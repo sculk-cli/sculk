@@ -68,6 +68,7 @@ fun main(args: Array<String>) {
         .subcommands(Init())
         .subcommands(ImportCmd().subcommands(ImportModrinth()))
         .subcommands(AddCmd().subcommands(AddByUrl(), AddFromModrinth(), AddByFile()))
+        .subcommands(Refresh())
         .subcommands(Install())
         .subcommands(ExportCmd().subcommands(ExportModrinth()))
         .main(args)
