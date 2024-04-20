@@ -1,0 +1,11 @@
+packs/**
+!packs/test
+TODO.md
+
+.gradle
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+.idea
+.vscode/
+.DS_Store

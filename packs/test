@@ -1,0 +1,10 @@
+#!/bin/bash
+
+cd .. # change to project dir
+./gradlew installDist
+cd packs || exit
+mkdir -p "$1" || exit
+cd "$1" || exit
+shift 1
+../../build/install/sculk/bin/sculk "$@" || cd .. || exit
+cd ..
