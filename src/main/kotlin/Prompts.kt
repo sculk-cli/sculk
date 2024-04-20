@@ -110,17 +110,17 @@ class PrettyListPrompt(prompt: String, choices: Collection<String>, terminal: Te
             val endIdx = choiceIdx + 2
 
             for (idx in startIdx..endIdx) {
-                var idx = idx
+                var actualIdx = idx
 
-                if (idx < 0) {
-                    idx += filteredChoices.size
+                if (actualIdx < 0) {
+                    actualIdx += filteredChoices.size
                 }
 
-                if (idx >= filteredChoices.size) {
-                    idx -= filteredChoices.size
+                if (actualIdx >= filteredChoices.size) {
+                    actualIdx -= filteredChoices.size
                 }
 
-                printChoice(filteredChoices.elementAt(idx), idx == choiceIdx)
+                printChoice(filteredChoices.elementAt(actualIdx), actualIdx == choiceIdx)
             }
 
             return 5

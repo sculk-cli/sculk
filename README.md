@@ -1,4 +1,4 @@
-![Skulk: A program for creating Minecraft modpacks](./banner.png)
+![Sculk: A program for creating Minecraft modpacks](./banner.png)
 
 <div align="center">
 
@@ -13,7 +13,7 @@ Sculk is a CLI tool for creating Minecraft modpacks, much like Packwiz. It is **
 
 ## Why Sculk?
 
-- **Multi-source support**: Sculk allows one mod to have multiple sources (e.g. Curseforge, Modrinth, and a URL). This means that you can export Modrinth and Curseforge modpacks from the same Skulk modpack.
+- **Multi-source support**: Sculk allows one mod to have multiple sources (e.g. Curseforge, Modrinth, and a URL). This means that you can export Modrinth and Curseforge modpacks from the same Sculk modpack.
 - **Content support**: Sculk supports mods, datapacks, resource packs, and shader packs - as well as any other files you want to include in your modpack (e.g. config).
 - **Ease of use**: Sculk is designed to be easy to use, with a simple command-line interface (with nice prompts!).
 - _[Planned]_ **Import support**: Sculk allows you to convert an existing Modrinth, Curseforge, or Packwiz modpack into a Sculk modpack.
