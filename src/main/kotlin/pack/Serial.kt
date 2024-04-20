@@ -28,6 +28,7 @@ data class SerialPackManifestFile(
 @Serializable
 data class SerialFileManifest(
     val filename: String,
+    val side: Side,
     val hashes: SerialFileManifestHashes,
     val fileSize: Int,
     val sources: SerialFileManifestSources
@@ -83,6 +84,7 @@ fun SerialPackManifest.load(): PackManifest {
 fun SerialFileManifest.load(): FileManifest {
     return FileManifest(
         filename = filename,
+        side = side,
         hashes = FileManifestHashes(
             sha1 = hashes.sha1,
             sha512 = hashes.sha512,

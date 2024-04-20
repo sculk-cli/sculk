@@ -137,6 +137,7 @@ data class PackManifestFile(
 
 data class FileManifest(
     var filename: String,
+    var side: Side,
     var hashes: FileManifestHashes,
     var fileSize: Int,
     var sources: FileManifestSources
@@ -187,6 +188,7 @@ fun PackManifest.toSerial(): SerialPackManifest {
 fun FileManifest.toSerial(): SerialFileManifest {
     return SerialFileManifest(
         filename = filename,
+        side = side,
         hashes = SerialFileManifestHashes(
             sha1 = hashes.sha1,
             sha512 = hashes.sha512,

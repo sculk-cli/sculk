@@ -15,6 +15,7 @@ class AddByUrl : CliktCommand(name = "url") {
         .prettyPrompt<Url>("Enter download URL")
     private val filename by option().prettyPrompt<String>("Enter file name")
     private val type by option().prettyPrompt<Type>("Select type")
+    private val side by option().prettyPrompt<Side>("Select side")
 
     override fun run() {
         val transformedSlug = slug.lowercase().replace(" ", "-")
@@ -37,6 +38,7 @@ class AddByUrl : CliktCommand(name = "url") {
         } else {
             FileManifest(
                 filename = filename,
+                side = side,
                 hashes = FileManifestHashes(
                     sha1 = contents.digestSha1(),
                     sha512 = contents.digestSha512()

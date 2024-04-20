@@ -11,7 +11,10 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import tech.jamalam.*
 import tech.jamalam.pack.*
+import tech.jamalam.services.ModrinthEnvType
 import tech.jamalam.services.ModrinthFileHashes
+import tech.jamalam.services.modrinthEnvTypePairToSide
+import tech.jamalam.services.sideToModrinthEnvTypePair
 import java.io.File
 import java.io.FileOutputStream
 import java.nio.file.Path
@@ -57,7 +60,7 @@ suspend fun exportModrinthPack(terminal: Terminal, pack: InMemoryPack) = corouti
                 sha1 = fileManifest.hashes.sha1, sha512 = fileManifest.hashes.sha512
             ),
             env = ModrinthPackFileEnv(
-                client = ModrinthEnvType.Required, server = ModrinthEnvType.Required
+                client = sideToModrinthEnvTypePair(fileManifest.side).first, server = sideToModrinthEnvTypePair(fileManifest.side).second
             ),
             downloads = filteredDownloads,
             fileSize = fileManifest.fileSize
@@ -141,6 +144,7 @@ suspend fun importModrinthPack(terminal: Terminal, importPath: Path, mrpackPath:
 
             val fileManifest = SerialFileManifest(
                 filename = File(file.path).name,
+                side = modrinthEnvTypePairToSide(file.env?.client ?: ModrinthEnvType.Required, file.env?.server ?: ModrinthEnvType.Required),
                 hashes = SerialFileManifestHashes(
                     sha1 = file.hashes.sha1,
                     sha512 = file.hashes.sha512
@@ -188,6 +192,7 @@ suspend fun importModrinthPack(terminal: Terminal, importPath: Path, mrpackPath:
         val pack = SerialPackManifest(
             name = index.name,
             summary = index.summary,
+            author = null,
             version = index.versionId,
             minecraft = index.dependencies.minecraft,
             loader = modLoader,
@@ -222,18 +227,6 @@ data class ModrinthPackFile(
 data class ModrinthPackFileEnv(
     val client: ModrinthEnvType, val server: ModrinthEnvType
 )
-
-@Serializable
-enum class ModrinthEnvType {
-    @SerialName("required")
-    Required,
-
-    @SerialName("optional")
-    Optional,
-
-    @SerialName("unsupported")
-    Unsupported
-}
 
 @Serializable
 data class ModrinthPackDependencies(

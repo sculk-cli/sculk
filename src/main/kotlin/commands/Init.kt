@@ -105,6 +105,7 @@ class Init : CliktCommand(name = "init") {
             name = name,
             version = "1.0.0",
             summary = null,
+            author = null,
             minecraft = minecraftVersion,
             loader = SerialPackManifestModLoader(loader, loaderVersion),
             files = emptyList()

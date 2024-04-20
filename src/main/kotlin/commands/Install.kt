@@ -1,8 +1,12 @@
 package tech.jamalam.commands
 
 import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.default
+import com.github.ajalt.clikt.parameters.options.default
+import com.github.ajalt.clikt.parameters.options.option
+import com.github.ajalt.clikt.parameters.types.enum
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import kotlinx.coroutines.runBlocking
@@ -11,11 +15,13 @@ import tech.jamalam.digestSha256
 import tech.jamalam.digestSha512
 import tech.jamalam.pack.SerialFileManifest
 import tech.jamalam.pack.SerialPackManifest
+import tech.jamalam.pack.Side
 import java.io.File
 
 class Install : CliktCommand(name = "install") {
     private val packLocation by argument()
     private val installLocation by argument().default(".")
+    private val side by option().enum<InstallSide>().default(InstallSide.SERVER)
 
     override fun run() = runBlocking {
         val manifest =
@@ -37,6 +43,13 @@ class Install : CliktCommand(name = "install") {
                         SerialFileManifest.serializer(),
                         manifestText
                     )
+
+                if (fileManifest.side != Side.Both) {
+                    if ((fileManifest.side == Side.ServerOnly && side == InstallSide.CLIENT) || (fileManifest.side == Side.ClientOnly && side == InstallSide.SERVER)) {
+                        terminal.info("Ignoring ${file.path} because it's not for the selected side ($side)")
+                        continue
+                    }
+                }
 
                 val downloadLink = if (fileManifest.sources.url != null) {
                     fileManifest.sources.url.url
@@ -74,5 +87,10 @@ class Install : CliktCommand(name = "install") {
         } else {
             File(packLocation).resolve(path).readText()
         }
+    }
+
+    enum class InstallSide {
+        CLIENT,
+        SERVER
     }
 }

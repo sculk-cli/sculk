@@ -9,6 +9,7 @@ import tech.jamalam.ctx
 import tech.jamalam.downloadFileTemp
 import tech.jamalam.pack.*
 import tech.jamalam.parseUrl
+import tech.jamalam.services.modrinthEnvTypePairToSide
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -70,6 +71,7 @@ class AddFromModrinth : CliktCommand(name = "modrinth") {
                     sha1 = modrinthFile.hashes.sha1, sha512 = modrinthFile.hashes.sha512
                 ),
                 fileSize = tempFile.readBytes().size,
+                side = modrinthEnvTypePairToSide(project.clientSide, project.serverSide),
                 sources = FileManifestSources(
                     curseforge = null, modrinth = FileManifestModrinthSource(
                         projectId = project.id, fileUrl = modrinthFile.url

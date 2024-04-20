@@ -7,6 +7,7 @@ import io.ktor.http.*
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import tech.jamalam.pack.ModLoader
+import tech.jamalam.pack.Side
 import java.net.URLEncoder
 
 class Modrinth(private val client: HttpClient) {
@@ -19,7 +20,9 @@ class Modrinth(private val client: HttpClient) {
                 it.id,
                 it.slug,
                 it.title,
-                it.description
+                it.description,
+                it.clientSide,
+                it.serverSide
             )
         }
     }
@@ -83,6 +86,10 @@ data class ModrinthSearchProject(
     val slug: String,
     val title: String,
     val description: String,
+    @SerialName("client_side")
+    val clientSide: ModrinthEnvType,
+    @SerialName("server_side")
+    val serverSide: ModrinthEnvType,
 )
 
 @Serializable
@@ -91,6 +98,10 @@ data class ModrinthProject(
     val slug: String,
     val title: String,
     val description: String,
+    @SerialName("client_side")
+    val clientSide: ModrinthEnvType,
+    @SerialName("server_side")
+    val serverSide: ModrinthEnvType,
 )
 
 @Serializable
@@ -117,3 +128,29 @@ data class ModrinthFileHashes(
     val sha1: String,
     val sha512: String,
 )
+
+@Serializable
+enum class ModrinthEnvType {
+    @SerialName("required")
+    Required,
+
+    @SerialName("optional")
+    Optional,
+
+    @SerialName("unsupported")
+    Unsupported
+}
+
+fun modrinthEnvTypePairToSide(clientSide: ModrinthEnvType, serverSide: ModrinthEnvType) = when (clientSide to serverSide) {
+    ModrinthEnvType.Unsupported to ModrinthEnvType.Required -> Side.ServerOnly
+    ModrinthEnvType.Unsupported to ModrinthEnvType.Optional -> Side.ClientOnly
+    ModrinthEnvType.Required to ModrinthEnvType.Unsupported -> Side.ClientOnly
+    ModrinthEnvType.Optional to ModrinthEnvType.Unsupported -> Side.ServerOnly
+    else -> Side.Both
+}
+
+fun sideToModrinthEnvTypePair(side: Side) = when (side) {
+    Side.ServerOnly -> ModrinthEnvType.Unsupported to ModrinthEnvType.Required
+    Side.ClientOnly -> ModrinthEnvType.Required to ModrinthEnvType.Unsupported
+    Side.Both -> ModrinthEnvType.Required to ModrinthEnvType.Required
+}

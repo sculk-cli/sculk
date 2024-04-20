@@ -18,7 +18,14 @@ enum class ModLoader {
     Quilt;
 }
 
-// A file that is included in the modpack, but does not have a manifest file (e.g. a config file)
-data class DirectFile(val path: String)
+@Serializable
+enum class Side {
+    @SerialName("both")
+    Both,
 
+    @SerialName("client_only")
+    ClientOnly,
 
+    @SerialName("server_only")
+    ServerOnly;
+}
