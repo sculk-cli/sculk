@@ -1,5 +1,11 @@
 ![Skulk: A program for creating Minecraft modpacks](./banner.png)
 
+<div align="center">
+
+[Report Issues](https://github.com/sculk-cli/sculk) • [Chat on Discord](https://discord.jamalam.tech) 
+
+</div>
+
 > **Warning**
 > This project is in early development and is not yet ready for use. Please check back later.
 

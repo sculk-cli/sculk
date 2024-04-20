@@ -11,6 +11,7 @@ import kotlin.system.exitProcess
 class PrettyListPrompt(prompt: String, choices: Collection<String>, terminal: Terminal) :
     Prompt<String>(prompt, terminal, choices = choices) {
     override fun ask(): String {
+        var filter: String? = null
         var choiceIdx = 0
         terminal.cursor.hide(true)
         terminal.println(buildString {
@@ -20,7 +21,7 @@ class PrettyListPrompt(prompt: String, choices: Collection<String>, terminal: Te
             append(" ")
             append(
                 terminal.theme.muted(
-                    "(arrow keys to move, enter to select)"
+                    "(arrow keys to move, enter to select, type to filter)"
                 )
             )
         })
@@ -28,12 +29,29 @@ class PrettyListPrompt(prompt: String, choices: Collection<String>, terminal: Te
         var printedLines: Int
 
         while (true) {
-            printedLines = printChoices(choices, choiceIdx)
-            val char = RawConsoleInput.read(true)
+            if (filter != null) {
+                terminal.println(
+                    terminal.theme.muted(
+                        " (filter: $filter)"
+                    )
+                )
+            }
 
-            when (char) {
+            printedLines = printChoices(choices, choiceIdx, filter)
+
+            if (filter != null) {
+                printedLines += 1
+            }
+
+            when (val char = RawConsoleInput.read(true)) {
                 3 -> exitProcess(0) // CTRL-C
                 10 -> break // Enter
+                127 -> { // Backspace
+                    if (filter != null) {
+                        filter = filter.dropLast(1)
+                    }
+                }
+
                 27 -> {
                     if (RawConsoleInput.read(true) == 91) {
                         when (RawConsoleInput.read(true)) {
@@ -48,10 +66,19 @@ class PrettyListPrompt(prompt: String, choices: Collection<String>, terminal: Te
                         }
                     }
                 }
+
+                else -> {
+                    filter = (filter ?: "") + char.toChar()
+                    choiceIdx = 0
+                }
             }
 
             terminal.clearLines(printedLines)
         }
+
+        val choice = choices.filter {
+            filter == null || it.contains(filter, ignoreCase = true)
+        }.elementAt(choiceIdx)
 
         terminal.clearLines(printedLines + 1)
         terminal.println(buildString {
@@ -61,20 +88,24 @@ class PrettyListPrompt(prompt: String, choices: Collection<String>, terminal: Te
             append(" ")
             append(
                 terminal.theme.info(
-                    choices.elementAt(choiceIdx)
+                    choice
                 )
             )
         })
 
         terminal.cursor.show()
         RawConsoleInput.resetConsoleMode()
-        return choices.elementAt(choiceIdx)
+        return choice
     }
 
     override fun convert(input: String): ConversionResult<String> = ConversionResult.Valid(input)
 
-    private fun printChoices(choices: Collection<String>, choiceIdx: Int): Int {
-        if (choices.size > 5) {
+    private fun printChoices(choices: Collection<String>, choiceIdx: Int, filter: String?): Int {
+        val filteredChoices = choices.filter {
+            filter == null || it.contains(filter, ignoreCase = true)
+        }
+
+        if (filteredChoices.size > 5) {
             val startIdx = choiceIdx - 2
             val endIdx = choiceIdx + 2
 
@@ -82,23 +113,23 @@ class PrettyListPrompt(prompt: String, choices: Collection<String>, terminal: Te
                 var idx = idx
 
                 if (idx < 0) {
-                    idx += choices.size
+                    idx += filteredChoices.size
                 }
 
-                if (idx >= choices.size) {
-                    idx -= choices.size
+                if (idx >= filteredChoices.size) {
+                    idx -= filteredChoices.size
                 }
 
-                printChoice(choices.elementAt(idx), idx == choiceIdx)
+                printChoice(filteredChoices.elementAt(idx), idx == choiceIdx)
             }
 
             return 5
         } else {
-            for ((idx, choice) in choices.withIndex()) {
+            for ((idx, choice) in filteredChoices.withIndex()) {
                 printChoice(choice, idx == choiceIdx)
             }
 
-            return choices.size
+            return filteredChoices.size
         }
     }
 
@@ -160,6 +191,7 @@ abstract class PrettyPrompt<T>(
                             }
                         }
                     } else if (default != null) {
+                        terminal.println()
                         RawConsoleInput.resetConsoleMode()
                         default!!
                     } else {
