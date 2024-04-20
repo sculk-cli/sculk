@@ -16,15 +16,20 @@ class Refresh : CliktCommand(name = "refresh") {
         val manifest =
             ctx.json.decodeFromString<SerialPackManifest>(String(manifestFile.readBytes()))
                 .load()
+        val removedFiles = mutableListOf<String>()
 
         for (file in manifest.files) {
             val fileManifestFile = basePath.resolve(file.path).toFile()
 
-            if (fileManifestFile.readBytes().digestSha256() != file.sha256) {
+            if (!fileManifestFile.exists()) {
+                terminal.warning("File ${file.path} does not exist, removing it from the manifest")
+                removedFiles += file.path
+            } else if (fileManifestFile.readBytes().digestSha256() != file.sha256) {
                 file.sha256 = fileManifestFile.readBytes().digestSha256()
             }
         }
 
+        manifest.files = manifest.files.filter { it.path !in removedFiles }
         val newManifest = manifest.toSerial()
         manifestFile.writeBytes(
             ctx.json.encodeToString(
