@@ -1,7 +1,9 @@
 package tech.jamalam
 
 import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.core.CliktError
 import com.github.ajalt.clikt.core.subcommands
+import com.github.ajalt.mordant.terminal.Terminal
 import io.ktor.client.*
 import io.ktor.client.plugins.*
 import io.ktor.client.plugins.contentnegotiation.*
@@ -10,6 +12,7 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import tech.jamalam.commands.*
 import tech.jamalam.services.*
+import kotlin.system.exitProcess
 
 class Context(
     val json: Json,
@@ -64,12 +67,22 @@ class ImportCmd : CliktCommand(name = "import") {
 }
 
 fun main(args: Array<String>) {
-    Cli()
+    val cli = Cli()
         .subcommands(Init())
         .subcommands(ImportCmd().subcommands(ImportModrinth()))
         .subcommands(AddCmd().subcommands(AddByUrl(), AddFromModrinth(), AddByFile()))
         .subcommands(Refresh())
         .subcommands(Install())
         .subcommands(ExportCmd().subcommands(ExportModrinth()))
-        .main(args)
+
+    try {
+        cli.parse(args)
+    } catch (e: CliktError) {
+        cli.echoFormattedHelp(e)
+        exitProcess(e.statusCode)
+    } catch (e: Exception) {
+        val terminal = Terminal()
+        terminal.danger(e.message ?: "An unknown error occurred")
+        exitProcess(0)
+    }
 }
