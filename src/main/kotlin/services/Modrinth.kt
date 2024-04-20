@@ -3,6 +3,7 @@ package tech.jamalam.services
 import io.ktor.client.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
+import io.ktor.http.*
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
@@ -12,16 +13,30 @@ import java.net.URLEncoder
 
 class Modrinth(private val client: HttpClient, private val json: Json) {
     suspend fun search(query: String): List<ModrinthProject> {
-        val query = URLEncoder.encode(query, "UTF-8")
+        val encodedQuery = URLEncoder.encode(query, "UTF-8")
         val response = client.get(
-            "https://api.modrinth.com/v2/search?query=$query"
+            "https://api.modrinth.com/v2/search?query=$encodedQuery"
         )
         return json.decodeFromString(
             ModrinthSearchResponse.serializer(), response.bodyAsText()
-        ).hits
+        ).hits.map { ModrinthProject(it.id, it.slug, it.title, it.description) }
     }
 
-    suspend fun findVersions(
+    suspend fun getProject(projectIdOrSlug: String): ModrinthProject? {
+        val response = client.get(
+            "https://api.modrinth.com/v2/project/$projectIdOrSlug"
+        )
+
+        if (response.status == HttpStatusCode.NotFound) {
+            return null
+        }
+
+        return json.decodeFromString(
+            ModrinthProject.serializer(), response.bodyAsText()
+        )
+    }
+
+    suspend fun getValidVersions(
         projectId: String, modLoader: ModLoader, gameVersion: String
     ): List<ModrinthVersion> {
         val validLoaders = listOf(
@@ -52,6 +67,10 @@ class Modrinth(private val client: HttpClient, private val json: Json) {
             "https://api.modrinth.com/v2/version_file/$sha1Hash",
         )
 
+        if (response.status == HttpStatusCode.NotFound) {
+            return null
+        }
+
         return json.decodeFromString(
             ModrinthVersion.serializer(), response.bodyAsText()
         )
@@ -60,12 +79,20 @@ class Modrinth(private val client: HttpClient, private val json: Json) {
 
 @Serializable
 data class ModrinthSearchResponse(
-    val hits: List<ModrinthProject>,
+    val hits: List<ModrinthSearchProject>,
+)
+
+@Serializable
+data class ModrinthSearchProject(
+    @SerialName("project_id")
+    val id: String,
+    val slug: String,
+    val title: String,
+    val description: String,
 )
 
 @Serializable
 data class ModrinthProject(
-    @SerialName("project_id")
     val id: String,
     val slug: String,
     val title: String,
