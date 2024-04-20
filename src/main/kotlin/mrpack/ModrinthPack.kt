@@ -10,7 +10,7 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import tech.jamalam.*
-import tech.jamalam.manifest.*
+import tech.jamalam.pack.*
 import tech.jamalam.services.ModrinthFileHashes
 import java.io.File
 import java.io.FileOutputStream
@@ -30,8 +30,7 @@ suspend fun exportModrinthPack(terminal: Terminal, pack: InMemoryPack) = corouti
     val files = mutableListOf<ModrinthPackFile>()
     val manifest = pack.getManifest()
 
-    for (file in manifest.files) {
-        val fileManifest = pack.getFileManifest(file.path)
+    for ((path, fileManifest) in pack.getFileManifests().entries) {
         val downloads = mutableListOf<String>()
 
         if (fileManifest.sources.modrinth != null) {
@@ -48,12 +47,12 @@ suspend fun exportModrinthPack(terminal: Terminal, pack: InMemoryPack) = corouti
             .map { it.toString() }
 
         if (filteredDownloads.isEmpty()) {
-            println("File ${file.path} will not be included as there are no valid sources for it")
+            terminal.warning("File $path will not be included as there are no valid sources for it")
             continue
         }
 
         files += ModrinthPackFile(
-            path = File(file.path).resolveSibling(fileManifest.filename).toString(),
+            path = File(path).resolveSibling(fileManifest.filename).toString(),
             hashes = ModrinthFileHashes(
                 sha1 = fileManifest.hashes.sha1, sha512 = fileManifest.hashes.sha512
             ),
@@ -88,20 +87,29 @@ suspend fun exportModrinthPack(terminal: Terminal, pack: InMemoryPack) = corouti
             pack.getBasePath().resolve("${manifest.name}-${manifest.version}.mrpack").toFile()
         )
     )
-    val entry = ZipEntry("modrinth.index.json")
+    var entry = ZipEntry("modrinth.index.json")
     os.putNextEntry(entry)
-    val data =
+    var data =
         ctx.json.encodeToString(ModrinthPackIndex.serializer(), index).toByteArray(Charsets.UTF_8)
     os.write(data, 0, data.size)
     os.closeEntry()
+
+    for (file in pack.getDirectFiles()) {
+        entry = ZipEntry("overrides/${file}")
+        os.putNextEntry(entry)
+        data = pack.getBasePath().resolve(file).toFile().readBytes()
+        os.write(data, 0, data.size)
+        os.closeEntry()
+    }
+
     os.close()
 
-    println("Wrote mrpack")
+    terminal.info("Exported ${manifest.name}-${manifest.version}.mrpack")
 }
 
 suspend fun importModrinthPack(terminal: Terminal, importPath: Path, mrpackPath: Path) =
     coroutineScope {
-        println("Importing $mrpackPath")
+        terminal.info("Importing $mrpackPath")
         val zip = ZipFile(mrpackPath.toFile())
         val entry = zip.getEntry("modrinth.index.json")
         val index =
@@ -129,7 +137,7 @@ suspend fun importModrinthPack(terminal: Terminal, importPath: Path, mrpackPath:
             val tempFile = downloadFileTemp(parseUrl(dl))
             val tempFileBytes = tempFile.readBytes()
             val version = ctx.modrinth.reverseLookupVersion(file.hashes.sha1)
-                ?: error("Can only currently import Modrinth possible versions from mrpacks")
+                ?: error("Can only currently import Modrinth versions from mrpacks")
 
             val fileManifest = SerialFileManifest(
                 filename = File(file.path).name,

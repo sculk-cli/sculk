@@ -6,7 +6,7 @@ import com.github.ajalt.clikt.parameters.options.option
 import io.ktor.http.*
 import kotlinx.coroutines.runBlocking
 import tech.jamalam.*
-import tech.jamalam.manifest.*
+import tech.jamalam.pack.*
 
 class AddByUrl : CliktCommand(name = "url") {
     private val name by option().prettyPrompt<String>("Enter project name")

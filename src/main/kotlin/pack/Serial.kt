@@ -1,4 +1,4 @@
-package tech.jamalam.manifest
+package tech.jamalam.pack
 
 import kotlinx.serialization.Serializable
 

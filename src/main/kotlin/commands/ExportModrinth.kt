@@ -4,7 +4,7 @@ import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
 import kotlinx.coroutines.runBlocking
 import tech.jamalam.ctx
-import tech.jamalam.manifest.InMemoryPack
+import tech.jamalam.pack.InMemoryPack
 import tech.jamalam.mrpack.exportModrinthPack
 
 class ExportModrinth : CliktCommand(name = "modrinth") {

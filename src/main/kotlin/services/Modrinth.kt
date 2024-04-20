@@ -6,7 +6,7 @@ import io.ktor.client.request.*
 import io.ktor.http.*
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import tech.jamalam.manifest.ModLoader
+import tech.jamalam.pack.ModLoader
 import java.net.URLEncoder
 
 class Modrinth(private val client: HttpClient) {
