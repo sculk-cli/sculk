@@ -6,6 +6,7 @@ import kotlinx.serialization.Serializable
 data class SerialPackManifest(
     val name: String,
     val summary: String?,
+    val author: String?,
     val version: String,
     val minecraft: String,
     val loader: SerialPackManifestModLoader,
@@ -63,6 +64,7 @@ fun SerialPackManifest.load(): PackManifest {
     return PackManifest(
         name = name,
         summary = summary,
+        author = author,
         version = version,
         minecraft = minecraft,
         loader = PackManifestModLoader(

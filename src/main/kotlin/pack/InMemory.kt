@@ -118,6 +118,7 @@ class InMemoryPack(json: Json, private val basePath: Path = Paths.get("")) {
 data class PackManifest(
     var name: String,
     var summary: String?,
+    var author: String?,
     var version: String,
     var minecraft: String,
     var loader: PackManifestModLoader,
@@ -167,6 +168,7 @@ fun PackManifest.toSerial(): SerialPackManifest {
     return SerialPackManifest(
         name = name,
         summary = summary,
+        author = author,
         version = version,
         minecraft = minecraft,
         loader = SerialPackManifestModLoader(
