@@ -154,23 +154,7 @@ abstract class PrettyPrompt<T>(
         var error = false
 
         while (true) {
-            terminal.print(buildString {
-                if (error) {
-                    append(terminal.theme.danger("?"))
-                } else {
-                    append(terminal.theme.muted("?"))
-                }
-
-                append(" ")
-                append(prompt)
-
-                if (default != null) {
-                    append(terminal.theme.info(" ($default)"))
-                }
-
-                append(": ")
-                append(input)
-            })
+            printPrompt(input, error)
 
             when (val char = RawConsoleInput.read(true)) {
                 3 -> exitProcess(0) // CTRL-C
@@ -178,7 +162,8 @@ abstract class PrettyPrompt<T>(
                     return if (input.isNotEmpty()) {
                         when (val conversion = convert(input)) {
                             is ConversionResult.Valid -> {
-                                terminal.println()
+                                terminal.clearLine()
+                                printPrompt(input, error = false, finished = true)
                                 RawConsoleInput.resetConsoleMode()
                                 conversion.value
                             }
@@ -191,7 +176,8 @@ abstract class PrettyPrompt<T>(
                             }
                         }
                     } else if (default != null) {
-                        terminal.println()
+                        terminal.clearLine()
+                        printPrompt(input, error = false, finished = true)
                         RawConsoleInput.resetConsoleMode()
                         default!!
                     } else {
@@ -212,6 +198,35 @@ abstract class PrettyPrompt<T>(
                     input += char.toChar()
                 }
             }
+        }
+    }
+    
+    private fun printPrompt(input: String, error: Boolean, finished: Boolean = false) {
+        terminal.print(buildString {
+            if (error) {
+                append(terminal.theme.danger("?"))
+            } else {
+                append(terminal.theme.muted("?"))
+            }
+
+            append(" ")
+            append(prompt)
+
+            if (default != null) {
+                append(terminal.theme.info(" ($default)"))
+            }
+
+            append(": ")
+            
+            if (finished) {
+                append(terminal.theme.info(input))
+            } else {
+                append(input)
+            }
+        })
+        
+        if (finished) {
+            terminal.println()
         }
     }
 }
