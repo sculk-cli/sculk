@@ -7,8 +7,13 @@ import com.github.ajalt.clikt.parameters.arguments.default
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.enum
+import com.github.ajalt.mordant.animation.coroutines.animateInCoroutine
+import com.github.ajalt.mordant.animation.progress.advance
+import com.github.ajalt.mordant.widgets.progress.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import tech.jamalam.ctx
 import tech.jamalam.digestSha256
@@ -24,60 +29,74 @@ class Install : CliktCommand(name = "install") {
     private val side by option().enum<InstallSide>().default(InstallSide.SERVER)
 
     override fun run() = runBlocking {
-        val manifest =
-            ctx.json.decodeFromString(
-                SerialPackManifest.serializer(),
-                readFile("manifest.sculk.json")
-            )
+        coroutineScope {
+            val manifest =
+                ctx.json.decodeFromString(
+                    SerialPackManifest.serializer(),
+                    readFile("manifest.sculk.json")
+                )
 
-        for (file in manifest.files) {
-            val manifestText = readFile(file.path)
+            val progress = progressBarContextLayout {
+                text(terminal.theme.info("Downloading files"))
+                marquee(width = 60) { terminal.theme.warning(context) }
+                percentage()
+                progressBar()
+                completed(style = terminal.theme.success)
+            }.animateInCoroutine(terminal, total = manifest.files.size.toLong(), context = "")
 
-            if (manifestText.toByteArray().digestSha256() != file.sha256) {
-                error("SHA256 doesn't match")
-            }
+            launch { progress.execute() }
 
-            if (file.path.endsWith(".sculk.json")) {
-                val fileManifest =
-                    ctx.json.decodeFromString(
-                        SerialFileManifest.serializer(),
-                        manifestText
-                    )
+            for (file in manifest.files) {
+                progress.advance(1)
+                progress.update { context = file.path }
+                val manifestText = readFile(file.path)
 
-                if (fileManifest.side != Side.Both) {
-                    if ((fileManifest.side == Side.ServerOnly && side == InstallSide.CLIENT) || (fileManifest.side == Side.ClientOnly && side == InstallSide.SERVER)) {
-                        terminal.info("Ignoring ${file.path} because it's not for the selected side ($side)")
-                        continue
+                if (manifestText.toByteArray().digestSha256() != file.sha256) {
+                    error("File ${file.path} was corrupted or hash was incorrect")
+                }
+
+                if (file.path.endsWith(".sculk.json")) {
+                    val fileManifest =
+                        ctx.json.decodeFromString(
+                            SerialFileManifest.serializer(),
+                            manifestText
+                        )
+
+                    if (fileManifest.side != Side.Both) {
+                        if ((fileManifest.side == Side.ServerOnly && side == InstallSide.CLIENT) || (fileManifest.side == Side.ClientOnly && side == InstallSide.SERVER)) {
+                            terminal.info("Ignoring ${file.path} because it's not for the selected side ($side)")
+                            continue
+                        }
                     }
-                }
 
-                val downloadLink = if (fileManifest.sources.url != null) {
-                    fileManifest.sources.url.url
-                } else if (fileManifest.sources.modrinth != null) {
-                    fileManifest.sources.modrinth.fileUrl
-                } else if (fileManifest.sources.curseforge != null) {
-                    TODO()
+                    val downloadLink = if (fileManifest.sources.url != null) {
+                        fileManifest.sources.url.url
+                    } else if (fileManifest.sources.modrinth != null) {
+                        fileManifest.sources.modrinth.fileUrl
+                    } else if (fileManifest.sources.curseforge != null) {
+                        TODO()
+                    } else {
+                        error("No valid source found for ${file.path}")
+                    }
+
+                    val fileFile = File(installLocation).resolve(file.path)
+                        .resolveSibling(fileManifest.filename)
+
+                    fileFile.parentFile.mkdirs()
+                    val request = ctx.client.get(downloadLink)
+                    fileFile.writeBytes(request.readBytes())
+
+                    if (fileFile.readBytes().digestSha512() != fileManifest.hashes.sha512) {
+                        error("Downloaded file for ${file.path} was corrupted or hash was incorrect")
+                    }
                 } else {
-                    error("No valid source")
+                    val fileFile = File(installLocation).resolve(file.path)
+                    fileFile.parentFile.mkdirs()
+                    fileFile.writeText(manifestText)
                 }
 
-                val fileFile = File(installLocation).resolve(file.path)
-                    .resolveSibling(fileManifest.filename)
-
-                fileFile.parentFile.mkdirs()
-                val request = ctx.client.get(downloadLink)
-                fileFile.writeBytes(request.readBytes())
-
-                if (fileFile.readBytes().digestSha512() != fileManifest.hashes.sha512) {
-                    error("File was corrupted or hash was incorrect")
-                }
-            } else {
-                val fileFile = File(installLocation).resolve(file.path)
-                fileFile.parentFile.mkdirs()
-                fileFile.writeText(manifestText)
+                terminal.info("Downloaded ${file.path}")
             }
-
-            terminal.info("Downloaded ${file.path}")
         }
     }
 
