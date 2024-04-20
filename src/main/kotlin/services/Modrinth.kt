@@ -1,25 +1,27 @@
 package tech.jamalam.services
 
 import io.ktor.client.*
+import io.ktor.client.call.*
 import io.ktor.client.request.*
-import io.ktor.client.statement.*
 import io.ktor.http.*
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.builtins.ListSerializer
-import kotlinx.serialization.json.Json
 import tech.jamalam.manifest.ModLoader
 import java.net.URLEncoder
 
-class Modrinth(private val client: HttpClient, private val json: Json) {
+class Modrinth(private val client: HttpClient) {
     suspend fun search(query: String): List<ModrinthProject> {
         val encodedQuery = URLEncoder.encode(query, "UTF-8")
-        val response = client.get(
+        return client.get(
             "https://api.modrinth.com/v2/search?query=$encodedQuery"
-        )
-        return json.decodeFromString(
-            ModrinthSearchResponse.serializer(), response.bodyAsText()
-        ).hits.map { ModrinthProject(it.id, it.slug, it.title, it.description) }
+        ).body<ModrinthSearchResponse>().hits.map {
+            ModrinthProject(
+                it.id,
+                it.slug,
+                it.title,
+                it.description
+            )
+        }
     }
 
     suspend fun getProject(projectIdOrSlug: String): ModrinthProject? {
@@ -31,9 +33,7 @@ class Modrinth(private val client: HttpClient, private val json: Json) {
             return null
         }
 
-        return json.decodeFromString(
-            ModrinthProject.serializer(), response.bodyAsText()
-        )
+        return response.body<ModrinthProject>()
     }
 
     suspend fun getValidVersions(
@@ -47,17 +47,13 @@ class Modrinth(private val client: HttpClient, private val json: Json) {
                 ModLoader.Quilt -> "quilt"
             }
         )
-
         val loaders =
             validLoaders.joinToString(",") { "%22$it%22" }
         val gameVersions = "%22$gameVersion%22"
-        val response = client.get(
-            "https://api.modrinth.com/v2/project/$projectId/version?loaders=[$loaders]&game_versions=[$gameVersions]",
-        )
 
-        return json.decodeFromString(
-            ListSerializer(ModrinthVersion.serializer()), response.bodyAsText()
-        )
+        return client.get(
+            "https://api.modrinth.com/v2/project/$projectId/version?loaders=[$loaders]&game_versions=[$gameVersions]",
+        ).body<List<ModrinthVersion>>()
     }
 
     suspend fun reverseLookupVersion(
@@ -71,9 +67,7 @@ class Modrinth(private val client: HttpClient, private val json: Json) {
             return null
         }
 
-        return json.decodeFromString(
-            ModrinthVersion.serializer(), response.bodyAsText()
-        )
+        return response.body<ModrinthVersion>()
     }
 }
 

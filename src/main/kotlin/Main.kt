@@ -4,6 +4,8 @@ import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.subcommands
 import io.ktor.client.*
 import io.ktor.client.plugins.*
+import io.ktor.client.plugins.contentnegotiation.*
+import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import tech.jamalam.commands.*
@@ -29,15 +31,19 @@ val ctx = run {
     }
     val client = HttpClient {
         install(UserAgent) {
-            agent = "sculk-cli/sculk (james<at>jamalam.tech / discord: jamalam)"
+            agent = "sculk-cli/sculk (email: james<at>jamalam<dot>tech / discord: jamalam)"
+        }
+
+        install(ContentNegotiation) {
+            json(json)
         }
     }
     val pistonMeta = PistonMeta(client)
-    val modrinth = Modrinth(client, json)
-    val fabricMeta = FabricMeta(client, json)
-    val neoForgeMeta = NeoForgeMeta(client, json)
-    val forgeMeta = ForgeMeta(client, json)
-    val quiltMeta = QuiltMeta(client, json)
+    val modrinth = Modrinth(client)
+    val fabricMeta = FabricMeta(client)
+    val neoForgeMeta = NeoForgeMeta(client)
+    val forgeMeta = ForgeMeta(client)
+    val quiltMeta = QuiltMeta(client)
     Context(json, client, pistonMeta, modrinth, fabricMeta, neoForgeMeta, forgeMeta, quiltMeta)
 }
 

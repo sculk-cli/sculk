@@ -1,20 +1,22 @@
 package tech.jamalam.services
 
 import io.ktor.client.*
+import io.ktor.client.call.*
 import io.ktor.client.request.*
-import io.ktor.client.statement.*
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 
-class NeoForgeMeta(private val client: HttpClient, private val json: Json) {
+class NeoForgeMeta(private val client: HttpClient) {
     suspend fun getLoaderVersions(gameVersion: String): List<String> {
-        val response = client.get(
+        return client.get(
             "https://maven.neoforged.net/api/maven/versions/releases/net/neoforged/neoforge"
-        )
-
-        return json.decodeFromString(
-            NeoForgeVersionResponse.serializer(), response.bodyAsText()
-        ).versions.filter { it.startsWith(gameVersion.trimStart('1', '.')) }.reversed()
+        ).body<NeoForgeVersionResponse>().versions.filter {
+            it.startsWith(
+                gameVersion.trimStart(
+                    '1',
+                    '.'
+                )
+            )
+        }.reversed()
     }
 }
 
