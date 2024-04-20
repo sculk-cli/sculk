@@ -60,11 +60,11 @@ class InMemoryPack(json: Json, private val basePath: Path = Paths.get("")) {
         return fileManifests
     }
 
-    fun getFileManifest(path: String): FileManifest {
-        return fileManifests[path] ?: error("No file manifest found at $path")
+    fun getFileManifest(path: String): FileManifest? {
+        return fileManifests[path]
     }
 
-    fun addFileManifest(path: String, fileManifest: FileManifest) {
+    fun setFileManifest(path: String, fileManifest: FileManifest) {
         fileManifests[path] = fileManifest
     }
 

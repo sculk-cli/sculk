@@ -42,17 +42,6 @@ class AddFromModrinth : CliktCommand(name = "modrinth") {
 
         val tempFile = runBlocking { downloadFileTemp(parseUrl(modrinthFile.url)) }
 
-        val fileManifest = FileManifest(
-            filename = modrinthFile.filename, hashes = FileManifestHashes(
-                sha1 = modrinthFile.hashes.sha1, sha512 = modrinthFile.hashes.sha512
-            ),
-            fileSize = tempFile.readBytes().size,
-            sources = FileManifestSources(
-                curseforge = null, modrinth = FileManifestModrinthSource(
-                    projectId = project.id, fileUrl = modrinthFile.url
-                ), url = null
-            )
-        )
 
         val dir = if (version.loaders.contains("minecraft")) {
             TODO()
@@ -60,11 +49,37 @@ class AddFromModrinth : CliktCommand(name = "modrinth") {
             "mods"
         }
 
+        val existingManifest = pack.getFileManifest("$dir/${project.slug}.sculk.json")
+        val fileManifest = if (existingManifest != null) {
+            if (existingManifest.sources.modrinth != null) {
+                error("Existing manifest already has a Modrinth source (did you mean to use the update command?)")
+            }
 
-        pack.addFileManifest("$dir/${project.slug}.sculk.json", fileManifest)
-        echo("Added ${fileManifest.filename} to manifest")
-        terminal.println(terminal.theme.info("Saving pack manifest..."))
+            if (existingManifest.hashes.sha1 != modrinthFile.hashes.sha1 || existingManifest.hashes.sha512 != modrinthFile.hashes.sha512) {
+                error("File hashes do not match for ${modrinthFile.filename}")
+            }
+
+            existingManifest.sources.modrinth = FileManifestModrinthSource(
+                projectId = project.id, fileUrl = modrinthFile.url
+            )
+
+            existingManifest
+        } else {
+            FileManifest(
+                filename = modrinthFile.filename, hashes = FileManifestHashes(
+                    sha1 = modrinthFile.hashes.sha1, sha512 = modrinthFile.hashes.sha512
+                ),
+                fileSize = tempFile.readBytes().size,
+                sources = FileManifestSources(
+                    curseforge = null, modrinth = FileManifestModrinthSource(
+                        projectId = project.id, fileUrl = modrinthFile.url
+                    ), url = null
+                )
+            )
+        }
+
+        pack.setFileManifest("$dir/${project.slug}.sculk.json", fileManifest)
         pack.save(ctx.json)
-        echo("Added ${project.title} to manifest")
+        terminal.info("Added ${project.title} to manifest")
     }
 }
