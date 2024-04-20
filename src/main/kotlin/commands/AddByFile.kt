@@ -14,8 +14,7 @@ class AddByFile : CliktCommand(name = "file") {
     override fun run() {
         val pack = InMemoryPack(ctx.json)
         pack.addDirectFile(file.relativeTo(Paths.get("").toFile()).toString())
-        echo("Added $file to manifest")
-        terminal.println(terminal.theme.info("Saving pack manifest..."))
+        terminal.info("Added $file to manifest")
         pack.save(ctx.json)
     }
 }

@@ -30,13 +30,11 @@ class Init : CliktCommand(name = "init") {
         }
 
         if (!path.isDirectory) {
-            echo("Path is not a directory", err = true)
-            return
+            error("Path is not a directory")
         }
 
         if (path.listFiles()?.isNotEmpty() == true) {
-            echo("Directory is not empty", err = true)
-            return
+            error("Directory is not empty")
         }
 
         val loaderVersion = runBlocking {

@@ -77,7 +77,7 @@ class Install : CliktCommand(name = "install") {
                 fileFile.writeText(manifestText)
             }
 
-            echo("Downloaded ${file.path}")
+            terminal.info("Downloaded ${file.path}")
         }
     }
 
