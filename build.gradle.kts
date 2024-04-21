@@ -40,7 +40,7 @@ application {
     mainClass = "tech.jamalam.MainKt"
 }
 
-val generatedResourcesDir = "${layout.buildDirectory}/generated-resources"
+val generatedResourcesDir = layout.buildDirectory.dir("generated-resources")
 sourceSets.getByName("main").output.dir(generatedResourcesDir)
 
 tasks {
@@ -49,7 +49,7 @@ tasks {
     // extracting the JAR and using my API key, but please don't.
     create("createCurseforgeCredentialsFile") {
         val fileName = "curseforge-credentials.properties"
-        outputs.file("$generatedResourcesDir/$fileName")
+        outputs.file(generatedResourcesDir.get().asFile.resolve(fileName))
 
         val properties = Properties()
         properties["api_url"] = if (System.getenv()["CURSEFORGE_NEW_API_KEY"] != null) {
@@ -60,7 +60,7 @@ tasks {
         properties["api_key"] = System.getenv()["CURSEFORGE_NEW_API_KEY"] ?: "unauthenticated"
 
         doLast {
-            properties.store(FileOutputStream(File("$generatedResourcesDir/$fileName")), null)
+            properties.store(FileOutputStream(generatedResourcesDir.get().asFile.resolve(fileName)), null)
         }
     }
 
