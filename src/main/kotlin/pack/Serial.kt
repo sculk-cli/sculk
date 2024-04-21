@@ -48,7 +48,7 @@ data class SerialFileManifestSources(
 
 @Serializable
 data class SerialFileManifestCurseforgeSource(
-    val todo: String,
+    val projectId: Int, val fileUrl: String, val fileId: Int,
 )
 
 @Serializable
@@ -93,7 +93,9 @@ fun SerialFileManifest.load(): FileManifest {
         sources = FileManifestSources(
             curseforge = sources.curseforge?.let {
                 FileManifestCurseforgeSource(
-                    todo = it.todo,
+                    projectId = it.projectId,
+                    fileUrl = it.fileUrl,
+                    fileId = it.fileId,
                 )
             },
             modrinth = sources.modrinth?.let {

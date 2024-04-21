@@ -7,42 +7,53 @@ import kotlinx.coroutines.runBlocking
 import tech.jamalam.PrettyListPrompt
 import tech.jamalam.ctx
 import tech.jamalam.downloadFileTemp
+import tech.jamalam.modrinth.models.ModrinthModLoader
 import tech.jamalam.pack.*
 import tech.jamalam.parseUrl
-import tech.jamalam.services.modrinthEnvTypePairToSide
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
+import tech.jamalam.util.modrinthEnvTypePairToSide
+import tech.jamalam.util.toModrinth
 
 class AddFromModrinth : CliktCommand(name = "modrinth") {
     private val query by argument()
 
     override fun run() = runBlocking {
         val pack = InMemoryPack(ctx.json)
-        val directMatch = ctx.modrinth.getProject(query)
+        val directMatch = ctx.modrinthApi.getProject(query)
 
-        val project = directMatch ?: run {
+        val projectSlug = directMatch?.slug ?: run {
             val projects =
-                ctx.modrinth.search(query)
+                ctx.modrinthApi.search(
+                    query,
+                    loaders = listOf(
+                        pack.getManifest().loader.type.toModrinth(),
+                        ModrinthModLoader.Minecraft
+                    ),
+                    gameVersions = listOf(pack.getManifest().minecraft)
+                ).hits
 
             PrettyListPrompt("Select a project", projects.map { it.title }, terminal).ask()
-                .let { projects.find { p -> p.title == it } }!!
+                .let { projects.find { p -> p.title == it } }!!.slug
         }
 
+        val project = directMatch ?: ctx.modrinthApi.getProject(projectSlug)!!
+
         val versions = runBlocking {
-            ctx.modrinth.getValidVersions(
-                project.slug, pack.getManifest().loader.type, pack.getManifest().minecraft
+            ctx.modrinthApi.getProjectVersions(
+                projectSlug,
+                loaders = listOf(
+                    pack.getManifest().loader.type.toModrinth(),
+                    ModrinthModLoader.Minecraft
+                ),
+                gameVersions = listOf(pack.getManifest().minecraft)
             )
         }.sortedBy {
-            LocalDateTime.parse(
-                it.publishedDate, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'")
-            )
+            it.publishedTime
         }.reversed()
 
-        val version = versions[0] // TODO: error handling
+        val version = versions.elementAtOrNull(0) ?: error("No valid versions found for ${project.title} (Minecraft: ${pack.getManifest().minecraft}, loader: ${pack.getManifest().loader.type})")
         val modrinthFile = version.files.first { it.primary }
 
-        val tempFile = runBlocking { downloadFileTemp(parseUrl(modrinthFile.url)) }
-
+        val tempFile = runBlocking { downloadFileTemp(parseUrl(modrinthFile.downloadUrl)) }
 
         val dir = if (version.loaders.contains("minecraft")) {
             TODO()
@@ -61,7 +72,7 @@ class AddFromModrinth : CliktCommand(name = "modrinth") {
             }
 
             existingManifest.sources.modrinth = FileManifestModrinthSource(
-                projectId = project.id, fileUrl = modrinthFile.url
+                projectId = project.id, fileUrl = modrinthFile.downloadUrl
             )
 
             existingManifest
@@ -71,16 +82,19 @@ class AddFromModrinth : CliktCommand(name = "modrinth") {
                     sha1 = modrinthFile.hashes.sha1, sha512 = modrinthFile.hashes.sha512
                 ),
                 fileSize = tempFile.readBytes().size,
-                side = modrinthEnvTypePairToSide(project.clientSide, project.serverSide),
+                side = modrinthEnvTypePairToSide(
+                    project.clientSideSupport,
+                    project.serverSideSupport
+                ),
                 sources = FileManifestSources(
                     curseforge = null, modrinth = FileManifestModrinthSource(
-                        projectId = project.id, fileUrl = modrinthFile.url
+                        projectId = project.id, fileUrl = modrinthFile.downloadUrl
                     ), url = null
                 )
             )
         }
 
-        pack.setFileManifest("$dir/${project.slug}.sculk.json", fileManifest)
+        pack.setFileManifest("$dir/${projectSlug}.sculk.json", fileManifest)
         pack.save(ctx.json)
         terminal.info("Added ${project.title} to manifest")
     }

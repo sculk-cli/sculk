@@ -11,6 +11,7 @@ import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import tech.jamalam.commands.*
+import tech.jamalam.modrinth.ModrinthApi
 import tech.jamalam.services.*
 import kotlin.system.exitProcess
 
@@ -18,7 +19,8 @@ class Context(
     val json: Json,
     val client: HttpClient,
     val pistonMeta: PistonMeta,
-    val modrinth: Modrinth,
+    val modrinthApi: ModrinthApi,
+    val curseforge: Curseforge,
     val fabricMeta: FabricMeta,
     val neoForgeMeta: NeoForgeMeta,
     val forgeMeta: ForgeMeta,
@@ -42,12 +44,13 @@ val ctx = run {
         }
     }
     val pistonMeta = PistonMeta(client)
-    val modrinth = Modrinth(client)
+    val modrinth = ModrinthApi("sculk-cli/sculk (email: james<at>jamalam<dot>tech / discord: jamalam)")
+    val curseforge = Curseforge(client)
     val fabricMeta = FabricMeta(client)
     val neoForgeMeta = NeoForgeMeta(client)
     val forgeMeta = ForgeMeta(client)
     val quiltMeta = QuiltMeta(client)
-    Context(json, client, pistonMeta, modrinth, fabricMeta, neoForgeMeta, forgeMeta, quiltMeta)
+    Context(json, client, pistonMeta, modrinth, curseforge, fabricMeta, neoForgeMeta, forgeMeta, quiltMeta)
 }
 
 class Cli : CliktCommand() {
@@ -70,7 +73,7 @@ fun main(args: Array<String>) {
     val cli = Cli()
         .subcommands(Init())
         .subcommands(ImportCmd().subcommands(ImportModrinth()))
-        .subcommands(AddCmd().subcommands(AddByUrl(), AddFromModrinth(), AddByFile()))
+        .subcommands(AddCmd().subcommands(AddByUrl(), AddFromModrinth(), AddFromCurseforge(), AddByFile()))
         .subcommands(Refresh())
         .subcommands(Install())
         .subcommands(ExportCmd().subcommands(ExportModrinth()))
@@ -83,6 +86,11 @@ fun main(args: Array<String>) {
     } catch (e: Exception) {
         val terminal = Terminal()
         terminal.danger(e.message ?: "An unknown error occurred")
+
+        if (e.message == null) {
+            e.printStackTrace()
+        }
+
         exitProcess(0)
     }
 }

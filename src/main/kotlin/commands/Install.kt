@@ -74,7 +74,7 @@ class Install : CliktCommand(name = "install") {
                     } else if (fileManifest.sources.modrinth != null) {
                         fileManifest.sources.modrinth.fileUrl
                     } else if (fileManifest.sources.curseforge != null) {
-                        TODO()
+                        fileManifest.sources.curseforge.fileUrl
                     } else {
                         error("No valid source found for ${file.path}")
                     }

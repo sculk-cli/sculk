@@ -10,11 +10,11 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import tech.jamalam.*
+import tech.jamalam.modrinth.models.ModrinthEnvSupport
+import tech.jamalam.modrinth.models.ModrinthVersionFileHashes
 import tech.jamalam.pack.*
-import tech.jamalam.services.ModrinthEnvType
-import tech.jamalam.services.ModrinthFileHashes
-import tech.jamalam.services.modrinthEnvTypePairToSide
-import tech.jamalam.services.sideToModrinthEnvTypePair
+import tech.jamalam.util.modrinthEnvTypePairToSide
+import tech.jamalam.util.sideToModrinthEnvTypePair
 import java.io.File
 import java.io.FileOutputStream
 import java.nio.file.Path
@@ -56,11 +56,12 @@ suspend fun exportModrinthPack(terminal: Terminal, pack: InMemoryPack) = corouti
 
         files += ModrinthPackFile(
             path = File(path).resolveSibling(fileManifest.filename).toString(),
-            hashes = ModrinthFileHashes(
+            hashes = ModrinthVersionFileHashes(
                 sha1 = fileManifest.hashes.sha1, sha512 = fileManifest.hashes.sha512
             ),
             env = ModrinthPackFileEnv(
-                client = sideToModrinthEnvTypePair(fileManifest.side).first, server = sideToModrinthEnvTypePair(fileManifest.side).second
+                client = sideToModrinthEnvTypePair(fileManifest.side).first,
+                server = sideToModrinthEnvTypePair(fileManifest.side).second
             ),
             downloads = filteredDownloads,
             fileSize = fileManifest.fileSize
@@ -139,12 +140,15 @@ suspend fun importModrinthPack(terminal: Terminal, importPath: Path, mrpackPath:
             progress.update { context = dl.split("/").last() }
             val tempFile = downloadFileTemp(parseUrl(dl))
             val tempFileBytes = tempFile.readBytes()
-            val version = ctx.modrinth.reverseLookupVersion(file.hashes.sha1)
+            val version = ctx.modrinthApi.getVersionFromHash(file.hashes.sha1)
                 ?: error("Can only currently import Modrinth versions from mrpacks")
 
             val fileManifest = SerialFileManifest(
                 filename = File(file.path).name,
-                side = modrinthEnvTypePairToSide(file.env?.client ?: ModrinthEnvType.Required, file.env?.server ?: ModrinthEnvType.Required),
+                side = modrinthEnvTypePairToSide(
+                    file.env?.client ?: ModrinthEnvSupport.Required,
+                    file.env?.server ?: ModrinthEnvSupport.Required
+                ),
                 hashes = SerialFileManifestHashes(
                     sha1 = file.hashes.sha1,
                     sha512 = file.hashes.sha512
@@ -217,7 +221,7 @@ data class ModrinthPackIndex(
 @Serializable
 data class ModrinthPackFile(
     val path: String,
-    val hashes: ModrinthFileHashes,
+    val hashes: ModrinthVersionFileHashes,
     val env: ModrinthPackFileEnv?,
     val downloads: List<String>,
     val fileSize: Int
@@ -225,7 +229,7 @@ data class ModrinthPackFile(
 
 @Serializable
 data class ModrinthPackFileEnv(
-    val client: ModrinthEnvType, val server: ModrinthEnvType
+    val client: ModrinthEnvSupport, val server: ModrinthEnvSupport
 )
 
 @Serializable

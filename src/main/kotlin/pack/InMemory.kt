@@ -154,7 +154,7 @@ data class FileManifestSources(
 )
 
 data class FileManifestCurseforgeSource(
-    var todo: String,
+    var projectId: Int, var fileUrl: String, var fileId: Int,
 )
 
 data class FileManifestModrinthSource(
@@ -197,7 +197,9 @@ fun FileManifest.toSerial(): SerialFileManifest {
         sources = SerialFileManifestSources(
             curseforge = sources.curseforge?.let {
                 SerialFileManifestCurseforgeSource(
-                    todo = it.todo,
+                    projectId = it.projectId,
+                    fileUrl = it.fileUrl,
+                    fileId = it.fileId,
                 )
             },
             modrinth = sources.modrinth?.let {
