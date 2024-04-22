@@ -42,7 +42,12 @@ class AddFromModrinth : CliktCommand(name = "modrinth") {
                 projectSlug,
                 loaders = listOf(
                     pack.getManifest().loader.type.toModrinth(),
-                    ModrinthModLoader.Minecraft
+                    ModrinthModLoader.Minecraft,
+                    *if (pack.getManifest().loader.type == ModLoader.Quilt) {
+                        arrayOf(ModrinthModLoader.Fabric)
+                    } else {
+                        emptyArray()
+                    }
                 ),
                 gameVersions = listOf(pack.getManifest().minecraft)
             )

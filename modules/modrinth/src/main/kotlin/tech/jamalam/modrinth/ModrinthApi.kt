@@ -63,6 +63,8 @@ public class ModrinthApi(
             parameter("limit", limit.toString())
         }
 
+        println(url)
+
         return client.get(url).body()
     }
 

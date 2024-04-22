@@ -35,9 +35,6 @@ class AddFromCurseforge : CliktCommand(name = "curseforge") {
                 project.id, pack.getManifest().loader.type, pack.getManifest().minecraft
             )
         }.sortedBy {
-//            LocalDateTime.parse(
-//                it.fileDate, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SS[S]'Z'")
-//            )
             it.fileDate
         }.reversed()
 
