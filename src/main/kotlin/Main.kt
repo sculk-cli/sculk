@@ -2,6 +2,7 @@ package tech.jamalam
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.CliktError
+import com.github.ajalt.clikt.core.NoOpCliktCommand
 import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.mordant.terminal.Terminal
 import io.ktor.client.*
@@ -55,20 +56,26 @@ val ctx = run {
     Context(json, client, pistonMeta, modrinth, curseforge, fabricMeta, neoForgeMeta, forgeMeta, quiltMeta)
 }
 
-class Cli : CliktCommand() {
-    override fun run() = Unit
+class Cli : NoOpCliktCommand() {
 }
 
-class AddCmd : CliktCommand(name = "add") {
-    override fun run() = Unit
+class AddCmd : NoOpCliktCommand(name = "add") {
+    override fun aliases(): Map<String, List<String>> = mapOf(
+        "mr" to listOf("modrinth"),
+        "cf" to listOf("curseforge"),
+    )
 }
 
-class ExportCmd : CliktCommand(name = "export") {
-    override fun run() = Unit
+class ExportCmd : NoOpCliktCommand(name = "export") {
+    override fun aliases(): Map<String, List<String>> = mapOf(
+        "mr" to listOf("modrinth"),
+    )
 }
 
-class ImportCmd : CliktCommand(name = "import") {
-    override fun run() = Unit
+class ImportCmd : NoOpCliktCommand(name = "import") {
+    override fun aliases(): Map<String, List<String>> = mapOf(
+        "mr" to listOf("modrinth"),
+    )
 }
 
 fun main(args: Array<String>) {

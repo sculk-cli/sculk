@@ -6,8 +6,6 @@ import com.github.ajalt.clikt.parameters.arguments.argument
 import kotlinx.coroutines.runBlocking
 import tech.jamalam.*
 import tech.jamalam.pack.*
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 
 class AddFromCurseforge : CliktCommand(name = "curseforge") {
     private val query by argument()
