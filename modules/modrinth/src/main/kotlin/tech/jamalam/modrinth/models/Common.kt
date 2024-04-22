@@ -12,7 +12,10 @@ public enum class ModrinthEnvSupport {
     Optional,
 
     @SerialName("unsupported")
-    Unsupported
+    Unsupported,
+
+    @SerialName("unknown")
+    Unknown,
 }
 
 @Serializable

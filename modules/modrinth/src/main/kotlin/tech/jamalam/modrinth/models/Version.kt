@@ -19,7 +19,7 @@ public data class ModrinthVersion(
     public val featured: Boolean,
     public val status: ModrinthVersionStatus,
     @SerialName("requested_status")
-    public val requestedStatus: ModrinthVersionRequestedStatus?,
+    public val requestedStatus: ModrinthVersionRequestedStatus? = null,
     public val id: String,
     @SerialName("project_id")
     public val projectId: String,
@@ -30,17 +30,18 @@ public data class ModrinthVersion(
     public val downloads: Int,
     public val files: List<ModrinthVersionFile>,
     @SerialName("changelog_url")
-    private val changelogUrl: Nothing?,
+    private val changelogUrl: Nothing? = null,
 )
 
 @Serializable
 public data class ModrinthVersionDependency(
     @SerialName("version_id")
-    public val versionId: String,
+    public val versionId: String? = null,
     @SerialName("project_id")
     public val projectId: String,
     @SerialName("file_name")
-    public val fileName: String,
+    public val fileName: String? = null,
+    @SerialName("dependency_type")
     public val type: ModrinthVersionDependencyType
 )
 

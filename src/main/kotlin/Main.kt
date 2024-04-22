@@ -33,7 +33,9 @@ val ctx = run {
         prettyPrint = true
         ignoreUnknownKeys = true
         explicitNulls = false
+        coerceInputValues = true
     }
+
     val client = HttpClient {
         install(UserAgent) {
             agent = "sculk-cli/sculk (email: james<at>jamalam<dot>tech / discord: jamalam)"

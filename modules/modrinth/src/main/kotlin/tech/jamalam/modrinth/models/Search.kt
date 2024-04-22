@@ -23,8 +23,8 @@ public data class ModrinthSearchResult(
     public val title: String,
     public val description: String,
     @SerialName("icon_url")
-    public val iconUrl: String?,
-    public val color: Int?,
+    public val iconUrl: String? = null,
+    public val color: Int? = null,
     public val categories: List<String>,
     @SerialName("display_categories")
     public val displayCategories: List<String>,
@@ -37,9 +37,9 @@ public data class ModrinthSearchResult(
     @SerialName("follows")
     public val followers: Int,
     @SerialName("thread_id")
-    public val threadId: String?,
+    public val threadId: String? = null,
     @SerialName("monetization_status")
-    public val monetizationStatus: ModrinthMonetizationStatus?,
+    public val monetizationStatus: ModrinthMonetizationStatus? = null,
     @SerialName("author")
     public val authorUsername: String,
     @SerialName("date_created")
@@ -52,7 +52,7 @@ public data class ModrinthSearchResult(
     @SerialName("gallery")
     public val galleryImages: List<String>,
     @SerialName("featured_gallery")
-    public val featuredGalleryImage: String?,
+    public val featuredGalleryImage: String? = null,
 )
 
 public enum class ModrinthSearchIndex {

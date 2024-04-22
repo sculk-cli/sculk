@@ -28,7 +28,7 @@ fun ByteArray.digestSha512(): String {
 }
 
 fun File.mkdirsAndWriteText(text: String) {
-    this.parentFile.mkdirs()
+    this.canonicalFile.parentFile.mkdirs()
     writeText(text)
 }
 

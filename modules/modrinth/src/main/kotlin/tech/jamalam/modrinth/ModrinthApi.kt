@@ -6,6 +6,7 @@ import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
+import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -27,7 +28,10 @@ public class ModrinthApi(
         }
 
         install(ContentNegotiation) {
-            json(Json { explicitNulls = false })
+            json(Json {
+                explicitNulls = false
+                coerceInputValues = true
+            })
         }
     }
 
@@ -55,15 +59,16 @@ public class ModrinthApi(
             parameter("query", query)
 
             if (facets.isNotEmpty()) {
-                encodedParameter("facets", "[${facets.joinToString(",").encodeURLParameter().replace("%2C", ",")}]")
+                encodedParameter(
+                    "facets",
+                    "[${facets.joinToString(",").encodeURLParameter().replace("%2C", ",")}]"
+                )
             }
 
             parameter("index", index.name.lowercase())
             parameter("offset", offset.toString())
             parameter("limit", limit.toString())
         }
-
-        println(url)
 
         return client.get(url).body()
     }
@@ -137,7 +142,8 @@ public class ModrinthApi(
                 encodedParameter(
                     "loaders",
                     "[${
-                        loaders.joinToString(",") { "\"${it.name.lowercase()}\"" }.encodeURLParameter()
+                        loaders.joinToString(",") { "\"${it.name.lowercase()}\"" }
+                            .encodeURLParameter()
                             .replace("%2C", ",")
                     }]"
                 )
@@ -180,7 +186,10 @@ public class ModrinthApi(
         val url = buildUrl {
             host(apiUrl)
             path("/v2/versions")
-            encodedParameter("ids", "[${ids.joinToString(",") { "\"$it\"" }.encodeURLParameter().replace("%2C", ",")}]")
+            encodedParameter(
+                "ids",
+                "[${ids.joinToString(",") { "\"$it\"" }.encodeURLParameter().replace("%2C", ",")}]"
+            )
         }
 
         return client.get(url).body()
@@ -253,7 +262,13 @@ public class ModrinthApi(
         val url = buildUrl {
             host(apiUrl)
             path("/v2/users")
-            encodedParameter("ids", "[${idsOrUsernames.joinToString(",") { "\"$it\"" }.encodeURLParameter().replace("%2C", ",")}]")
+            encodedParameter(
+                "ids",
+                "[${
+                    idsOrUsernames.joinToString(",") { "\"$it\"" }.encodeURLParameter()
+                        .replace("%2C", ",")
+                }]"
+            )
         }
 
         return client.get(url).body()

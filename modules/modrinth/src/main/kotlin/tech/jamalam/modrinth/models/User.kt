@@ -9,8 +9,8 @@ public data class ModrinthUser(
     public val id: String,
     public val userName: String,
     @SerialName("name")
-    public val displayName: String?,
-    public val email: String?,
+    public val displayName: String? = null,
+    public val email: String? = null,
     public val bio: String,
     @SerialName("payout_data")
     public val payoutData: ModrinthUserPayoutData,
@@ -21,15 +21,15 @@ public data class ModrinthUser(
     public val role: ModrinthUserRole,
     public val badges: Int,
     @SerialName("auth_providers")
-    public val authProviders: List<String>?,
+    public val authProviders: List<String>? = null,
     @SerialName("email_verified")
-    public val emailVerified: Boolean?,
+    public val emailVerified: Boolean? = null,
     @SerialName("has_password")
-    public val hasPassword: Boolean?,
+    public val hasPassword: Boolean? = null,
     @SerialName("has_totp")
-    public val hasTotp: Boolean?,
+    public val hasTotp: Boolean? = null,
     @SerialName("github_id")
-    private val githubId: Nothing?,
+    private val githubId: Nothing? = null,
 )
 
 @Serializable
