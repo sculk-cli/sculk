@@ -42,11 +42,15 @@ class Install : CliktCommand(name = "install") {
                 percentage()
                 progressBar()
                 completed(style = terminal.theme.success)
-            }.animateInCoroutine(terminal, total = manifest.files.size.toLong(), context = "")
+            }.animateInCoroutine(
+                terminal,
+                total = manifest.manifests.size.toLong() + manifest.files.size.toLong(),
+                context = ""
+            )
 
             launch { progress.execute() }
 
-            for (file in manifest.files) {
+            for (file in manifest.manifests) {
                 progress.advance(1)
                 progress.update { context = file.path }
                 val manifestText = readFile(file.path)
@@ -55,46 +59,62 @@ class Install : CliktCommand(name = "install") {
                     error("File ${file.path} was corrupted or hash was incorrect")
                 }
 
-                if (file.path.endsWith(".sculk.json")) {
-                    val fileManifest =
-                        ctx.json.decodeFromString(
-                            SerialFileManifest.serializer(),
-                            manifestText
-                        )
+                val fileManifest =
+                    ctx.json.decodeFromString(
+                        SerialFileManifest.serializer(),
+                        manifestText
+                    )
 
-                    if (fileManifest.side != Side.Both) {
-                        if ((fileManifest.side == Side.ServerOnly && side == InstallSide.CLIENT) || (fileManifest.side == Side.ClientOnly && side == InstallSide.SERVER)) {
-                            terminal.info("Ignoring ${file.path} because it's not for the selected side ($side)")
-                            continue
-                        }
+                if (fileManifest.side != Side.Both) {
+                    if ((fileManifest.side == Side.ServerOnly && side == InstallSide.CLIENT) || (fileManifest.side == Side.ClientOnly && side == InstallSide.SERVER)) {
+                        terminal.info("Ignoring ${file.path} because it's not for the selected side ($side)")
+                        continue
                     }
-
-                    val downloadLink = if (fileManifest.sources.url != null) {
-                        fileManifest.sources.url.url
-                    } else if (fileManifest.sources.modrinth != null) {
-                        fileManifest.sources.modrinth.fileUrl
-                    } else if (fileManifest.sources.curseforge != null) {
-                        fileManifest.sources.curseforge.fileUrl
-                    } else {
-                        error("No valid source found for ${file.path}")
-                    }
-
-                    val fileFile = File(installLocation).resolve(file.path)
-                        .resolveSibling(fileManifest.filename)
-
-                    fileFile.parentFile.mkdirs()
-                    val request = ctx.client.get(downloadLink)
-                    fileFile.writeBytes(request.readBytes())
-
-                    if (fileFile.readBytes().digestSha512() != fileManifest.hashes.sha512) {
-                        error("Downloaded file for ${file.path} was corrupted or hash was incorrect")
-                    }
-                } else {
-                    val fileFile = File(installLocation).resolve(file.path)
-                    fileFile.parentFile.mkdirs()
-                    fileFile.writeText(manifestText)
                 }
 
+                val downloadLink = if (fileManifest.sources.url != null) {
+                    fileManifest.sources.url.url
+                } else if (fileManifest.sources.modrinth != null) {
+                    fileManifest.sources.modrinth.fileUrl
+                } else if (fileManifest.sources.curseforge != null) {
+                    fileManifest.sources.curseforge.fileUrl
+                } else {
+                    error("No valid source found for ${file.path}")
+                }
+
+                val fileFile = File(installLocation).resolve(file.path)
+                    .resolveSibling(fileManifest.filename)
+
+                fileFile.parentFile.mkdirs()
+                val request = ctx.client.get(downloadLink)
+                fileFile.writeBytes(request.readBytes())
+
+                if (fileFile.readBytes().digestSha512() != fileManifest.hashes.sha512) {
+                    error("Downloaded file for ${file.path} was corrupted or hash was incorrect")
+                }
+
+                terminal.info("Downloaded ${file.path}")
+            }
+
+            for (file in manifest.files) {
+                progress.advance(1)
+                progress.update { context = file.path }
+                val fileText = readFile(file.path)
+
+                if (fileText.toByteArray().digestSha256() != file.sha256) {
+                    error("File ${file.path} was corrupted or hash was incorrect")
+                }
+
+                if (file.side != Side.Both) {
+                    if ((file.side == Side.ServerOnly && side == InstallSide.CLIENT) || (file.side == Side.ClientOnly && side == InstallSide.SERVER)) {
+                        terminal.info("Ignoring ${file.path} because it's not for the selected side ($side)")
+                        continue
+                    }
+                }
+
+                val fileFile = File(installLocation).resolve(file.path)
+                fileFile.parentFile.mkdirs()
+                fileFile.writeText(fileText)
                 terminal.info("Downloaded ${file.path}")
             }
         }

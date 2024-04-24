@@ -2,13 +2,15 @@ package tech.jamalam.pack
 
 import kotlinx.serialization.json.Json
 import tech.jamalam.digestSha256
+import tech.jamalam.pathMatchesGlob
 import java.nio.file.Path
 import java.nio.file.Paths
 
 class InMemoryPack(json: Json, private val basePath: Path = Paths.get("")) {
     private val packManifest: PackManifest
-    private val fileManifests = mutableMapOf<String, FileManifest>()
-    private val directFiles = mutableListOf<String>()
+    private val manifests = mutableMapOf<String, FileManifest>()
+    private val files = mutableListOf<PackManifestFile>()
+    private val sculkIgnore: SculkIgnore = loadSculkIgnore(basePath)
 
     init {
         basePath.toFile().mkdirs()
@@ -22,25 +24,26 @@ class InMemoryPack(json: Json, private val basePath: Path = Paths.get("")) {
         val serialManifest = json.decodeFromString(SerialPackManifest.serializer(), manifest)
         packManifest = serialManifest.load()
 
-        for (file in packManifest.files) {
-            if (file.path.endsWith(".sculk.json")) {
-                val fileManifestPath = basePath.resolve(file.path)
-                if (!fileManifestPath.toFile().exists()) {
-                    error("Attempted to open a file manifest at ${file.path}, but no manifest was found")
-                }
-
-                val fileManifest = fileManifestPath.toFile().readText()
-
-                if (fileManifest.toByteArray().digestSha256() != file.sha256) {
-                    error("File hashes do not match for manifest at ${file.path}")
-                }
-
-                val serialFileManifest =
-                    json.decodeFromString(SerialFileManifest.serializer(), fileManifest)
-                fileManifests[file.path] = serialFileManifest.load()
-            } else {
-                directFiles.add(file.path)
+        for (file in packManifest.manifests) {
+            val fileManifestPath = basePath.resolve(file.path)
+            if (!fileManifestPath.toFile().exists()) {
+                error("Attempted to open a file manifest at ${file.path}, but no manifest was found")
             }
+
+            val fileManifest = fileManifestPath.toFile().readText()
+
+            if (fileManifest.toByteArray().digestSha256() != file.sha256) {
+                error("File hashes do not match for manifest at ${file.path}")
+            }
+
+            val serialFileManifest =
+                json.decodeFromString(SerialFileManifest.serializer(), fileManifest)
+            manifests[file.path] = serialFileManifest.load()
+
+        }
+
+        for (file in packManifest.files) {
+            files += file
         }
     }
 
@@ -52,65 +55,69 @@ class InMemoryPack(json: Json, private val basePath: Path = Paths.get("")) {
         return packManifest
     }
 
-    fun getDirectFiles(): List<String> {
-        return directFiles
+
+
+    fun getFiles(): List<PackManifestFile> {
+        return files
     }
 
-    fun getFileManifests(): Map<String, FileManifest> {
-        return fileManifests
+    fun getManifests(): Map<String, FileManifest> {
+        return manifests
     }
 
-    fun getFileManifest(path: String): FileManifest? {
-        return fileManifests[path]
+    fun getManifest(path: String): FileManifest? {
+        return manifests[path]
     }
 
-    fun setFileManifest(path: String, fileManifest: FileManifest) {
-        fileManifests[path] = fileManifest
-    }
-
-    fun addDirectFile(path: String) {
-        directFiles.add(path)
+    fun setManifest(path: String, fileManifest: FileManifest) {
+        manifests[path] = fileManifest
     }
 
     fun save(json: Json) {
         val manifestPath = basePath.resolve("manifest.sculk.json")
 
-        for ((path, fileManifest) in fileManifests) {
+        for ((path, fileManifest) in manifests) {
             val fileManifestFile = basePath.resolve(path).toFile()
             fileManifestFile.parentFile.mkdirs()
             fileManifestFile.writeText(
-                "${json.encodeToString(
-                    SerialFileManifest.serializer(),
-                    fileManifest.toSerial()
-                )}\n"
+                "${
+                    json.encodeToString(
+                        SerialFileManifest.serializer(),
+                        fileManifest.toSerial()
+                    )
+                }\n"
             )
 
-            if (packManifest.files.none { it.path == path }) {
-                packManifest.files += PackManifestFile(
+            if (packManifest.manifests.none { it.path == path }) {
+                packManifest.manifests += PackManifestManifest(
                     path = path, sha256 = fileManifestFile.readBytes().digestSha256()
                 )
             } else {
-                packManifest.files.find { it.path == path }!!.sha256 =
+                packManifest.manifests.find { it.path == path }!!.sha256 =
                     fileManifestFile.readBytes().digestSha256()
             }
         }
 
-        for (path in directFiles) {
-            if (packManifest.files.none { it.path == path }) {
+        for (file in files) {
+            if (packManifest.files.none { it.path == file.path }) {
                 packManifest.files += PackManifestFile(
-                    path = path, sha256 = basePath.resolve(path).toFile().readBytes().digestSha256()
+                    path = file.path,
+                    side = file.side,
+                    sha256 = basePath.resolve(file.path).toFile().readBytes().digestSha256()
                 )
             } else {
-                packManifest.files.find { it.path == path }!!.sha256 =
-                    basePath.resolve(path).toFile().readBytes().digestSha256()
+                packManifest.files.find { it.path == file.path }!!.sha256 =
+                    basePath.resolve(file.path).toFile().readBytes().digestSha256()
             }
         }
 
         manifestPath.toFile().writeText(
-            "${json.encodeToString(
-                SerialPackManifest.serializer(),
-                packManifest.toSerial()
-            )}\n"
+            "${
+                json.encodeToString(
+                    SerialPackManifest.serializer(),
+                    packManifest.toSerial()
+                )
+            }\n"
         )
     }
 }
@@ -122,6 +129,7 @@ data class PackManifest(
     var version: String,
     var minecraft: String,
     var loader: PackManifestModLoader,
+    var manifests: List<PackManifestManifest>,
     var files: List<PackManifestFile>
 )
 
@@ -130,9 +138,15 @@ data class PackManifestModLoader(
     var version: String,
 )
 
-data class PackManifestFile(
+data class PackManifestManifest(
     var path: String,
     var sha256: String,
+)
+
+data class PackManifestFile(
+    var path: String,
+    var side: Side,
+    var sha256: String
 )
 
 data class FileManifest(
@@ -176,9 +190,16 @@ fun PackManifest.toSerial(): SerialPackManifest {
             type = loader.type,
             version = loader.version,
         ),
+        manifests = manifests.map {
+            SerialPackManifestManifest(
+                path = it.path,
+                sha256 = it.sha256,
+            )
+        },
         files = files.map {
             SerialPackManifestFile(
                 path = it.path,
+                side = it.side,
                 sha256 = it.sha256,
             )
         }

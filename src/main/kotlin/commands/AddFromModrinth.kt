@@ -70,7 +70,7 @@ class AddFromModrinth : CliktCommand(name = "modrinth") {
             "mods"
         }
 
-        val existingManifest = pack.getFileManifest("$dir/${project.slug}.sculk.json")
+        val existingManifest = pack.getManifest("$dir/${project.slug}.sculk.json")
         val fileManifest = if (existingManifest != null) {
             if (existingManifest.sources.modrinth != null) {
                 error("Existing manifest already has a Modrinth source (did you mean to use the update command?)")
@@ -103,7 +103,7 @@ class AddFromModrinth : CliktCommand(name = "modrinth") {
             )
         }
 
-        pack.setFileManifest("$dir/${projectSlug}.sculk.json", fileManifest)
+        pack.setManifest("$dir/${projectSlug}.sculk.json", fileManifest)
         pack.save(ctx.json)
         terminal.info("Added ${project.title} to manifest")
     }

@@ -20,9 +20,8 @@ class ExportModrinth : CliktCommand(name = "modrinth") {
         val pack = InMemoryPack(ctx.json)
         val mrpackIndex = createMrpackIndex(pack)
         val overrides = pack
-            .getDirectFiles()
-            .map { it to pack.getBasePath().resolve(it).toFile().readBytes() }
-
+            .getFiles()
+            .map { it.path to pack.getBasePath().resolve(it.path).toFile().readBytes() }
 
         createModrinthPack(
             path = Paths.get("")
@@ -39,7 +38,7 @@ class ExportModrinth : CliktCommand(name = "modrinth") {
     private fun createMrpackIndex(pack: InMemoryPack): ModrinthPackIndex {
         val files = mutableListOf<ModrinthPackFile>()
 
-        for ((path, fileManifest) in pack.getFileManifests().entries) {
+        for ((path, fileManifest) in pack.getManifests().entries) {
             val downloadUrls = mutableListOf<String>()
 
             if (fileManifest.sources.modrinth != null) {

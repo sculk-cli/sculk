@@ -10,6 +10,7 @@ data class SerialPackManifest(
     val version: String,
     val minecraft: String,
     val loader: SerialPackManifestModLoader,
+    val manifests: List<SerialPackManifestManifest>,
     val files: List<SerialPackManifestFile>
 )
 
@@ -20,9 +21,16 @@ data class SerialPackManifestModLoader(
 )
 
 @Serializable
-data class SerialPackManifestFile(
+data class SerialPackManifestManifest(
     val path: String,
     val sha256: String,
+)
+
+@Serializable
+data class SerialPackManifestFile(
+    val path: String,
+    val side: Side,
+    val sha256: String
 )
 
 @Serializable
@@ -72,9 +80,16 @@ fun SerialPackManifest.load(): PackManifest {
             type = loader.type,
             version = loader.version,
         ),
+        manifests = manifests.map {
+            PackManifestManifest(
+                path = it.path,
+                sha256 = it.sha256,
+            )
+        },
         files = files.map {
             PackManifestFile(
                 path = it.path,
+                side = it.side,
                 sha256 = it.sha256,
             )
         }

@@ -109,7 +109,6 @@ fun main(args: Array<String>) {
                 AddByUrl(),
                 AddFromModrinth(),
                 AddFromCurseforge(),
-                AddByFile()
             )
         )
         .subcommands(Refresh())
@@ -124,11 +123,7 @@ fun main(args: Array<String>) {
     } catch (e: Exception) {
         val terminal = Terminal()
         terminal.danger(e.message ?: "An unknown error occurred")
-
-//        if (e.message == null) {
-            e.printStackTrace()
-//        }
-
+        e.printStackTrace()
         exitProcess(0)
     }
 }

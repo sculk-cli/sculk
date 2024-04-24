@@ -27,7 +27,7 @@ class AddByUrl : CliktCommand(name = "url") {
             Type.Mod -> "mods"
         }
 
-        val existingManifest = pack.getFileManifest("$dir/$transformedSlug.sculk.json")
+        val existingManifest = pack.getManifest("$dir/$transformedSlug.sculk.json")
         val fileManifest = if (existingManifest != null) {
             if (existingManifest.hashes.sha1 != contents.digestSha1() || existingManifest.hashes.sha512 != contents.digestSha512()) {
                 error("File hashes do not match for $filename")
@@ -52,7 +52,7 @@ class AddByUrl : CliktCommand(name = "url") {
             )
         }
 
-        pack.setFileManifest("$dir/$transformedSlug.sculk.json", fileManifest)
+        pack.setManifest("$dir/$transformedSlug.sculk.json", fileManifest)
         pack.save(ctx.json)
         terminal.info("Added $transformedSlug to manifest")
     }

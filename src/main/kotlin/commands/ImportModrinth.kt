@@ -29,6 +29,7 @@ class ImportModrinth : CliktCommand(name = "modrinth") {
         coroutineScope {
             val importedPack = importModrinthPack(mrpack.toPath())
             terminal.info("Loaded Modrinth pack with name ${importedPack.index.name}; creating Sculk modpack")
+            val manifests = mutableListOf<SerialPackManifestManifest>()
             val files = mutableListOf<SerialPackManifestFile>()
 
             val progress = progressBarContextLayout {
@@ -100,7 +101,7 @@ class ImportModrinth : CliktCommand(name = "modrinth") {
                     File(file.path).resolveSibling("$actualSlug.sculk.json")
                 manifestFile.mkdirsAndWriteJson(ctx.json, fileManifest.toSerial())
 
-                files += SerialPackManifestFile(
+                manifests += SerialPackManifestManifest(
                     path = manifestFile.toString(),
                     sha256 = manifestFile.readBytes().digestSha256()
                 )
@@ -112,17 +113,39 @@ class ImportModrinth : CliktCommand(name = "modrinth") {
                 overrideFile.writeBytes(bytes)
                 files += SerialPackManifestFile(
                     path = path,
+                    side = Side.Both,
                     sha256 = bytes.digestSha256()
                 )
             }
 
-            // FIXME: client and server overrides are currently not supported as it does not really make sense in the Sculk format. How do we incorporate them?
-            if (importedPack.clientOverrides.isNotEmpty()) {
-                terminal.warning("Imported pack contains client overrides, but Sculk current cannot deal with them; ignoring them")
+            for ((path, bytes) in importedPack.clientOverrides) {
+                if (files.any { it.path == path }) {
+                    files.removeIf { it.path == path }
+                }
+
+                val overrideFile = Paths.get("").resolve(path).toFile()
+                overrideFile.canonicalFile.parentFile.mkdirs()
+                overrideFile.writeBytes(bytes)
+                files += SerialPackManifestFile(
+                    path = path,
+                    side = Side.ClientOnly,
+                    sha256 = bytes.digestSha256()
+                )
             }
 
-            if (importedPack.serverOverrides.isNotEmpty()) {
-                terminal.warning("Imported pack contains server overrides, but Sculk current cannot deal with them; ignoring them")
+            for ((path, bytes) in importedPack.serverOverrides) {
+                if (files.any { it.path == path }) {
+                    files.removeIf { it.path == path }
+                }
+
+                val overrideFile = Paths.get("").resolve(path).toFile()
+                overrideFile.canonicalFile.parentFile.mkdirs()
+                overrideFile.writeBytes(bytes)
+                files += SerialPackManifestFile(
+                    path = path,
+                    side = Side.ServerOnly,
+                    sha256 = bytes.digestSha256()
+                )
             }
 
             val modLoaderAndVersion = importedPack.index.dependencies.getLoaderVersionPair()
@@ -138,6 +161,7 @@ class ImportModrinth : CliktCommand(name = "modrinth") {
                 version = importedPack.index.versionId,
                 minecraft = importedPack.index.dependencies.minecraftVersion,
                 loader = modLoader,
+                manifests = manifests,
                 files = files,
             )
 

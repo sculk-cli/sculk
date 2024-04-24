@@ -70,7 +70,7 @@ class AddFromCurseforge : CliktCommand(name = "curseforge") {
         val sha1 = tempFile.digestSha1()
         val sha512 = tempFile.digestSha512()
 
-        val existingManifest = pack.getFileManifest("mods/${project.slug}.sculk.json")
+        val existingManifest = pack.getManifest("mods/${project.slug}.sculk.json")
         val fileManifest = if (existingManifest != null) {
             if (existingManifest.sources.curseforge != null) {
                 error("Existing manifest already has a Curseforge source (did you mean to use the update command?)")
@@ -100,7 +100,7 @@ class AddFromCurseforge : CliktCommand(name = "curseforge") {
             )
         }
 
-        pack.setFileManifest("mods/${project.slug}.sculk.json", fileManifest)
+        pack.setManifest("mods/${project.slug}.sculk.json", fileManifest)
         pack.save(ctx.json)
         terminal.info("Added ${project.name} to manifest")
     }

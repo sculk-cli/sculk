@@ -10,6 +10,7 @@ import io.ktor.http.*
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.File
+import java.nio.file.FileSystems
 import java.security.MessageDigest
 
 fun ByteArray.digestSha1(): String {
@@ -138,4 +139,9 @@ suspend fun tryReq(url: Url, maxAttempts: Int = 3): ByteArray {
     }
 
     error("Failed to complete request to $url after $maxAttempts attempts")
+}
+
+fun pathMatchesGlob(path: String, glob: String): Boolean {
+    val matcher = FileSystems.getDefault().getPathMatcher("glob:$glob")
+    return matcher.matches(FileSystems.getDefault().getPath(path))
 }
