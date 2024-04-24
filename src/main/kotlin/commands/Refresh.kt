@@ -16,6 +16,7 @@ class Refresh : CliktCommand(name = "refresh") {
                 .load()
         val ignore = loadSculkIgnore()
         val removedManifests = mutableListOf<String>()
+        var updated = false
 
         for (file in manifest.manifests) {
             val fileManifestFile = basePath.resolve(file.path).toFile()
@@ -23,8 +24,10 @@ class Refresh : CliktCommand(name = "refresh") {
             if (!fileManifestFile.exists()) {
                 terminal.warning("Manifest ${file.path} does not exist, removing it from the manifest")
                 removedManifests += file.path
+                updated = true
             } else if (fileManifestFile.readBytes().digestSha256() != file.sha256) {
                 file.sha256 = fileManifestFile.readBytes().digestSha256()
+                updated = true
             }
         }
 
@@ -40,11 +43,14 @@ class Refresh : CliktCommand(name = "refresh") {
             if (!fileFile.exists()) {
                 terminal.warning("File ${file.path} does not exist, removing it from the manifest")
                 removedFiles += file.path
+                updated = true
             } else if (ignore.isFileIgnored(relativePath)) {
                 terminal.warning("File ${file.path} is ignored, removing it from the manifest")
                 removedFiles += file.path
+                updated = true
             } else if (fileFile.readBytes().digestSha256() != file.sha256) {
                 file.sha256 = fileFile.readBytes().digestSha256()
+                updated = true
             }
         }
 
@@ -70,16 +76,22 @@ class Refresh : CliktCommand(name = "refresh") {
                     sha256 = file.readBytes().digestSha256(),
                     side = Side.Both
                 )
+                updated = true
             }
         }
 
-        val newManifest = manifest.toSerial()
-        manifestFile.writeBytes(
-            ctx.json.encodeToString(
-                SerialPackManifest.serializer(),
-                newManifest
-            ).toByteArray()
-        )
-        terminal.info("Updated manifest.sculk.json")
+
+        if (updated) {
+            val newManifest = manifest.toSerial()
+            manifestFile.writeBytes(
+                ctx.json.encodeToString(
+                    SerialPackManifest.serializer(),
+                    newManifest
+                ).toByteArray()
+            )
+            terminal.info("Updated manifest.sculk.json")
+        } else {
+            terminal.info("Manifest already up to date")
+        }
     }
 }
