@@ -31,6 +31,10 @@ class AddFromModrinth : CliktCommand(name = "modrinth") {
                     gameVersions = listOf(pack.getManifest().minecraft)
                 ).hits
 
+            if (projects.isEmpty()) {
+                error("No projects found")
+            }
+
             PrettyListPrompt("Select a project", projects.map { it.title }, terminal).ask()
                 .let { projects.find { p -> p.title == it } }!!.slug
         }

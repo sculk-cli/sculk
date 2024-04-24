@@ -34,6 +34,10 @@ class AddFromCurseforge : CliktCommand(name = "curseforge") {
                 classId = CURSEFORGE_MODS_CLASS
             )
 
+            if (projects.isEmpty()) {
+                error("No projects found")
+            }
+
             PrettyListPrompt("Select a project", projects.map { it.name }, terminal).ask()
                 .let { projects.find { p -> p.name == it } }!!
         }
@@ -52,7 +56,11 @@ class AddFromCurseforge : CliktCommand(name = "curseforge") {
             it.fileDate
         }.reversed()
 
-        val file = files[0] // TODO: error handling
+        if (files.isEmpty()) {
+            error("No files found for ${project.name}")
+        }
+
+        val file = files[0] // Most recent version
 
         if (file.downloadUrl == null) {
             error("No download URL for ${file.fileName}")
