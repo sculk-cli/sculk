@@ -53,14 +53,22 @@ tasks {
 
         val properties = Properties()
         properties["api_url"] = if (System.getenv()["CURSEFORGE_NEW_API_KEY"] != null) {
-            "https://api.curseforge.com/v1"
+            "api.curseforge.com"
         } else {
-            "https://api.curse.tools/v1/cf"
+            "api.curse.tools"
+        }
+        properties["api_base_path"] = if (System.getenv()["CURSEFORGE_NEW_API_KEY"] != null) {
+            "/v1"
+        } else {
+            "/v1/cf"
         }
         properties["api_key"] = System.getenv()["CURSEFORGE_NEW_API_KEY"] ?: "unauthenticated"
 
         doLast {
-            properties.store(FileOutputStream(generatedResourcesDir.get().asFile.resolve(fileName)), null)
+            properties.store(
+                FileOutputStream(generatedResourcesDir.get().asFile.resolve(fileName)),
+                null
+            )
         }
     }
 

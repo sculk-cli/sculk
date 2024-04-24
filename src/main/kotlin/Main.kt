@@ -1,6 +1,5 @@
 package tech.jamalam
 
-import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.CliktError
 import com.github.ajalt.clikt.core.NoOpCliktCommand
 import com.github.ajalt.clikt.core.subcommands
@@ -12,8 +11,10 @@ import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import tech.jamalam.commands.*
+import tech.jamalam.curseforge.CurseforgeApi
 import tech.jamalam.modrinth.ModrinthApi
 import tech.jamalam.services.*
+import java.util.*
 import kotlin.system.exitProcess
 
 class Context(
@@ -21,7 +22,7 @@ class Context(
     val client: HttpClient,
     val pistonMeta: PistonMeta,
     val modrinthApi: ModrinthApi,
-    val curseforge: Curseforge,
+    val curseforgeApi: CurseforgeApi,
     val fabricMeta: FabricMeta,
     val neoForgeMeta: NeoForgeMeta,
     val forgeMeta: ForgeMeta,
@@ -47,17 +48,38 @@ val ctx = run {
         }
     }
     val pistonMeta = PistonMeta(client)
-    val modrinth = ModrinthApi("sculk-cli/sculk (email: james<at>jamalam<dot>tech / discord: jamalam)")
-    val curseforge = Curseforge(client)
+    val modrinthApi =
+        ModrinthApi("sculk-cli/sculk (email: james<at>jamalam<dot>tech / discord: jamalam)")
+    val curseforgeApi = run {
+        Cli::class.java.getResourceAsStream("/curseforge-credentials.properties").use {
+            val properties = Properties()
+            properties.load(it)
+            CurseforgeApi(
+                userAgent = "sculk-cli/sculk (email: james<at>jamalam<dot>tech / discord: jamalam)",
+                apiUrl = properties.getProperty("api_url"),
+                basePath = properties.getProperty("api_base_path"),
+                token = properties.getProperty("api_key")
+            )
+        }
+    }
     val fabricMeta = FabricMeta(client)
     val neoForgeMeta = NeoForgeMeta(client)
     val forgeMeta = ForgeMeta(client)
     val quiltMeta = QuiltMeta(client)
-    Context(json, client, pistonMeta, modrinth, curseforge, fabricMeta, neoForgeMeta, forgeMeta, quiltMeta)
+    Context(
+        json,
+        client,
+        pistonMeta,
+        modrinthApi,
+        curseforgeApi,
+        fabricMeta,
+        neoForgeMeta,
+        forgeMeta,
+        quiltMeta
+    )
 }
 
-class Cli : NoOpCliktCommand() {
-}
+class Cli : NoOpCliktCommand()
 
 class AddCmd : NoOpCliktCommand(name = "add") {
     override fun aliases(): Map<String, List<String>> = mapOf(
@@ -82,7 +104,14 @@ fun main(args: Array<String>) {
     val cli = Cli()
         .subcommands(Init())
         .subcommands(ImportCmd().subcommands(ImportModrinth()))
-        .subcommands(AddCmd().subcommands(AddByUrl(), AddFromModrinth(), AddFromCurseforge(), AddByFile()))
+        .subcommands(
+            AddCmd().subcommands(
+                AddByUrl(),
+                AddFromModrinth(),
+                AddFromCurseforge(),
+                AddByFile()
+            )
+        )
         .subcommands(Refresh())
         .subcommands(Install())
         .subcommands(ExportCmd().subcommands(ExportModrinth()))
@@ -96,9 +125,9 @@ fun main(args: Array<String>) {
         val terminal = Terminal()
         terminal.danger(e.message ?: "An unknown error occurred")
 
-        if (e.message == null) {
+//        if (e.message == null) {
             e.printStackTrace()
-        }
+//        }
 
         exitProcess(0)
     }

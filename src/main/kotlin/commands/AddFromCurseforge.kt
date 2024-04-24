@@ -5,14 +5,20 @@ import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.arguments.argument
 import kotlinx.coroutines.runBlocking
 import tech.jamalam.*
+import tech.jamalam.curseforge.CURSEFORGE_MODS_CLASS
 import tech.jamalam.pack.*
+import tech.jamalam.util.toCurseforge
 
 class AddFromCurseforge : CliktCommand(name = "curseforge") {
     private val query by argument()
 
     override fun run() = runBlocking {
         val pack = InMemoryPack(ctx.json)
-        val directMatches = ctx.curseforge.searchBySlug(query, pack.getManifest().minecraft)
+        val directMatches = ctx.curseforgeApi.search(
+            slug = query,
+            gameVersion = pack.getManifest().minecraft,
+            classId = CURSEFORGE_MODS_CLASS
+        )
 
         val project = if (directMatches.isNotEmpty()) {
             if (directMatches.size > 1) {
@@ -22,25 +28,39 @@ class AddFromCurseforge : CliktCommand(name = "curseforge") {
                 directMatches[0]
             }
         } else {
-            val projects = ctx.curseforge.search(query, pack.getManifest().minecraft)
+            val projects = ctx.curseforgeApi.search(
+                searchFilter = query,
+                gameVersion = pack.getManifest().minecraft,
+                classId = CURSEFORGE_MODS_CLASS
+            )
 
             PrettyListPrompt("Select a project", projects.map { it.name }, terminal).ask()
                 .let { projects.find { p -> p.name == it } }!!
         }
 
+        if (project.allowModDistribution == false) {
+            error("This project does not allow distribution")
+        }
+
         val files = runBlocking {
-            ctx.curseforge.getValidVersions(
-                project.id, pack.getManifest().loader.type, pack.getManifest().minecraft
+            ctx.curseforgeApi.getModFiles(
+                modId = project.id,
+                modLoader = pack.getManifest().loader.type.toCurseforge(),
+                gameVersion = pack.getManifest().minecraft
             )
         }.sortedBy {
             it.fileDate
         }.reversed()
 
         val file = files[0] // TODO: error handling
-        val tempFile = runBlocking { downloadFileTemp(parseUrl(file.downloadUrl)).readBytes() }
+
+        if (file.downloadUrl == null) {
+            error("No download URL for ${file.fileName}")
+        }
+
+        val tempFile = runBlocking { downloadFileTemp(parseUrl(file.downloadUrl!!)).readBytes() }
         val sha1 = tempFile.digestSha1()
         val sha512 = tempFile.digestSha512()
-
 
         val existingManifest = pack.getFileManifest("mods/${project.slug}.sculk.json")
         val fileManifest = if (existingManifest != null) {
@@ -53,7 +73,7 @@ class AddFromCurseforge : CliktCommand(name = "curseforge") {
             }
 
             existingManifest.sources.curseforge = FileManifestCurseforgeSource(
-                projectId = project.id, fileUrl = file.downloadUrl, fileId = file.id
+                projectId = project.id, fileUrl = file.downloadUrl!!, fileId = file.id
             )
 
             existingManifest
@@ -66,7 +86,7 @@ class AddFromCurseforge : CliktCommand(name = "curseforge") {
                 side = Side.Both,
                 sources = FileManifestSources(
                     curseforge = FileManifestCurseforgeSource(
-                        projectId = project.id, fileUrl = file.downloadUrl, fileId = file.id
+                        projectId = project.id, fileUrl = file.downloadUrl!!, fileId = file.id
                     ), modrinth = null, url = null
                 )
             )

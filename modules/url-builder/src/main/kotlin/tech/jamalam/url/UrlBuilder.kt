@@ -27,8 +27,14 @@ public class UrlBuilder {
         this.path = path
     }
 
-    public fun parameter(name: String, value: String) {
-        parameters[name] = value
+    public fun parameter(name: String, value: Any) {
+        parameters[name] = value.toString()
+    }
+
+    public fun optionalParameter(name: String, value: Any?) {
+        if (value != null) {
+            parameter(name, value)
+        }
     }
 
     public fun encodedParameter(name: String, value: String) {
