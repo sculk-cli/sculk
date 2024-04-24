@@ -2,7 +2,6 @@ package tech.jamalam.pack
 
 import kotlinx.serialization.json.Json
 import tech.jamalam.digestSha256
-import tech.jamalam.pathMatchesGlob
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -54,7 +53,6 @@ class InMemoryPack(json: Json, private val basePath: Path = Paths.get("")) {
     fun getManifest(): PackManifest {
         return packManifest
     }
-
 
 
     fun getFiles(): List<PackManifestFile> {

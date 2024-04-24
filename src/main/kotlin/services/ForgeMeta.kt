@@ -3,7 +3,6 @@ package tech.jamalam.services
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
-import kotlinx.serialization.json.Json
 
 class ForgeMeta(private val client: HttpClient) {
     suspend fun getLoaderVersions(gameVersion: String): List<String> {

@@ -34,7 +34,8 @@ class Refresh : CliktCommand(name = "refresh") {
 
         for (file in manifest.files) {
             val fileFile = basePath.resolve(file.path).toFile()
-            val relativePath = fileFile.canonicalFile.toRelativeString(Paths.get("").toFile().canonicalFile)
+            val relativePath =
+                fileFile.canonicalFile.toRelativeString(Paths.get("").toFile().canonicalFile)
 
             if (!fileFile.exists()) {
                 terminal.warning("File ${file.path} does not exist, removing it from the manifest")
@@ -55,7 +56,10 @@ class Refresh : CliktCommand(name = "refresh") {
             }
 
             val relativePath = file.toRelativeString(Paths.get("").toFile().canonicalFile)
-            if (relativePath.endsWith(".sculk.json") || relativePath == ".sculkignore" || ignore.isFileIgnored(relativePath)) {
+            if (relativePath.endsWith(".sculk.json") || relativePath == ".sculkignore" || ignore.isFileIgnored(
+                    relativePath
+                )
+            ) {
                 continue
             }
 

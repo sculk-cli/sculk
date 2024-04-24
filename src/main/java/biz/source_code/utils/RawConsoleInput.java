@@ -42,10 +42,23 @@ public class RawConsoleInput {
     private static final boolean isWindows = System.getProperty("os.name").startsWith("Windows");
     private static final int invalidKey = 0xFFFE;
     private static final String invalidKeyStr = String.valueOf((char) invalidKey);
-
+    private static final int stdinFd = 0;
     private static boolean initDone;
     private static boolean stdinIsConsole;
     private static boolean consoleModeAltered;
+    private static Msvcrt msvcrt;
+    private static Kernel32 kernel32;
+    private static Pointer consoleHandle;
+
+//--- Windows ------------------------------------------------------------------
+
+// The Windows version uses _kbhit() and _getwch() from msvcrt.dll.
+    private static int originalConsoleMode;
+    private static Libc libc;
+    private static CharsetDecoder charsetDecoder;
+    private static Termios originalTermios;
+    private static Termios rawTermios;
+    private static Termios intermediateTermios;
 
     /**
      * Reads a character from the console without echo.
@@ -89,15 +102,6 @@ public class RawConsoleInput {
         } catch (Exception ignored) {
         }
     }
-
-//--- Windows ------------------------------------------------------------------
-
-// The Windows version uses _kbhit() and _getwch() from msvcrt.dll.
-
-    private static Msvcrt msvcrt;
-    private static Kernel32 kernel32;
-    private static Pointer consoleHandle;
-    private static int originalConsoleMode;
 
     private static int readWindows(boolean wait) throws IOException {
         initWindows();
@@ -160,6 +164,13 @@ public class RawConsoleInput {
         return handle;
     }
 
+//--- Unix ---------------------------------------------------------------------
+
+// The Unix version uses tcsetattr() to switch the console to non-canonical mode,
+// System.in.available() to check whether data is available and System.in.read()
+// to read bytes from the console.
+// A CharsetDecoder is used to convert bytes to characters.
+
     private static int getConsoleMode(Pointer handle) throws IOException {
         IntByReference mode = new IntByReference();
         int rc = kernel32.GetConsoleMode(handle, mode);
@@ -183,45 +194,6 @@ public class RawConsoleInput {
         setConsoleMode(consoleHandle, originalConsoleMode);
         consoleModeAltered = false;
     }
-
-    private interface Msvcrt extends Library {
-
-        int _kbhit();
-
-        int _getwch();
-
-        int getwchar();
-    }
-
-    private static class Kernel32Defs {
-
-        static final int STD_INPUT_HANDLE = -10;
-        static final long INVALID_HANDLE_VALUE = (Native.POINTER_SIZE == 8) ? -1 : 0xFFFFFFFFL;
-        static final int ENABLE_PROCESSED_INPUT = 0x0001;
-    }
-
-    private interface Kernel32 extends Library {
-
-        int GetConsoleMode(Pointer hConsoleHandle, IntByReference lpMode);
-
-        int SetConsoleMode(Pointer hConsoleHandle, int dwMode);
-
-        Pointer GetStdHandle(int nStdHandle);
-    }
-
-//--- Unix ---------------------------------------------------------------------
-
-// The Unix version uses tcsetattr() to switch the console to non-canonical mode,
-// System.in.available() to check whether data is available and System.in.read()
-// to read bytes from the console.
-// A CharsetDecoder is used to convert bytes to characters.
-
-    private static final int stdinFd = 0;
-    private static Libc libc;
-    private static CharsetDecoder charsetDecoder;
-    private static Termios originalTermios;
-    private static Termios rawTermios;
-    private static Termios intermediateTermios;
 
     private static int readUnix(boolean wait) throws IOException {
         initUnix();
@@ -324,6 +296,42 @@ public class RawConsoleInput {
         consoleModeAltered = false;
     }
 
+    private interface Msvcrt extends Library {
+
+        int _kbhit();
+
+        int _getwch();
+
+        int getwchar();
+    }
+
+    private interface Kernel32 extends Library {
+
+        int GetConsoleMode(Pointer hConsoleHandle, IntByReference lpMode);
+
+        int SetConsoleMode(Pointer hConsoleHandle, int dwMode);
+
+        Pointer GetStdHandle(int nStdHandle);
+    }
+
+    private interface Libc extends Library {
+
+        // termios.h
+        int tcgetattr(int fd, Termios termios) throws LastErrorException;
+
+        int tcsetattr(int fd, int opt, Termios termios) throws LastErrorException;
+
+        // unistd.h
+        int isatty(int fd);
+    }
+
+    private static class Kernel32Defs {
+
+        static final int STD_INPUT_HANDLE = -10;
+        static final long INVALID_HANDLE_VALUE = (Native.POINTER_SIZE == 8) ? -1 : 0xFFFFFFFFL;
+        static final int ENABLE_PROCESSED_INPUT = 0x0001;
+    }
+
     protected static class Termios extends Structure {         // termios.h
 
         public int c_iflag;
@@ -332,11 +340,6 @@ public class RawConsoleInput {
         public int c_lflag;
         public byte c_line;
         public byte[] filler = new byte[64];                  // actual length is platform dependent
-
-        @Override
-        protected List<String> getFieldOrder() {
-            return Arrays.asList("c_iflag", "c_oflag", "c_cflag", "c_lflag", "c_line", "filler");
-        }
 
         Termios() {
         }
@@ -349,6 +352,11 @@ public class RawConsoleInput {
             c_line = t.c_line;
             filler = t.filler.clone();
         }
+
+        @Override
+        protected List<String> getFieldOrder() {
+            return Arrays.asList("c_iflag", "c_oflag", "c_cflag", "c_lflag", "c_line", "filler");
+        }
     }
 
     private static class LibcDefs {
@@ -359,17 +367,6 @@ public class RawConsoleInput {
         static final int ECHO = 8;
         static final int ECHONL = 64;
         static final int TCSANOW = 0;
-    }
-
-    private interface Libc extends Library {
-
-        // termios.h
-        int tcgetattr(int fd, Termios termios) throws LastErrorException;
-
-        int tcsetattr(int fd, int opt, Termios termios) throws LastErrorException;
-
-        // unistd.h
-        int isatty(int fd);
     }
 
 }

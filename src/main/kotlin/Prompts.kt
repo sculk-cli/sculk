@@ -200,7 +200,7 @@ abstract class PrettyPrompt<T>(
             }
         }
     }
-    
+
     private fun printPrompt(input: String, error: Boolean, finished: Boolean = false) {
         terminal.print(buildString {
             if (error) {
@@ -217,14 +217,14 @@ abstract class PrettyPrompt<T>(
             }
 
             append(": ")
-            
+
             if (finished) {
                 append(terminal.theme.info(input))
             } else {
                 append(input)
             }
         })
-        
+
         if (finished) {
             terminal.println()
         }

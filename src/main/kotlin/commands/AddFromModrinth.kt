@@ -59,7 +59,8 @@ class AddFromModrinth : CliktCommand(name = "modrinth") {
             it.publishedTime
         }.reversed()
 
-        val version = versions.elementAtOrNull(0) ?: error("No valid versions found for ${project.title} (Minecraft: ${pack.getManifest().minecraft}, loader: ${pack.getManifest().loader.type})")
+        val version = versions.elementAtOrNull(0)
+            ?: error("No valid versions found for ${project.title} (Minecraft: ${pack.getManifest().minecraft}, loader: ${pack.getManifest().loader.type})")
         val modrinthFile = version.files.first { it.primary }
 
         val tempFile = runBlocking { downloadFileTemp(parseUrl(modrinthFile.downloadUrl)) }
