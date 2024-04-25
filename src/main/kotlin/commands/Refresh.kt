@@ -31,7 +31,8 @@ class Refresh : CliktCommand(name = "refresh") {
             }
         }
 
-        manifest.manifests = manifest.manifests.filter { it.path !in removedManifests }
+        manifest.manifests =
+            manifest.manifests.filter { it.path !in removedManifests }.toMutableList()
 
         val removedFiles = mutableListOf<String>()
 
@@ -54,7 +55,7 @@ class Refresh : CliktCommand(name = "refresh") {
             }
         }
 
-        manifest.files = manifest.files.filter { it.path !in removedFiles }
+        manifest.files = manifest.files.filter { it.path !in removedFiles }.toMutableList()
 
         for (file in Paths.get("").toFile().canonicalFile.walkTopDown()) {
             if (file.isDirectory) {
@@ -62,21 +63,32 @@ class Refresh : CliktCommand(name = "refresh") {
             }
 
             val relativePath = file.toRelativeString(Paths.get("").toFile().canonicalFile)
-            if (relativePath.endsWith(".sculk.json") || relativePath == ".sculkignore" || ignore.isFileIgnored(
+            if (relativePath == "manifest.sculk.json" || relativePath == ".sculkignore" || ignore.isFileIgnored(
                     relativePath
                 )
             ) {
                 continue
             }
 
-            if (manifest.files.none { it.path == relativePath }) {
-                terminal.info("Found new file $relativePath, adding it to the manifest")
-                manifest.files += PackManifestFile(
-                    path = relativePath,
-                    sha256 = file.readBytes().digestSha256(),
-                    side = Side.Both
-                )
-                updated = true
+            if (relativePath.endsWith(".sculk.json")) {
+                if (manifest.manifests.none { it.path == relativePath }) {
+                    terminal.info("Found new manifest $relativePath, adding it to the manifest")
+                    manifest.manifests += PackManifestManifest(
+                        path = relativePath,
+                        sha256 = file.readBytes().digestSha256(),
+                    )
+                    updated = true
+                }
+            } else {
+                if (manifest.files.none { it.path == relativePath }) {
+                    terminal.info("Found new file $relativePath, adding it to the manifest")
+                    manifest.files += PackManifestFile(
+                        path = relativePath,
+                        sha256 = file.readBytes().digestSha256(),
+                        side = Side.Both
+                    )
+                    updated = true
+                }
             }
         }
 

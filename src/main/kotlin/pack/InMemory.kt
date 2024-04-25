@@ -9,7 +9,6 @@ class InMemoryPack(json: Json, private val basePath: Path = Paths.get("")) {
     private val packManifest: PackManifest
     private val manifests = mutableMapOf<String, FileManifest>()
     private val files = mutableListOf<PackManifestFile>()
-    private val sculkIgnore: SculkIgnore = loadSculkIgnore(basePath)
 
     init {
         basePath.toFile().mkdirs()
@@ -38,7 +37,6 @@ class InMemoryPack(json: Json, private val basePath: Path = Paths.get("")) {
             val serialFileManifest =
                 json.decodeFromString(SerialFileManifest.serializer(), fileManifest)
             manifests[file.path] = serialFileManifest.load()
-
         }
 
         for (file in packManifest.files) {
@@ -54,9 +52,13 @@ class InMemoryPack(json: Json, private val basePath: Path = Paths.get("")) {
         return packManifest
     }
 
-
     fun getFiles(): List<PackManifestFile> {
         return files
+    }
+
+    fun removeFile(path: String) {
+        files.remove(files.first { it.path == path })
+        packManifest.files.remove(packManifest.files.first { it.path == path })
     }
 
     fun getManifests(): Map<String, FileManifest> {
@@ -69,6 +71,11 @@ class InMemoryPack(json: Json, private val basePath: Path = Paths.get("")) {
 
     fun setManifest(path: String, fileManifest: FileManifest) {
         manifests[path] = fileManifest
+    }
+
+    fun removeManifest(path: String) {
+        manifests.remove(path)
+        packManifest.manifests.remove(packManifest.manifests.first { it.path == path })
     }
 
     fun save(json: Json) {
@@ -127,8 +134,8 @@ data class PackManifest(
     var version: String,
     var minecraft: String,
     var loader: PackManifestModLoader,
-    var manifests: List<PackManifestManifest>,
-    var files: List<PackManifestFile>
+    var manifests: MutableList<PackManifestManifest>,
+    var files: MutableList<PackManifestFile>
 )
 
 data class PackManifestModLoader(

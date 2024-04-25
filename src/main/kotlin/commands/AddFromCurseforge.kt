@@ -63,7 +63,6 @@ class AddFromCurseforge : CliktCommand(name = "curseforge") {
         }
 
         val file = files[0] // Most recent version
-        println(file.gameVersions)
 
         if (file.downloadUrl == null) {
             error("No download URL for ${file.fileName}")

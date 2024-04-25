@@ -85,14 +85,14 @@ fun SerialPackManifest.load(): PackManifest {
                 path = it.path,
                 sha256 = it.sha256,
             )
-        },
+        }.toMutableList(),
         files = files.map {
             PackManifestFile(
                 path = it.path,
                 side = it.side,
                 sha256 = it.sha256,
             )
-        }
+        }.toMutableList()
     )
 }
 
