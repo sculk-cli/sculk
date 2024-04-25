@@ -143,8 +143,8 @@ public data class ModrinthLicense(
 public data class ModrinthGalleryImage(
     public val url: String,
     public val featured: Boolean,
-    public val title: String,
-    public val description: String,
+    public val title: String?,
+    public val description: String?,
     @SerialName("created") public val createdTime: Instant,
     public val ordering: Int
 )

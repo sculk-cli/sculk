@@ -63,7 +63,7 @@ class Refresh : CliktCommand(name = "refresh") {
             }
 
             val relativePath = file.toRelativeString(Paths.get("").toFile().canonicalFile)
-            if (relativePath == "manifest.sculk.json" || relativePath == ".sculkignore" || ignore.isFileIgnored(
+            if (relativePath == "manifest.sculk.json" || relativePath == "dependency-graph.sculk.json" || relativePath == ".sculkignore" || ignore.isFileIgnored(
                     relativePath
                 )
             ) {

@@ -8,6 +8,8 @@ import tech.jamalam.PrettyListPrompt
 import tech.jamalam.ctx
 import tech.jamalam.downloadFileTemp
 import tech.jamalam.modrinth.models.ModrinthModLoader
+import tech.jamalam.modrinth.models.ModrinthProject
+import tech.jamalam.modrinth.models.ModrinthVersionDependencyType
 import tech.jamalam.pack.*
 import tech.jamalam.parseUrl
 import tech.jamalam.util.modrinthEnvTypePairToSide
@@ -18,6 +20,7 @@ class AddFromModrinth : CliktCommand(name = "modrinth") {
 
     override fun run() = runBlocking {
         val pack = InMemoryPack(ctx.json)
+        val dependencyGraph = loadDependencyGraph()
         val directMatch = ctx.modrinthApi.getProject(query)
 
         val projectSlug = directMatch?.slug ?: run {
@@ -39,11 +42,20 @@ class AddFromModrinth : CliktCommand(name = "modrinth") {
                 .let { projects.find { p -> p.title == it } }!!.slug
         }
 
-        val project = directMatch ?: ctx.modrinthApi.getProject(projectSlug)!!
+        addProject(pack, dependencyGraph, directMatch ?: ctx.modrinthApi.getProject(projectSlug)!!, false)
+        dependencyGraph.save()
+        pack.save(ctx.json)
+    }
 
+    private suspend fun addProject(
+        pack: InMemoryPack,
+        dependencyGraph: DependencyGraph,
+        project: ModrinthProject,
+        ignoreIfExists: Boolean = true,
+    ) {
         val versions = runBlocking {
             ctx.modrinthApi.getProjectVersions(
-                projectSlug,
+                project.slug,
                 loaders = listOf(
                     pack.getManifest().loader.type.toModrinth(),
                     ModrinthModLoader.Minecraft,
@@ -74,6 +86,10 @@ class AddFromModrinth : CliktCommand(name = "modrinth") {
         val existingManifest = pack.getManifest("$dir/${project.slug}.sculk.json")
         val fileManifest = if (existingManifest != null) {
             if (existingManifest.sources.modrinth != null) {
+                if (ignoreIfExists) {
+                    return
+                }
+
                 error("Existing manifest already has a Modrinth source (did you mean to use the update command?)")
             }
 
@@ -104,8 +120,44 @@ class AddFromModrinth : CliktCommand(name = "modrinth") {
             )
         }
 
-        pack.setManifest("$dir/${projectSlug}.sculk.json", fileManifest)
-        pack.save(ctx.json)
+        pack.setManifest("$dir/${project.slug}.sculk.json", fileManifest)
         terminal.info("Added ${project.title} to manifest")
+
+        for (dependency in version.dependencies) {
+            when (dependency.type) {
+                ModrinthVersionDependencyType.Required -> {
+                    val dependencyProject = ctx.modrinthApi.getProject(dependency.projectId)
+                        ?: error("Dependency not found")
+
+                    dependencyGraph.addDependency(
+                        "mods/${dependencyProject.slug}.sculk.json",
+                        "mods/${project.slug}.sculk.json"
+                    )
+
+                    addProject(pack, dependencyGraph, dependencyProject)
+                }
+
+                ModrinthVersionDependencyType.Optional -> {
+                    val dependencyProject = ctx.modrinthApi.getProject(dependency.projectId)
+                        ?: error("Dependency not found")
+                    val prompt = PrettyListPrompt(
+                        "Add optional dependency ${dependencyProject.title}?",
+                        listOf("Yes", "No"),
+                        terminal
+                    )
+
+                    if (prompt.ask() == "Yes") {
+                        dependencyGraph.addDependency(
+                            "mods/${dependencyProject.slug}.sculk.json",
+                            "mods/${project.slug}.sculk.json"
+                        )
+
+                        addProject(pack, dependencyGraph, dependencyProject)
+                    }
+                }
+
+                else -> {}
+            }
+        }
     }
 }
