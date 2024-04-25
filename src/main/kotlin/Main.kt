@@ -96,6 +96,7 @@ class AddCmd : NoOpCliktCommand(name = "add") {
 class ExportCmd : NoOpCliktCommand(name = "export") {
     override fun aliases(): Map<String, List<String>> = mapOf(
         "mr" to listOf("modrinth"),
+        "cf" to listOf("curseforge"),
     )
 }
 
@@ -120,7 +121,7 @@ fun main(args: Array<String>) {
         .subcommands(Remove())
         .subcommands(Install())
         .subcommands(ModList())
-        .subcommands(ExportCmd().subcommands(ExportModrinth()))
+        .subcommands(ExportCmd().subcommands(ExportModrinth()).subcommands(ExportCurseforge()))
         .subcommands(CompletionCommand(name = "completion"))
 
     try {

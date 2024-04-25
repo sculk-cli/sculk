@@ -60,7 +60,7 @@ public fun createModrinthPack(
 public fun importModrinthPack(path: Path): ImportedModrinthPack {
     val zipFile = ZipFile(path.toFile())
     val indexEntry = zipFile.getEntry(MODRINTH_INDEX_JSON_PATH)
-    val index = Json.decodeFromString(
+    val index = json.decodeFromString(
         ModrinthPackIndex.serializer(),
         zipFile.getInputStream(indexEntry).readBytes().decodeToString()
     )
