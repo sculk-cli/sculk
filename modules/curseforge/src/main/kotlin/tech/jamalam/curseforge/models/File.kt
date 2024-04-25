@@ -48,10 +48,10 @@ public fun CurseforgeFile.getSide(): CurseforgeSide = this.gameVersions
         }
     }
     .let {
-        if (it.size > 1) {
-            CurseforgeSide.Both
-        } else {
+        if (it.size == 1) {
             it[0]
+        } else {
+            CurseforgeSide.Both
         }
     }
 
