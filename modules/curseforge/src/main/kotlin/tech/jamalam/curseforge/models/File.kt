@@ -35,6 +35,32 @@ public data class CurseforgeFile(
     public val modules: List<CurseforgeFileModule>
 )
 
+public fun CurseforgeFile.getActualGameVersions(): List<String> =
+    this.gameVersions.filter { it.contains("1.") }
+
+public fun CurseforgeFile.getSide(): CurseforgeSide = this.gameVersions
+    .filter { it == "Client" || it == "Server" }
+    .map {
+        if (it == "Client") {
+            CurseforgeSide.Client
+        } else {
+            CurseforgeSide.Server
+        }
+    }
+    .let {
+        if (it.size > 1) {
+            CurseforgeSide.Both
+        } else {
+            it[0]
+        }
+    }
+
+public enum class CurseforgeSide {
+    Client,
+    Server,
+    Both
+}
+
 @Serializable
 public data class CurseforgeFileIndex(
     public val gameVersion: String,
@@ -42,7 +68,7 @@ public data class CurseforgeFileIndex(
     public val filename: String,
     public val releaseType: CurseforgeFileReleaseType,
     public val gameVersionTypeId: Int?,
-    public val modLoader: CurseforgeModLoader,
+    public val modLoader: CurseforgeModLoader?,
 )
 
 @Serializable(with = CurseforgeFileReleaseTypeSerializer::class)

@@ -128,6 +128,7 @@ suspend fun downloadFileTemp(url: Url): File {
 
 suspend fun tryReq(url: Url, maxAttempts: Int = 3): ByteArray {
     var attempts = 0
+    var lastException: Exception? = null
 
     while (attempts < maxAttempts) {
         try {
@@ -135,10 +136,11 @@ suspend fun tryReq(url: Url, maxAttempts: Int = 3): ByteArray {
             return response.body()
         } catch (e: Exception) {
             attempts += 1
+            lastException = e
         }
     }
 
-    error("Failed to complete request to $url after $maxAttempts attempts")
+    error("Failed to complete request to $url after $maxAttempts attempts (last caught exception: $lastException")
 }
 
 fun pathMatchesGlob(path: String, glob: String): Boolean {

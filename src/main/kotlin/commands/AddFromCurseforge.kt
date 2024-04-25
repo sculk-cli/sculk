@@ -6,8 +6,10 @@ import com.github.ajalt.clikt.parameters.arguments.argument
 import kotlinx.coroutines.runBlocking
 import tech.jamalam.*
 import tech.jamalam.curseforge.CURSEFORGE_MODS_CLASS
+import tech.jamalam.curseforge.models.getSide
 import tech.jamalam.pack.*
 import tech.jamalam.util.toCurseforge
+import tech.jamalam.util.toSide
 
 class AddFromCurseforge : CliktCommand(name = "curseforge") {
     private val query by argument()
@@ -61,6 +63,7 @@ class AddFromCurseforge : CliktCommand(name = "curseforge") {
         }
 
         val file = files[0] // Most recent version
+        println(file.gameVersions)
 
         if (file.downloadUrl == null) {
             error("No download URL for ${file.fileName}")
@@ -91,7 +94,7 @@ class AddFromCurseforge : CliktCommand(name = "curseforge") {
                     sha1 = sha1, sha512 = sha512
                 ),
                 fileSize = tempFile.size,
-                side = Side.Both,
+                side = file.getSide().toSide(),
                 sources = FileManifestSources(
                     curseforge = FileManifestCurseforgeSource(
                         projectId = project.id, fileUrl = file.downloadUrl!!, fileId = file.id
