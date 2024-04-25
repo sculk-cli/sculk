@@ -115,6 +115,7 @@ fun main(args: Array<String>) {
         .subcommands(Refresh())
         .subcommands(Remove())
         .subcommands(Install())
+        .subcommands(ModList())
         .subcommands(ExportCmd().subcommands(ExportModrinth()))
         .subcommands(CompletionCommand(name = "completion"))
 
