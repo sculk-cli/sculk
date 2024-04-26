@@ -6,11 +6,11 @@ import com.github.ajalt.clikt.parameters.options.option
 import kotlinx.coroutines.runBlocking
 import tech.jamalam.PrettyListPrompt
 import tech.jamalam.ctx
-import tech.jamalam.mkdirsAndWriteJson
 import tech.jamalam.pack.ModLoader
 import tech.jamalam.pack.SerialPackManifest
 import tech.jamalam.pack.SerialPackManifestModLoader
-import tech.jamalam.prettyPrompt
+import tech.jamalam.util.mkdirsAndWriteJson
+import tech.jamalam.util.prettyPrompt
 import java.io.File
 
 class Init : CliktCommand(name = "init") {

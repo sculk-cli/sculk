@@ -9,7 +9,7 @@ import tech.jamalam.modrinth.models.ModrinthVersionFileHashes
 import tech.jamalam.pack.InMemoryPack
 import tech.jamalam.pack.ModLoader
 import tech.jamalam.pack.PackManifest
-import tech.jamalam.parseUrl
+import tech.jamalam.util.parseUrl
 import tech.jamalam.util.toModrinthEnvClientSupport
 import tech.jamalam.util.toModrinthEnvServerSupport
 import java.io.File

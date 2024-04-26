@@ -1,41 +1,15 @@
-package tech.jamalam
+package tech.jamalam.util
 
 import com.github.ajalt.clikt.parameters.options.OptionWithValues
 import com.github.ajalt.clikt.parameters.options.RawOption
 import com.github.ajalt.clikt.parameters.options.transformAll
 import com.github.ajalt.mordant.terminal.Terminal
-import io.ktor.client.call.*
-import io.ktor.client.request.*
 import io.ktor.http.*
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
+import tech.jamalam.FilePrettyPrompt
+import tech.jamalam.PrettyListPrompt
+import tech.jamalam.StringPrettyPrompt
+import tech.jamalam.UrlPrettyPrompt
 import java.io.File
-import java.nio.file.FileSystems
-import java.security.MessageDigest
-
-fun ByteArray.digestSha1(): String {
-    val digest = MessageDigest.getInstance("SHA-1")
-    return digest.digest(this).fold("") { str, it -> str + "%02x".format(it) }
-}
-
-fun ByteArray.digestSha256(): String {
-    val digest = MessageDigest.getInstance("SHA-256")
-    return digest.digest(this).fold("") { str, it -> str + "%02x".format(it) }
-}
-
-fun ByteArray.digestSha512(): String {
-    val digest = MessageDigest.getInstance("SHA-512")
-    return digest.digest(this).fold("") { str, it -> str + "%02x".format(it) }
-}
-
-fun File.mkdirsAndWriteText(text: String) {
-    this.canonicalFile.parentFile.mkdirs()
-    writeText(text)
-}
-
-inline fun <reified T> File.mkdirsAndWriteJson(json: Json, value: T) {
-    mkdirsAndWriteText("${json.encodeToString(value)}\n")
-}
 
 fun Terminal.clearLines(count: Int) {
     for (i in 0..<count) {
@@ -50,10 +24,6 @@ fun Terminal.moveUp() {
 
 fun Terminal.clearLine() {
     rawPrint("\u001B[2K\r")
-}
-
-fun parseUrl(url: String): Url {
-    return URLBuilder(url).build()
 }
 
 @Suppress("UNCHECKED_CAST")
@@ -91,7 +61,7 @@ inline fun <reified T> RawOption.prettyPrompt(
                     }
                 }
 
-                File::class -> {
+                java.io.File::class -> {
                     if (it.lastOrNull() != null) {
                         File(it.lastOrNull()!!) as T
                     } else {
@@ -116,34 +86,4 @@ inline fun <reified T> RawOption.prettyPrompt(
             }
         }
     }
-}
-
-suspend fun downloadFileTemp(url: Url): File {
-    val tempFile = File.createTempFile("sculk", null)
-    tempFile.deleteOnExit()
-    tempFile.writeBytes(tryReq(url))
-
-    return tempFile
-}
-
-suspend fun tryReq(url: Url, maxAttempts: Int = 3): ByteArray {
-    var attempts = 0
-    var lastException: Exception? = null
-
-    while (attempts < maxAttempts) {
-        try {
-            val response = ctx.client.get(url)
-            return response.body()
-        } catch (e: Exception) {
-            attempts += 1
-            lastException = e
-        }
-    }
-
-    error("Failed to complete request to $url after $maxAttempts attempts (last caught exception: $lastException")
-}
-
-fun pathMatchesGlob(path: String, glob: String): Boolean {
-    val matcher = FileSystems.getDefault().getPathMatcher("glob:$glob")
-    return matcher.matches(FileSystems.getDefault().getPath(path))
 }

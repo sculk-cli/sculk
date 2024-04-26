@@ -16,11 +16,11 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import tech.jamalam.ctx
-import tech.jamalam.digestSha256
-import tech.jamalam.digestSha512
 import tech.jamalam.pack.SerialFileManifest
 import tech.jamalam.pack.SerialPackManifest
 import tech.jamalam.pack.Side
+import tech.jamalam.util.digestSha256
+import tech.jamalam.util.digestSha512
 import java.io.File
 
 class Install : CliktCommand(name = "install") {

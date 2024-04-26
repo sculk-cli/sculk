@@ -1,7 +1,7 @@
 package tech.jamalam.pack
 
 import kotlinx.serialization.json.Json
-import tech.jamalam.digestSha256
+import tech.jamalam.util.digestSha256
 import java.nio.file.Path
 import java.nio.file.Paths
 

@@ -10,8 +10,7 @@ import tech.jamalam.curseforge.models.CurseforgeFileRelationType
 import tech.jamalam.curseforge.models.CurseforgeMod
 import tech.jamalam.curseforge.models.getSide
 import tech.jamalam.pack.*
-import tech.jamalam.util.toCurseforge
-import tech.jamalam.util.toSide
+import tech.jamalam.util.*
 
 class AddFromCurseforge : CliktCommand(name = "curseforge") {
     private val query by argument()

@@ -3,8 +3,8 @@ package tech.jamalam.commands
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
 import tech.jamalam.ctx
-import tech.jamalam.digestSha256
 import tech.jamalam.pack.*
+import tech.jamalam.util.digestSha256
 import java.nio.file.Paths
 
 class Refresh : CliktCommand(name = "refresh") {

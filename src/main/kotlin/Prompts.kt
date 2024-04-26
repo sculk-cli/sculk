@@ -5,6 +5,8 @@ import com.github.ajalt.mordant.terminal.ConversionResult
 import com.github.ajalt.mordant.terminal.Prompt
 import com.github.ajalt.mordant.terminal.Terminal
 import io.ktor.http.*
+import tech.jamalam.util.clearLine
+import tech.jamalam.util.clearLines
 import java.io.File
 import kotlin.system.exitProcess
 

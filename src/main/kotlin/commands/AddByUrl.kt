@@ -7,6 +7,10 @@ import io.ktor.http.*
 import kotlinx.coroutines.runBlocking
 import tech.jamalam.*
 import tech.jamalam.pack.*
+import tech.jamalam.util.digestSha1
+import tech.jamalam.util.digestSha512
+import tech.jamalam.util.downloadFileTemp
+import tech.jamalam.util.prettyPrompt
 
 class AddByUrl : CliktCommand(name = "url") {
     private val slug by option()

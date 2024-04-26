@@ -6,13 +6,13 @@ import com.github.ajalt.clikt.parameters.arguments.argument
 import kotlinx.coroutines.runBlocking
 import tech.jamalam.PrettyListPrompt
 import tech.jamalam.ctx
-import tech.jamalam.downloadFileTemp
 import tech.jamalam.modrinth.models.ModrinthModLoader
 import tech.jamalam.modrinth.models.ModrinthProject
 import tech.jamalam.modrinth.models.ModrinthVersionDependencyType
 import tech.jamalam.pack.*
-import tech.jamalam.parseUrl
+import tech.jamalam.util.downloadFileTemp
 import tech.jamalam.util.modrinthEnvTypePairToSide
+import tech.jamalam.util.parseUrl
 import tech.jamalam.util.toModrinth
 
 class AddFromModrinth : CliktCommand(name = "modrinth") {

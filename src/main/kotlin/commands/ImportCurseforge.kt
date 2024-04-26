@@ -14,7 +14,7 @@ import tech.jamalam.*
 import tech.jamalam.curseforge.importCurseforgePack
 import tech.jamalam.curseforge.models.getSide
 import tech.jamalam.pack.*
-import tech.jamalam.util.toSide
+import tech.jamalam.util.*
 import java.io.File
 import java.nio.file.Paths
 

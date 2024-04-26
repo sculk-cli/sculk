@@ -1,6 +1,6 @@
 package tech.jamalam.pack
 
-import tech.jamalam.pathMatchesGlob
+import tech.jamalam.util.pathMatchesGlob
 import java.nio.file.Path
 import java.nio.file.Paths
 
