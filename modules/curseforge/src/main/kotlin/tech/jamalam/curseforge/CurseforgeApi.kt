@@ -136,6 +136,23 @@ public class CurseforgeApi(
         return response.body<PaginatedCurseforgeResponse<List<CurseforgeFile>>>().data
     }
 
+    public suspend fun getModFile(
+        modId: Int,
+        fileId: Int,
+    ): CurseforgeFile? {
+        val response = get(buildUrl {
+            host(apiUrl)
+            path("$basePath/mods/$modId/files/$fileId")
+        })
+
+        return if (response.status == HttpStatusCode.OK) {
+            response.body<CurseforgeResponse<CurseforgeFile>>().data
+        } else {
+            null
+        }
+    }
+
+
     public fun getFingerprintMatches(
     ) {
         TODO("Curseforge does not document what hashing algorithm it expects the fingerprints to be from?")

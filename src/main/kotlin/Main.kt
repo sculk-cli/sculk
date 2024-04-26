@@ -103,13 +103,13 @@ class ExportCmd : NoOpCliktCommand(name = "export") {
 class ImportCmd : NoOpCliktCommand(name = "import") {
     override fun aliases(): Map<String, List<String>> = mapOf(
         "mr" to listOf("modrinth"),
+        "cf" to listOf("curseforge")
     )
 }
 
 fun main(args: Array<String>) {
     val cli = Cli()
         .subcommands(Init())
-        .subcommands(ImportCmd().subcommands(ImportModrinth()))
         .subcommands(
             AddCmd().subcommands(
                 AddByUrl(),
@@ -120,8 +120,9 @@ fun main(args: Array<String>) {
         .subcommands(Refresh())
         .subcommands(Remove())
         .subcommands(Install())
-        .subcommands(ModList())
+        .subcommands(ImportCmd().subcommands(ImportModrinth()).subcommands(ImportCurseforge()))
         .subcommands(ExportCmd().subcommands(ExportModrinth()).subcommands(ExportCurseforge()))
+        .subcommands(ModList())
         .subcommands(CompletionCommand(name = "completion"))
 
     try {

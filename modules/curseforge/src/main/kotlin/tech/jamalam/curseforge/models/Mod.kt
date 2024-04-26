@@ -18,7 +18,7 @@ public data class CurseforgeMod(
     public val categories: List<CurseforgeCategory>,
     public val classId: Int?,
     public val authors: List<CurseforgeModAuthor>,
-    public val logo: CurseforgeModAsset,
+    public val logo: CurseforgeModAsset?,
     public val screenshots: List<CurseforgeModAsset>,
     public val mainFileId: Int,
     public val latestFiles: List<CurseforgeFile>,

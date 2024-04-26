@@ -1,6 +1,7 @@
 package tech.jamalam.curseforge
 
 import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -84,7 +85,9 @@ public data class CurseforgePackModLoader(
 
 @Serializable
 public data class CurseforgePackFile(
+    @SerialName("projectID")
     public val projectId: Int,
+    @SerialName("fileID")
     public val fileId: Int,
     public val required: Boolean,
 )
