@@ -6,7 +6,7 @@ on:
       - '*'
 
 jobs:
-  build:
+  release:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -28,7 +28,7 @@ jobs:
       - name: ZIP distribution
         run: |
           cd build/install/sculk
-          zip -r ../../sculk.zip .
+          zip -r ../../../sculk.zip .
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -37,9 +37,8 @@ jobs:
         with:
           tag_name: ${{ github.ref }}
           name: ${{ github.ref_name }}
-          body: |
-            # Sculk ${{ github.ref_name }}
-          draft: true
+          body: ''
+          draft: false
           prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') }}
           files: |
             sculk.zip

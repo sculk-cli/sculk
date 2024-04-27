@@ -9,8 +9,8 @@ plugins {
 
 allprojects {
     group = "tech.jamalam"
-    version = "1.0.0-alpha.1"
 
+    println(version)
     repositories {
         mavenCentral()
     }
