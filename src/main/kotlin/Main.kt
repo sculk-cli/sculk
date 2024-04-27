@@ -80,7 +80,7 @@ val ctx = run {
     )
 }
 
-class Cli : NoOpCliktCommand() {
+class Cli : NoOpCliktCommand(name = "sculk") {
     override fun aliases(): Map<String, List<String>> = mapOf(
         "rm" to listOf("remove"),
     )
