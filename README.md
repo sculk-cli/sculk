@@ -2,12 +2,12 @@
 
 <div align="center">
 
-[Report Issues](https://github.com/sculk-cli/sculk) • [Chat on Discord](https://discord.jamalam.tech) 
+[Read the Docs](https://sculk-cli.github.io) • [Report Issues](https://github.com/sculk-cli/sculk) • [Chat on Discord](https://discord.jamalam.tech) 
 
 </div>
 
 > **Warning**
-> This project is in early development and is not yet ready for use. Please check back later.
+> This project is in early development.
 
 Sculk is a CLI tool for creating Minecraft modpacks, much like Packwiz. It is **aimed at modpack creators**, rather than users (for users, a program such as [Ferium](https://github.com/gorilla-devs/ferium) is recommended)
 
@@ -20,3 +20,8 @@ Sculk is a CLI tool for creating Minecraft modpacks, much like Packwiz. It is **
 - **Dependency management**: Sculk automatically installs dependencies for you, and will keep track of them so that they can be removed if their dependant is.
 - _[Planned]_ **Rollback system**: Sculk keeps track of changes made to the modpack, so that you can easily revert changes - because it's too easy to forget to keep your Git commits granular.
 - _[Planned]_ **Publishing support**: Sculk can export to Curseforge and Modrinth modpacks, and can even publish them for you from the command line.
+
+## Links
+
+- [Documentation](https://sculk-cli.github.io)
+- [Example modpack](https://github.com/sculk-cli/example)
