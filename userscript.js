@@ -46,7 +46,9 @@ const CURSEFORGE_HOST = "www.curseforge.com";
       setTimeout(() => {
         URL.revokeObjectURL(blob);
         a.remove();
-      }, 1000);
+			}, 1000);
+			
+			this.clear();
     }
 
     save() {
