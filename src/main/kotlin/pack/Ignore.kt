@@ -6,6 +6,15 @@ import java.nio.file.Paths
 
 typealias SculkIgnore = List<String>
 
+val defaultIgnoredGlobs = listOf(
+    ".git/**",
+    ".gitignore",
+    ".gitattributes",
+    "manifest.sculk.json",
+    "dependency-graph.sculk.json",
+    ".sculkignore"
+)
+
 fun loadSculkIgnore(basePath: Path = Paths.get("")): SculkIgnore {
     val ignoreFile = basePath.resolve(".sculkignore")
     if (!ignoreFile.toFile().exists()) {
@@ -16,5 +25,5 @@ fun loadSculkIgnore(basePath: Path = Paths.get("")): SculkIgnore {
 }
 
 fun SculkIgnore.isFileIgnored(path: String): Boolean {
-    return this.any { pathMatchesGlob(path, it) }
+    return this.any { pathMatchesGlob(path, it) } || defaultIgnoredGlobs.any { pathMatchesGlob(path, it) }
 }

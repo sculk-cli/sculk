@@ -16,8 +16,7 @@ class Refresh : CliktCommand(name = "refresh") {
         val basePath = Paths.get("")
         val manifestFile = basePath.resolve("manifest.sculk.json").toFile()
         val manifest =
-            ctx.json.decodeFromString<SerialPackManifest>(String(manifestFile.readBytes()))
-                .load()
+            ctx.json.decodeFromString<SerialPackManifest>(String(manifestFile.readBytes())).load()
         val ignore = loadSculkIgnore()
         val removedManifests = mutableListOf<String>()
         var updated = false
@@ -87,10 +86,7 @@ class Refresh : CliktCommand(name = "refresh") {
             }
 
             val relativePath = file.toRelativeString(Paths.get("").toFile().canonicalFile)
-            if (relativePath == "manifest.sculk.json" || relativePath == "dependency-graph.sculk.json" || relativePath == ".sculkignore" || ignore.isFileIgnored(
-                    relativePath
-                )
-            ) {
+            if (ignore.isFileIgnored(relativePath)) {
                 continue
             }
 
@@ -129,8 +125,7 @@ class Refresh : CliktCommand(name = "refresh") {
                 val newManifest = manifest.toSerial()
                 manifestFile.writeBytes(
                     ctx.json.encodeToString(
-                        SerialPackManifest.serializer(),
-                        newManifest
+                        SerialPackManifest.serializer(), newManifest
                     ).toByteArray()
                 )
                 terminal.info("Updated manifest.sculk.json")
