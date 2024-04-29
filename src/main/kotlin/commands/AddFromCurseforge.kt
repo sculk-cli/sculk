@@ -10,7 +10,7 @@ import tech.jamalam.pack.loadDependencyGraph
 import tech.jamalam.pack.save
 import tech.jamalam.util.addCurseforgeMod
 
-class AddFromCurseforge : CliktCommand(name = "curseforge") {
+class AddFromCurseforge : CliktCommand(name = "curseforge", help = "Add a project to the manifest from Curseforge") {
     private val query by argument()
 
     override fun run() = runBlocking {

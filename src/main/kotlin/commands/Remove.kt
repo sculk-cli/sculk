@@ -10,7 +10,7 @@ import tech.jamalam.pack.*
 import java.io.File
 import java.nio.file.Paths
 
-class Remove : CliktCommand(name = "remove") {
+class Remove : CliktCommand(name = "remove", help = "Remove a file or manifest") {
     private val filename by argument().file(mustExist = true, canBeDir = false)
 
     override fun run() = runBlocking {

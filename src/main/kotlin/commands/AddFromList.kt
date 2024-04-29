@@ -12,7 +12,7 @@ import tech.jamalam.pack.save
 import tech.jamalam.util.addCurseforgeMod
 import tech.jamalam.util.addModrinthMod
 
-class AddFromList : CliktCommand(name = "list") {
+class AddFromList : CliktCommand(name = "list", help = "Add projects to the manifest from a userscript export list") {
     private val listFile by argument().file(mustExist = true, mustBeReadable = true)
 
     override fun run() = runBlocking {

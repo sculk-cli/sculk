@@ -13,7 +13,7 @@ import tech.jamalam.util.mkdirsAndWriteJson
 import tech.jamalam.util.prettyPrompt
 import java.io.File
 
-class Init : CliktCommand(name = "init") {
+class Init : CliktCommand(name = "init", help = "Initialize a new Sculk modpack") {
     private val path by option().prettyPrompt<File>(
         "Enter modpack path",
         default = File(".")

@@ -15,7 +15,7 @@ import tech.jamalam.util.toModrinthEnvServerSupport
 import java.io.File
 import java.nio.file.Paths
 
-class ExportModrinth : CliktCommand(name = "modrinth") {
+class ExportModrinth : CliktCommand(name = "modrinth", help = "Export a Modrinth modpack (.mrpack)") {
     override fun run() = runBlocking {
         val pack = InMemoryPack(ctx.json)
         val mrpackIndex = createMrpackIndex(pack)

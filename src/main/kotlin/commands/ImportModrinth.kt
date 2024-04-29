@@ -18,7 +18,7 @@ import tech.jamalam.util.*
 import java.io.File
 import java.nio.file.Paths
 
-class ImportModrinth : CliktCommand(name = "modrinth") {
+class ImportModrinth : CliktCommand(name = "modrinth", help = "Import a Modrinth modpack (.mrpack)") {
     private val mrpack by argument().file(mustExist = true, mustBeReadable = true)
 
     override fun run() = runBlocking {

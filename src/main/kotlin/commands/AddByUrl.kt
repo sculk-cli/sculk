@@ -12,7 +12,7 @@ import tech.jamalam.util.digestSha512
 import tech.jamalam.util.downloadFileTemp
 import tech.jamalam.util.prettyPrompt
 
-class AddByUrl : CliktCommand(name = "url") {
+class AddByUrl : CliktCommand(name = "url", help = "Add a project to the manifest from a direct download URL") {
     private val slug by option()
         .prettyPrompt<String>("Enter project name")
     private val url by option()

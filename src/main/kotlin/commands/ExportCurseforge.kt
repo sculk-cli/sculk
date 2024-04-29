@@ -9,7 +9,7 @@ import tech.jamalam.pack.InMemoryPack
 import tech.jamalam.pack.ModLoader
 import java.nio.file.Paths
 
-class ExportCurseforge : CliktCommand(name = "curseforge") {
+class ExportCurseforge : CliktCommand(name = "curseforge", help = "Export a Curseforge modpack (.zip)") {
     override fun run() = runBlocking {
         val pack = InMemoryPack(ctx.json)
         val curseforgeManifest = createCurseforgeManifest(pack)

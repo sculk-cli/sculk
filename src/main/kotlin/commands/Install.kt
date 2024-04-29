@@ -23,7 +23,7 @@ import tech.jamalam.util.digestSha256
 import tech.jamalam.util.digestSha512
 import java.io.File
 
-class Install : CliktCommand(name = "install") {
+class Install : CliktCommand(name = "install", help = "Install a Sculk modpack from a URL or local directory") {
     private val packLocation by argument()
     private val installLocation by argument().default(".")
     private val side by option().enum<InstallSide>().default(InstallSide.SERVER)

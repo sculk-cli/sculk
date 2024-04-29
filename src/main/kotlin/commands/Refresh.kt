@@ -9,7 +9,7 @@ import tech.jamalam.pack.*
 import tech.jamalam.util.digestSha256
 import java.nio.file.Paths
 
-class Refresh : CliktCommand(name = "refresh") {
+class Refresh : CliktCommand(name = "refresh", help = "Check all hashes in the manifest and update them if needed") {
     private val check by option().flag()
 
     override fun run() {

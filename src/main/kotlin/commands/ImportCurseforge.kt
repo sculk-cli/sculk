@@ -18,7 +18,7 @@ import tech.jamalam.util.*
 import java.io.File
 import java.nio.file.Paths
 
-class ImportCurseforge : CliktCommand(name = "curseforge") {
+class ImportCurseforge : CliktCommand(name = "curseforge", help = "Import a Curseforge modpack (.zip)") {
     private val curseforgePackPath by argument().file(mustExist = true, mustBeReadable = true)
 
     override fun run() = runBlocking {

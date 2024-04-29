@@ -13,7 +13,7 @@ import kotlinx.coroutines.runBlocking
 import tech.jamalam.ctx
 import tech.jamalam.pack.InMemoryPack
 
-class ModList : CliktCommand(name = "modlist") {
+class ModList : CliktCommand(name = "modlist", help = "Generate a markdown mod list") {
     private val file by argument().file()
 
     override fun run() = runBlocking {
