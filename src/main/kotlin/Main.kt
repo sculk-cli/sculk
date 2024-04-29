@@ -115,6 +115,7 @@ fun main(args: Array<String>) {
                 AddByUrl(),
                 AddFromModrinth(),
                 AddFromCurseforge(),
+                AddFromList()
             )
         )
         .subcommands(Refresh())
