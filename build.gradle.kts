@@ -27,6 +27,9 @@ dependencies {
     implementation(libs.mordant)
     implementation(libs.mordant.coroutines)
 
+    implementation(libs.slf4j.api)
+    implementation(libs.slf4j.simple)
+
     implementation(project(":modules:modrinth"))
     implementation(project(":modules:curseforge"))
 }
