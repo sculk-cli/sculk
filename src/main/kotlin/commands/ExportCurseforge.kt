@@ -11,7 +11,7 @@ import java.nio.file.Paths
 
 class ExportCurseforge : CliktCommand(name = "curseforge", help = "Export a Curseforge modpack (.zip)") {
     override fun run() = runBlocking {
-        val pack = InMemoryPack(ctx.json)
+        val pack = InMemoryPack(ctx.json, terminal = terminal)
         val curseforgeManifest = createCurseforgeManifest(pack)
         val overrides = pack
             .getFiles()

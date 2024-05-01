@@ -9,6 +9,7 @@ import tech.jamalam.ctx
 import tech.jamalam.pack.ModLoader
 import tech.jamalam.pack.SerialPackManifest
 import tech.jamalam.pack.SerialPackManifestModLoader
+import tech.jamalam.pack.migration.FormatVersion
 import tech.jamalam.util.mkdirsAndWriteJson
 import tech.jamalam.util.prettyPrompt
 import java.io.File
@@ -100,6 +101,7 @@ class Init : CliktCommand(name = "init", help = "Initialize a new Sculk modpack"
         }
 
         val manifest = SerialPackManifest(
+            formatVersion = FormatVersion.CURRENT.toString(),
             name = name,
             version = "1.0.0",
             summary = null,

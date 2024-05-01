@@ -4,6 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class SerialPackManifest(
+    val formatVersion: String,
     val name: String,
     val summary: String?,
     val author: String?,
@@ -71,6 +72,7 @@ data class SerialFileManifestUrlSource(
 
 fun SerialPackManifest.load(): PackManifest {
     return PackManifest(
+        formatVersion = formatVersion,
         name = name,
         summary = summary,
         author = author,

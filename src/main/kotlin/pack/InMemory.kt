@@ -1,11 +1,17 @@
 package tech.jamalam.pack
 
+import com.github.ajalt.mordant.terminal.Terminal
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import tech.jamalam.pack.migration.MigrationFileType
+import tech.jamalam.pack.migration.migrateFile
 import tech.jamalam.util.digestSha256
 import java.nio.file.Path
 import java.nio.file.Paths
 
-class InMemoryPack(json: Json, private val basePath: Path = Paths.get("")) {
+class InMemoryPack(json: Json, private val basePath: Path = Paths.get(""), terminal: Terminal) {
     private val packManifest: PackManifest
     private val manifests = mutableMapOf<String, FileManifest>()
     private val files = mutableListOf<PackManifestFile>()
@@ -19,7 +25,17 @@ class InMemoryPack(json: Json, private val basePath: Path = Paths.get("")) {
         }
 
         val manifest = manifestPath.toFile().readText()
-        val serialManifest = json.decodeFromString(SerialPackManifest.serializer(), manifest)
+        var rootManifestJson = json.parseToJsonElement(manifest).jsonObject
+        val migrationResult = migrateFile(MigrationFileType.ROOT_MANIFEST, rootManifestJson)
+
+        if (migrationResult.first) {
+            terminal.info("Migrated root manifest from ${migrationResult.second["formatVersion"]?.jsonPrimitive?.content} to ${migrationResult.second["formatVersion"]?.jsonPrimitive?.content}")
+            manifestPath.toFile().writeText(json.encodeToString(migrationResult.second))
+            rootManifestJson = migrationResult.second.jsonObject
+        }
+
+        val serialManifest =
+            json.decodeFromJsonElement(SerialPackManifest.serializer(), rootManifestJson)
         packManifest = serialManifest.load()
 
         for (file in packManifest.manifests) {
@@ -34,8 +50,17 @@ class InMemoryPack(json: Json, private val basePath: Path = Paths.get("")) {
                 error("File hashes do not match for manifest at ${file.path}")
             }
 
+            var fileManifestJson = json.parseToJsonElement(fileManifest).jsonObject
+            val migrationResult = migrateFile(MigrationFileType.FILE_MANIFEST, fileManifestJson)
+
+            if (migrationResult.first) {
+                terminal.info("Migrated file manifest")
+                fileManifestPath.toFile().writeText(json.encodeToString(migrationResult.second))
+                fileManifestJson = migrationResult.second.jsonObject
+            }
+
             val serialFileManifest =
-                json.decodeFromString(SerialFileManifest.serializer(), fileManifest)
+                json.decodeFromJsonElement(SerialFileManifest.serializer(), fileManifestJson)
             manifests[file.path] = serialFileManifest.load()
         }
 
@@ -128,6 +153,7 @@ class InMemoryPack(json: Json, private val basePath: Path = Paths.get("")) {
 }
 
 data class PackManifest(
+    var formatVersion: String,
     var name: String,
     var summary: String?,
     var author: String?,
@@ -186,6 +212,7 @@ data class FileManifestUrlSource(
 
 fun PackManifest.toSerial(): SerialPackManifest {
     return SerialPackManifest(
+        formatVersion = formatVersion,
         name = name,
         summary = summary,
         author = author,

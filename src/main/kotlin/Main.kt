@@ -93,14 +93,16 @@ class AddCmd : NoOpCliktCommand(name = "add", help = "Add projects to the pack")
     )
 }
 
-class ExportCmd : NoOpCliktCommand(name = "export", help = "Export the pack to a different format") {
+class ExportCmd :
+    NoOpCliktCommand(name = "export", help = "Export the pack to a different format") {
     override fun aliases(): Map<String, List<String>> = mapOf(
         "mr" to listOf("modrinth"),
         "cf" to listOf("curseforge"),
     )
 }
 
-class ImportCmd : NoOpCliktCommand(name = "import", help = "Import a pack from a different format") {
+class ImportCmd :
+    NoOpCliktCommand(name = "import", help = "Import a pack from a different format") {
     override fun aliases(): Map<String, List<String>> = mapOf(
         "mr" to listOf("modrinth"),
         "cf" to listOf("curseforge")
@@ -124,7 +126,12 @@ fun main(args: Array<String>) {
         .subcommands(ImportCmd().subcommands(ImportModrinth()).subcommands(ImportCurseforge()))
         .subcommands(ExportCmd().subcommands(ExportModrinth()).subcommands(ExportCurseforge()))
         .subcommands(ModList())
-        .subcommands(CompletionCommand(name = "completion", help = "Generate a completion script for your shell"))
+        .subcommands(
+            CompletionCommand(
+                name = "completion",
+                help = "Generate a completion script for your shell"
+            )
+        )
 
     try {
         cli.parse(args)

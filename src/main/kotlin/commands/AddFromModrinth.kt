@@ -14,7 +14,7 @@ class AddFromModrinth : CliktCommand(name = "modrinth", help = "Add a project to
     private val query by argument()
 
     override fun run() = runBlocking {
-        val pack = InMemoryPack(ctx.json)
+        val pack = InMemoryPack(ctx.json, terminal = terminal)
         val dependencyGraph = loadDependencyGraph()
         addModrinthMod(pack, dependencyGraph, query, terminal)
         dependencyGraph.save()

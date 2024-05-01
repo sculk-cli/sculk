@@ -17,7 +17,7 @@ import java.nio.file.Paths
 
 class ExportModrinth : CliktCommand(name = "modrinth", help = "Export a Modrinth modpack (.mrpack)") {
     override fun run() = runBlocking {
-        val pack = InMemoryPack(ctx.json)
+        val pack = InMemoryPack(ctx.json, terminal = terminal)
         val mrpackIndex = createMrpackIndex(pack)
         val overrides = pack
             .getFiles()

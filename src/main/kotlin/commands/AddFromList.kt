@@ -16,7 +16,7 @@ class AddFromList : CliktCommand(name = "list", help = "Add projects to the mani
     private val listFile by argument().file(mustExist = true, mustBeReadable = true)
 
     override fun run() = runBlocking {
-        val pack = InMemoryPack(ctx.json)
+        val pack = InMemoryPack(ctx.json, terminal = terminal)
         val dependencyGraph = loadDependencyGraph()
 
         listFile.forEachLine { line ->

@@ -14,7 +14,7 @@ class AddFromCurseforge : CliktCommand(name = "curseforge", help = "Add a projec
     private val query by argument()
 
     override fun run() = runBlocking {
-        val pack = InMemoryPack(ctx.json)
+        val pack = InMemoryPack(ctx.json, terminal = terminal)
         val dependencyGraph = loadDependencyGraph()
         addCurseforgeMod(pack, dependencyGraph, query, terminal)
         dependencyGraph.save()

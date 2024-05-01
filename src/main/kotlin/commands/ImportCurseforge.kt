@@ -14,6 +14,7 @@ import tech.jamalam.*
 import tech.jamalam.curseforge.importCurseforgePack
 import tech.jamalam.curseforge.models.getSide
 import tech.jamalam.pack.*
+import tech.jamalam.pack.migration.FormatVersion
 import tech.jamalam.util.*
 import java.io.File
 import java.nio.file.Paths
@@ -122,6 +123,7 @@ class ImportCurseforge : CliktCommand(name = "curseforge", help = "Import a Curs
             )
 
             val pack = SerialPackManifest(
+                formatVersion = FormatVersion.CURRENT.toString(),
                 name = importedPack.manifest.name,
                 author = importedPack.manifest.author,
                 summary = null,

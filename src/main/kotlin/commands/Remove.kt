@@ -14,7 +14,7 @@ class Remove : CliktCommand(name = "remove", help = "Remove a file or manifest")
     private val filename by argument().file(mustExist = true, canBeDir = false)
 
     override fun run() = runBlocking {
-        val pack = InMemoryPack(ctx.json)
+        val pack = InMemoryPack(ctx.json, terminal = terminal)
         val dependencyGraph = loadDependencyGraph()
         val relativePath =
             filename.canonicalFile.toRelativeString(Paths.get("").toFile().canonicalFile)

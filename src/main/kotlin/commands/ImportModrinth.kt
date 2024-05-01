@@ -14,6 +14,7 @@ import tech.jamalam.ctx
 import tech.jamalam.modrinth.getLoaderVersionPair
 import tech.jamalam.modrinth.importModrinthPack
 import tech.jamalam.pack.*
+import tech.jamalam.pack.migration.FormatVersion
 import tech.jamalam.util.*
 import java.io.File
 import java.nio.file.Paths
@@ -151,6 +152,7 @@ class ImportModrinth : CliktCommand(name = "modrinth", help = "Import a Modrinth
             )
 
             val pack = SerialPackManifest(
+                formatVersion = FormatVersion.CURRENT.toString(),
                 name = importedPack.index.name,
                 author = null,
                 summary = importedPack.index.summary,

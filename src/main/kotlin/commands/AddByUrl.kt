@@ -23,7 +23,7 @@ class AddByUrl : CliktCommand(name = "url", help = "Add a project to the manifes
 
     override fun run() {
         val transformedSlug = slug.lowercase().replace(" ", "-")
-        val pack = InMemoryPack(ctx.json)
+        val pack = InMemoryPack(ctx.json, terminal = terminal)
         val tempFile = runBlocking { downloadFileTemp(url) }
         val contents = tempFile.readBytes()
 
