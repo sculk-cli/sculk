@@ -19,21 +19,72 @@ public enum class ModrinthEnvSupport {
 }
 
 @Serializable
-public enum class ModrinthModLoader {
-    @SerialName("minecraft")
-    Minecraft,
+public enum class ModrinthLoader {
+    @SerialName("bukkit")
+    Bukkit,
+
+    @SerialName("bungeecord")
+    Bungeecord,
+
+    @SerialName("canvas")
+    Canvas,
+
+    @SerialName("datapack")
+    Datapack,
 
     @SerialName("fabric")
     Fabric,
 
+    @SerialName("folia")
+    Folia,
+
     @SerialName("forge")
     Forge,
+
+    @SerialName("iris")
+    Iris,
+
+    @SerialName("liteloader")
+    LiteLoader,
+
+    @SerialName("minecraft")
+    Minecraft,
+
+    @SerialName("modloader")
+    RisugamiModLoader,
 
     @SerialName("neoforge")
     NeoForge,
 
+    @SerialName("optifine")
+    Optifine,
+
+    @SerialName("paper")
+    Paper,
+
+    @SerialName("purpur")
+    Purpur,
+
     @SerialName("quilt")
     Quilt,
+
+    @SerialName("rift")
+    Rift,
+
+    @SerialName("spigot")
+    Spigot,
+
+    @SerialName("sponge")
+    Sponge,
+
+    @SerialName("vanilla")
+    Vanilla,
+
+    @SerialName("velocity")
+    Velocity,
+
+    @SerialName("waterfall")
+    Waterfall,
 }
 
 @Serializable

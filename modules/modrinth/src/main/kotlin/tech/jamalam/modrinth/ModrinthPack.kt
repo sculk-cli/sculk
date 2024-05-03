@@ -5,7 +5,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import tech.jamalam.modrinth.models.ModrinthEnvSupport
-import tech.jamalam.modrinth.models.ModrinthModLoader
+import tech.jamalam.modrinth.models.ModrinthLoader
 import tech.jamalam.modrinth.models.ModrinthVersionFileHashes
 import java.io.FileOutputStream
 import java.nio.file.Path
@@ -125,12 +125,12 @@ public data class ModrinthPackDependencies(
     @SerialName("quilt-loader") val quiltLoaderVersion: String? = null,
 )
 
-public fun ModrinthPackDependencies.getLoaderVersionPair(): Pair<ModrinthModLoader, String> {
+public fun ModrinthPackDependencies.getLoaderVersionPair(): Pair<ModrinthLoader, String> {
     return when {
-        forgeVersion != null -> ModrinthModLoader.Forge to forgeVersion
-        neoforgeVersion != null -> ModrinthModLoader.NeoForge to neoforgeVersion
-        fabricLoaderVersion != null -> ModrinthModLoader.Fabric to fabricLoaderVersion
-        quiltLoaderVersion != null -> ModrinthModLoader.Quilt to quiltLoaderVersion
+        forgeVersion != null -> ModrinthLoader.Forge to forgeVersion
+        neoforgeVersion != null -> ModrinthLoader.NeoForge to neoforgeVersion
+        fabricLoaderVersion != null -> ModrinthLoader.Fabric to fabricLoaderVersion
+        quiltLoaderVersion != null -> ModrinthLoader.Quilt to quiltLoaderVersion
         else -> error("No valid mod loader found")
     }
 }

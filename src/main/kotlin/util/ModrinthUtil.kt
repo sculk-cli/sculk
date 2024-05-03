@@ -8,6 +8,13 @@ import tech.jamalam.modrinth.ModrinthPackFileEnv
 import tech.jamalam.modrinth.models.*
 import tech.jamalam.pack.*
 
+private val MODRINTH_DEFAULT_LOADERS = listOf(
+    ModrinthLoader.Optifine,
+    ModrinthLoader.Iris,
+    ModrinthLoader.Datapack,
+    ModrinthLoader.Minecraft // resource packs
+).toTypedArray()
+
 suspend fun addModrinthProject(
     pack: InMemoryPack,
     dependencyGraph: DependencyGraph,
@@ -22,7 +29,7 @@ suspend fun addModrinthProject(
                 query,
                 loaders = listOf(
                     pack.getManifest().loader.type.toModrinth(),
-                    ModrinthModLoader.Minecraft
+                    *MODRINTH_DEFAULT_LOADERS
                 ),
                 gameVersions = listOf(pack.getManifest().minecraft)
             ).hits
@@ -56,12 +63,12 @@ private suspend fun addModrinthProject(
             project.slug,
             loaders = listOf(
                 pack.getManifest().loader.type.toModrinth(),
-                ModrinthModLoader.Minecraft,
                 *if (pack.getManifest().loader.type == ModLoader.Quilt) {
-                    arrayOf(ModrinthModLoader.Fabric)
+                    arrayOf(ModrinthLoader.Fabric)
                 } else {
                     emptyArray()
-                }
+                },
+                *MODRINTH_DEFAULT_LOADERS
             ),
             gameVersions = listOf(pack.getManifest().minecraft)
         )
@@ -83,14 +90,8 @@ suspend fun addModrinthVersion(
     ignoreIfExists: Boolean = true,
 ): Boolean {
     val modrinthFile = version.files.first { it.primary }
-
     val tempFile = runBlocking { downloadFileTemp(parseUrl(modrinthFile.downloadUrl)) }
-
-    val dir = if (version.loaders.contains("minecraft")) {
-        TODO()
-    } else {
-        "mods"
-    }
+    val dir = version.loaders.first().getSaveDir()
 
     val existingManifest = pack.getManifest("$dir/${project.slug}.sculk.json")
     val fileManifest = if (existingManifest != null) {
@@ -132,46 +133,48 @@ suspend fun addModrinthVersion(
     pack.setManifest("$dir/${project.slug}.sculk.json", fileManifest)
     terminal.info("Added ${project.title} to manifest")
 
-    for (dependency in version.dependencies) {
-        when (dependency.type) {
-            ModrinthVersionDependencyType.Required -> {
-                val dependencyProject = ctx.modrinthApi.getProject(dependency.projectId)
-                    ?: error("Dependency not found")
+    if (dir == "mods") { // only supporting mod dependencies for now
+        for (dependency in version.dependencies) {
+            when (dependency.type) {
+                ModrinthVersionDependencyType.Required -> {
+                    val dependencyProject = ctx.modrinthApi.getProject(dependency.projectId)
+                        ?: error("Dependency not found")
 
-                if (addModrinthProject(
-                        terminal,
-                        pack,
-                        dependencyGraph,
-                        dependencyProject
-                    ) || dependencyGraph.containsKey("mods/${dependencyProject.slug}.sculk.json")
-                ) {
-                    dependencyGraph.addDependency(
-                        "mods/${dependencyProject.slug}.sculk.json",
-                        "mods/${project.slug}.sculk.json"
-                    )
+                    if (addModrinthProject(
+                            terminal,
+                            pack,
+                            dependencyGraph,
+                            dependencyProject
+                        ) || dependencyGraph.containsKey("$dir/${dependencyProject.slug}.sculk.json")
+                    ) {
+                        dependencyGraph.addDependency(
+                            "$dir/${dependencyProject.slug}.sculk.json",
+                            "$dir/${project.slug}.sculk.json"
+                        )
+                    }
                 }
-            }
 
-            ModrinthVersionDependencyType.Optional -> {
-                val dependencyProject = ctx.modrinthApi.getProject(dependency.projectId)
-                    ?: error("Dependency not found")
-                val prompt = PrettyListPrompt(
-                    "Add optional dependency ${dependencyProject.title}?",
-                    listOf("Yes", "No"),
-                    terminal
-                )
-
-                if (prompt.ask() == "Yes") {
-                    dependencyGraph.addDependency(
-                        "mods/${dependencyProject.slug}.sculk.json",
-                        "mods/${project.slug}.sculk.json"
+                ModrinthVersionDependencyType.Optional -> {
+                    val dependencyProject = ctx.modrinthApi.getProject(dependency.projectId)
+                        ?: error("Dependency not found")
+                    val prompt = PrettyListPrompt(
+                        "Add optional dependency ${dependencyProject.title}?",
+                        listOf("Yes", "No"),
+                        terminal
                     )
 
-                    addModrinthProject(terminal, pack, dependencyGraph, dependencyProject)
-                }
-            }
+                    if (prompt.ask() == "Yes") {
+                        dependencyGraph.addDependency(
+                            "$dir/${dependencyProject.slug}.sculk.json",
+                            "$dir/${project.slug}.sculk.json"
+                        )
 
-            else -> {}
+                        addModrinthProject(terminal, pack, dependencyGraph, dependencyProject)
+                    }
+                }
+
+                else -> {}
+            }
         }
     }
 
@@ -245,17 +248,31 @@ fun Side.toModrinthEnvClientSupport() = when (this) {
     Side.Both -> ModrinthEnvSupport.Required
 }
 
-fun ModrinthModLoader.toModLoader(): ModLoader = when (this) {
-    ModrinthModLoader.NeoForge -> ModLoader.Neoforge
-    ModrinthModLoader.Fabric -> ModLoader.Fabric
-    ModrinthModLoader.Forge -> ModLoader.Forge
-    ModrinthModLoader.Quilt -> ModLoader.Quilt
-    else -> error("Unknown Modrinth mod loader: $this")
+fun ModrinthLoader.toModLoader(): ModLoader = when (this) {
+    ModrinthLoader.NeoForge -> ModLoader.Neoforge
+    ModrinthLoader.Fabric -> ModLoader.Fabric
+    ModrinthLoader.Forge -> ModLoader.Forge
+    ModrinthLoader.Quilt -> ModLoader.Quilt
+    else -> error("Unsupported Modrinth mod loader: $this")
 }
 
-fun ModLoader.toModrinth(): ModrinthModLoader = when (this) {
-    ModLoader.Neoforge -> ModrinthModLoader.NeoForge
-    ModLoader.Fabric -> ModrinthModLoader.Fabric
-    ModLoader.Forge -> ModrinthModLoader.Forge
-    ModLoader.Quilt -> ModrinthModLoader.Quilt
+fun ModLoader.toModrinth(): ModrinthLoader = when (this) {
+    ModLoader.Neoforge -> ModrinthLoader.NeoForge
+    ModLoader.Fabric -> ModrinthLoader.Fabric
+    ModLoader.Forge -> ModrinthLoader.Forge
+    ModLoader.Quilt -> ModrinthLoader.Quilt
+}
+
+fun ModrinthLoader.getSaveDir(): String = when (this) {
+    ModrinthLoader.Canvas -> "shaderpacks"
+    ModrinthLoader.Datapack -> "datapacks"
+    ModrinthLoader.Fabric -> "mods"
+    ModrinthLoader.Forge -> "mods"
+    ModrinthLoader.Iris -> "shaderpacks"
+    ModrinthLoader.Minecraft -> "resourcepacks"
+    ModrinthLoader.NeoForge -> "mods"
+    ModrinthLoader.Optifine -> "shaderpacks"
+    ModrinthLoader.Quilt -> "mods"
+    ModrinthLoader.Vanilla -> "resourcepacks"
+    else -> error("Unsupported Modrinth loader: $this")
 }

@@ -45,7 +45,7 @@ public data class ModrinthProject(
     @SerialName("approved") public val approvedTime: Instant? = null,
     @SerialName("queued") public val queuedTime: Instant? = null,
     @SerialName("versions") public val versionIds: List<String>,
-    public val loaders: List<String>,
+    public val loaders: List<ModrinthLoader>,
     @SerialName("game_versions") public val gameVersions: List<String>,
     @SerialName("gallery") public val galleryImages: List<ModrinthGalleryImage>? = null,
     @SerialName("body_url") private val bodyUrl: Nothing? = null,

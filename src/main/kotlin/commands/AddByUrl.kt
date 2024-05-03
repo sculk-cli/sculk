@@ -5,16 +5,15 @@ import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.options.option
 import io.ktor.http.*
 import kotlinx.coroutines.runBlocking
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
-import tech.jamalam.*
+import tech.jamalam.ctx
 import tech.jamalam.pack.*
 import tech.jamalam.util.digestSha1
 import tech.jamalam.util.digestSha512
 import tech.jamalam.util.downloadFileTemp
 import tech.jamalam.util.prettyPrompt
 
-class AddByUrl : CliktCommand(name = "url", help = "Add a project to the manifest from a direct download URL") {
+class AddByUrl :
+    CliktCommand(name = "url", help = "Add a project to the manifest from a direct download URL") {
     private val slug by option()
         .prettyPrompt<String>("Enter project name")
     private val url by option()
@@ -31,6 +30,9 @@ class AddByUrl : CliktCommand(name = "url", help = "Add a project to the manifes
 
         val dir = when (type) {
             Type.Mod -> "mods"
+            Type.Shaderpack -> "shaderpacks"
+            Type.Resourcepack -> "resourcepacks"
+            Type.Datapack -> "datapacks"
         }
 
         val existingManifest = pack.getManifest("$dir/$transformedSlug.sculk.json")
@@ -64,6 +66,9 @@ class AddByUrl : CliktCommand(name = "url", help = "Add a project to the manifes
     }
 
     enum class Type {
-        Mod
+        Mod,
+        Shaderpack,
+        Resourcepack,
+        Datapack,
     }
 }

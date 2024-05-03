@@ -15,7 +15,7 @@ public data class ModrinthVersion(
     public val gameVersions: List<String>,
     @SerialName("version_type")
     public val type: ModrinthVersionType,
-    public val loaders: List<String>,
+    public val loaders: List<ModrinthLoader>,
     public val featured: Boolean,
     public val status: ModrinthVersionStatus,
     @SerialName("requested_status")

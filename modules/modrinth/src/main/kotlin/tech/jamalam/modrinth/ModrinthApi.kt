@@ -36,7 +36,7 @@ public class ModrinthApi(
 
     public suspend fun search(
         query: String,
-        loaders: List<ModrinthModLoader> = listOf(),
+        loaders: List<ModrinthLoader> = listOf(),
         gameVersions: List<String> = listOf(),
         index: ModrinthSearchIndex = ModrinthSearchIndex.Relevance,
         offset: Int = 0,
@@ -129,7 +129,7 @@ public class ModrinthApi(
 
     public suspend fun getProjectVersions(
         idOrSlug: String,
-        loaders: List<ModrinthModLoader> = listOf(),
+        loaders: List<ModrinthLoader> = listOf(),
         gameVersions: List<String> = listOf(),
         featured: Boolean? = null
     ): List<ModrinthVersion> {

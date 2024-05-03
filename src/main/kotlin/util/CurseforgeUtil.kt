@@ -74,11 +74,18 @@ private suspend fun addCurseforgeProject(
         error("No download URL for ${file.fileName}")
     }
 
+    val dir = when (mod.classId) {
+        6552 -> "shaderpacks"
+        6 -> "mods"
+        6945 -> "datapacks"
+        12 -> "resourcepacks"
+        else -> error("Unsupported class ID ${mod.classId}")
+    }
     val tempFile = downloadFileTemp(parseUrl(file.downloadUrl!!)).readBytes()
     val sha1 = tempFile.digestSha1()
     val sha512 = tempFile.digestSha512()
 
-    val existingManifest = pack.getManifest("mods/${mod.slug}.sculk.json")
+    val existingManifest = pack.getManifest("$dir/${mod.slug}.sculk.json")
     val fileManifest = if (existingManifest != null) {
         if (existingManifest.sources.curseforge != null) {
             if (ignoreIfExists) {
@@ -112,43 +119,57 @@ private suspend fun addCurseforgeProject(
         )
     }
 
-    pack.setManifest("mods/${mod.slug}.sculk.json", fileManifest)
+    pack.setManifest("$dir/${mod.slug}.sculk.json", fileManifest)
     terminal.info("Added ${mod.name} to manifest")
 
-    for (dependency in file.dependencies) {
-        when (dependency.relationType) {
-            CurseforgeFileRelationType.RequiredDependency -> {
-                val dependencyMod = ctx.curseforgeApi.getMod(dependency.modId)
-                    ?: error("Dependency not found")
+    if (dir == "mods") {
+        for (dependency in file.dependencies) {
+            when (dependency.relationType) {
+                CurseforgeFileRelationType.RequiredDependency -> {
+                    val dependencyMod = ctx.curseforgeApi.getMod(dependency.modId)
+                        ?: error("Dependency not found")
 
-                if (addCurseforgeProject(terminal, pack, dependencyGraph, dependencyMod) || dependencyGraph.containsKey("mods/${dependencyMod.slug}.sculk.json")) {
-                    dependencyGraph.addDependency(
-                        "mods/${dependencyMod.slug}.sculk.json",
-                        "mods/${mod.slug}.sculk.json"
-                    )
-                }
-            }
-
-            CurseforgeFileRelationType.OptionalDependency -> {
-                val dependencyMod = ctx.curseforgeApi.getMod(dependency.modId)
-                    ?: error("Dependency not found")
-                val prompt = PrettyListPrompt(
-                    "Add optional dependency ${dependencyMod.name}?",
-                    listOf("Yes", "No"),
-                    terminal
-                )
-
-                if (prompt.ask() == "Yes") {
-                    if (addCurseforgeProject(terminal, pack, dependencyGraph, dependencyMod) || dependencyGraph.containsKey("mods/${dependencyMod.slug}.sculk.json")) {
+                    if (addCurseforgeProject(
+                            terminal,
+                            pack,
+                            dependencyGraph,
+                            dependencyMod
+                        ) || dependencyGraph.containsKey("$dir/${dependencyMod.slug}.sculk.json")
+                    ) {
                         dependencyGraph.addDependency(
-                            "mods/${dependencyMod.slug}.sculk.json",
-                            "mods/${mod.slug}.sculk.json"
+                            "$dir/${dependencyMod.slug}.sculk.json",
+                            "$dir/${mod.slug}.sculk.json"
                         )
                     }
                 }
-            }
 
-            else -> {}
+                CurseforgeFileRelationType.OptionalDependency -> {
+                    val dependencyMod = ctx.curseforgeApi.getMod(dependency.modId)
+                        ?: error("Dependency not found")
+                    val prompt = PrettyListPrompt(
+                        "Add optional dependency ${dependencyMod.name}?",
+                        listOf("Yes", "No"),
+                        terminal
+                    )
+
+                    if (prompt.ask() == "Yes") {
+                        if (addCurseforgeProject(
+                                terminal,
+                                pack,
+                                dependencyGraph,
+                                dependencyMod
+                            ) || dependencyGraph.containsKey("$dir/${dependencyMod.slug}.sculk.json")
+                        ) {
+                            dependencyGraph.addDependency(
+                                "$dir/${dependencyMod.slug}.sculk.json",
+                                "$dir/${mod.slug}.sculk.json"
+                            )
+                        }
+                    }
+                }
+
+                else -> {}
+            }
         }
     }
 
