@@ -8,7 +8,7 @@ import tech.jamalam.ctx
 import tech.jamalam.pack.InMemoryPack
 import tech.jamalam.pack.loadDependencyGraph
 import tech.jamalam.pack.save
-import tech.jamalam.util.addCurseforgeMod
+import tech.jamalam.util.findAndAddCurseforgeProject
 
 class AddFromCurseforge : CliktCommand(name = "curseforge", help = "Add a project to the manifest from Curseforge") {
     private val query by argument()
@@ -16,7 +16,7 @@ class AddFromCurseforge : CliktCommand(name = "curseforge", help = "Add a projec
     override fun run() = runBlocking {
         val pack = InMemoryPack(ctx.json, terminal = terminal)
         val dependencyGraph = loadDependencyGraph()
-        addCurseforgeMod(pack, dependencyGraph, query, terminal)
+        findAndAddCurseforgeProject(pack, dependencyGraph, query, terminal)
         dependencyGraph.save()
         pack.save(ctx.json)
     }

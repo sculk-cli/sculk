@@ -9,8 +9,8 @@ import tech.jamalam.ctx
 import tech.jamalam.pack.InMemoryPack
 import tech.jamalam.pack.loadDependencyGraph
 import tech.jamalam.pack.save
-import tech.jamalam.util.addCurseforgeMod
-import tech.jamalam.util.addModrinthMod
+import tech.jamalam.util.findAndAddCurseforgeProject
+import tech.jamalam.util.addModrinthProject
 
 class AddFromList : CliktCommand(name = "list", help = "Add projects to the manifest from a userscript export list") {
     private val listFile by argument().file(mustExist = true, mustBeReadable = true)
@@ -28,8 +28,8 @@ class AddFromList : CliktCommand(name = "list", help = "Add projects to the mani
                         val (site, slug) = parts
 
                         when (site) {
-                            "curseforge" -> addCurseforgeMod(pack, dependencyGraph, slug, terminal)
-                            "modrinth" -> addModrinthMod(pack, dependencyGraph, slug, terminal)
+                            "curseforge" -> findAndAddCurseforgeProject(pack, dependencyGraph, slug, terminal)
+                            "modrinth" -> addModrinthProject(pack, dependencyGraph, slug, terminal)
                             else -> terminal.println("Invalid site: $site")
                         }
                     }

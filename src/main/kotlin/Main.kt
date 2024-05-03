@@ -120,6 +120,7 @@ fun main(args: Array<String>) {
                 AddFromList()
             )
         )
+        .subcommands(Update())
         .subcommands(Refresh())
         .subcommands(Remove())
         .subcommands(Install())

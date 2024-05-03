@@ -7,7 +7,7 @@ import tech.jamalam.curseforge.CURSEFORGE_MODS_CLASS
 import tech.jamalam.curseforge.models.*
 import tech.jamalam.pack.*
 
-suspend fun addCurseforgeMod(
+suspend fun findAndAddCurseforgeProject(
     pack: InMemoryPack,
     dependencyGraph: DependencyGraph,
     query: String,
@@ -41,10 +41,10 @@ suspend fun addCurseforgeMod(
             .let { mods.find { p -> p.name == it } }!!
     }
 
-    addMod(terminal, pack, dependencyGraph, mod, false)
+    addCurseforgeProject(terminal, pack, dependencyGraph, mod, false)
 }
 
-private suspend fun addMod(
+private suspend fun addCurseforgeProject(
     terminal: Terminal,
     pack: InMemoryPack,
     dependencyGraph: DependencyGraph,
@@ -121,7 +121,7 @@ private suspend fun addMod(
                 val dependencyMod = ctx.curseforgeApi.getMod(dependency.modId)
                     ?: error("Dependency not found")
 
-                if (addMod(terminal, pack, dependencyGraph, dependencyMod) || dependencyGraph.containsKey("mods/${dependencyMod.slug}.sculk.json")) {
+                if (addCurseforgeProject(terminal, pack, dependencyGraph, dependencyMod) || dependencyGraph.containsKey("mods/${dependencyMod.slug}.sculk.json")) {
                     dependencyGraph.addDependency(
                         "mods/${dependencyMod.slug}.sculk.json",
                         "mods/${mod.slug}.sculk.json"
@@ -139,7 +139,7 @@ private suspend fun addMod(
                 )
 
                 if (prompt.ask() == "Yes") {
-                    if (addMod(terminal, pack, dependencyGraph, dependencyMod) || dependencyGraph.containsKey("mods/${dependencyMod.slug}.sculk.json")) {
+                    if (addCurseforgeProject(terminal, pack, dependencyGraph, dependencyMod) || dependencyGraph.containsKey("mods/${dependencyMod.slug}.sculk.json")) {
                         dependencyGraph.addDependency(
                             "mods/${dependencyMod.slug}.sculk.json",
                             "mods/${mod.slug}.sculk.json"
@@ -151,6 +151,53 @@ private suspend fun addMod(
             else -> {}
         }
     }
+
+    return true
+}
+
+suspend fun updateCurseforgeProject(
+    pack: InMemoryPack,
+    manifest: FileManifest,
+): Boolean {
+    if (manifest.sources.curseforge == null) {
+        return false
+    }
+
+    val mod = ctx.curseforgeApi.getMod(manifest.sources.curseforge!!.projectId)
+        ?: error("Project not found")
+
+    val files =
+        ctx.curseforgeApi.getModFiles(
+            modId = mod.id,
+            modLoader = pack.getManifest().loader.type.toCurseforge(),
+            gameVersion = pack.getManifest().minecraft
+        ).sortedBy {
+            it.fileDate
+        }.reversed()
+
+    if (files.isEmpty()) {
+        error("No files found for ${mod.name}")
+    }
+
+    val file = files[0] // Most recent version
+
+    if (file.id == manifest.sources.curseforge!!.fileId) {
+        return false
+    }
+
+    if (file.downloadUrl == null) {
+        error("No download URL for ${file.fileName}")
+    }
+
+    val tempFile = downloadFileTemp(parseUrl(file.downloadUrl!!)).readBytes()
+    manifest.hashes.sha1 = tempFile.digestSha1()
+    manifest.hashes.sha512 = tempFile.digestSha512()
+    manifest.fileSize = tempFile.size
+    manifest.filename = file.fileName
+
+    manifest.sources.curseforge = FileManifestCurseforgeSource(
+        projectId = mod.id, fileUrl = file.downloadUrl!!, fileId = file.id
+    )
 
     return true
 }

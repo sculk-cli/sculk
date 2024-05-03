@@ -5,13 +5,10 @@ import kotlinx.coroutines.runBlocking
 import tech.jamalam.PrettyListPrompt
 import tech.jamalam.ctx
 import tech.jamalam.modrinth.ModrinthPackFileEnv
-import tech.jamalam.modrinth.models.ModrinthEnvSupport
-import tech.jamalam.modrinth.models.ModrinthModLoader
-import tech.jamalam.modrinth.models.ModrinthProject
-import tech.jamalam.modrinth.models.ModrinthVersionDependencyType
+import tech.jamalam.modrinth.models.*
 import tech.jamalam.pack.*
 
-suspend fun addModrinthMod(
+suspend fun addModrinthProject(
     pack: InMemoryPack,
     dependencyGraph: DependencyGraph,
     query: String,
@@ -38,7 +35,7 @@ suspend fun addModrinthMod(
             .let { projects.find { p -> p.title == it } }!!.slug
     }
 
-    addProject(
+    addModrinthProject(
         terminal,
         pack,
         dependencyGraph,
@@ -47,7 +44,7 @@ suspend fun addModrinthMod(
     )
 }
 
-private suspend fun addProject(
+private suspend fun addModrinthProject(
     terminal: Terminal,
     pack: InMemoryPack,
     dependencyGraph: DependencyGraph,
@@ -74,6 +71,17 @@ private suspend fun addProject(
 
     val version = versions.elementAtOrNull(0)
         ?: error("No valid versions found for ${project.title} (Minecraft: ${pack.getManifest().minecraft}, loader: ${pack.getManifest().loader.type})")
+    return addModrinthVersion(pack, dependencyGraph, project, version, terminal, ignoreIfExists)
+}
+
+suspend fun addModrinthVersion(
+    pack: InMemoryPack,
+    dependencyGraph: DependencyGraph,
+    project: ModrinthProject,
+    version: ModrinthVersion,
+    terminal: Terminal,
+    ignoreIfExists: Boolean = true,
+): Boolean {
     val modrinthFile = version.files.first { it.primary }
 
     val tempFile = runBlocking { downloadFileTemp(parseUrl(modrinthFile.downloadUrl)) }
@@ -130,7 +138,7 @@ private suspend fun addProject(
                 val dependencyProject = ctx.modrinthApi.getProject(dependency.projectId)
                     ?: error("Dependency not found")
 
-                if (addProject(
+                if (addModrinthProject(
                         terminal,
                         pack,
                         dependencyGraph,
@@ -159,13 +167,57 @@ private suspend fun addProject(
                         "mods/${project.slug}.sculk.json"
                     )
 
-                    addProject(terminal, pack, dependencyGraph, dependencyProject)
+                    addModrinthProject(terminal, pack, dependencyGraph, dependencyProject)
                 }
             }
 
             else -> {}
         }
     }
+
+    return true
+}
+
+suspend fun updateModrinthProject(
+    pack: InMemoryPack,
+    manifest: FileManifest,
+): Boolean {
+    if (manifest.sources.modrinth == null) {
+        return false
+    }
+
+    val mod = ctx.modrinthApi.getProject(manifest.sources.modrinth!!.projectId)
+        ?: error("Project not found")
+
+    val versions =
+        ctx.modrinthApi.getProjectVersions(
+            idOrSlug = mod.id,
+            loaders = listOf(pack.getManifest().loader.type.toModrinth()),
+            gameVersions = listOf(pack.getManifest().minecraft)
+        ).sortedBy {
+            it.publishedTime
+        }.reversed()
+
+    if (versions.isEmpty()) {
+        error("No versions found for ${mod.title}")
+    }
+
+    val version = versions[0] // Most recent version
+    val file = version.files.first { it.primary }
+
+    if (file.downloadUrl == manifest.sources.modrinth!!.fileUrl) {
+        return false
+    }
+
+    val tempFile = downloadFileTemp(parseUrl(file.downloadUrl)).readBytes()
+    manifest.hashes.sha1 = tempFile.digestSha1()
+    manifest.hashes.sha512 = tempFile.digestSha512()
+    manifest.fileSize = tempFile.size
+    manifest.filename = file.filename
+
+    manifest.sources.modrinth = FileManifestModrinthSource(
+        projectId = mod.id, fileUrl = file.downloadUrl
+    )
 
     return true
 }
