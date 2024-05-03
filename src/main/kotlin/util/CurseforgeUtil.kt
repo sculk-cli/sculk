@@ -50,7 +50,7 @@ private suspend fun addMod(
     dependencyGraph: DependencyGraph,
     mod: CurseforgeMod,
     ignoreIfExists: Boolean = true,
-) {
+): Boolean {
     if (mod.allowModDistribution == false) {
         error("${mod.name} does not allow distribution")
     }
@@ -82,7 +82,7 @@ private suspend fun addMod(
     val fileManifest = if (existingManifest != null) {
         if (existingManifest.sources.curseforge != null) {
             if (ignoreIfExists) {
-                return
+                return false
             }
 
             error("Existing manifest already has a Curseforge source (did you mean to use the update command?)")
@@ -121,12 +121,12 @@ private suspend fun addMod(
                 val dependencyMod = ctx.curseforgeApi.getMod(dependency.modId)
                     ?: error("Dependency not found")
 
-                dependencyGraph.addDependency(
-                    "mods/${dependencyMod.slug}.sculk.json",
-                    "mods/${mod.slug}.sculk.json"
-                )
-
-                addMod(terminal, pack, dependencyGraph, dependencyMod)
+                if (addMod(terminal, pack, dependencyGraph, dependencyMod) || dependencyGraph.containsKey("mods/${dependencyMod.slug}.sculk.json")) {
+                    dependencyGraph.addDependency(
+                        "mods/${dependencyMod.slug}.sculk.json",
+                        "mods/${mod.slug}.sculk.json"
+                    )
+                }
             }
 
             CurseforgeFileRelationType.OptionalDependency -> {
@@ -139,18 +139,20 @@ private suspend fun addMod(
                 )
 
                 if (prompt.ask() == "Yes") {
-                    dependencyGraph.addDependency(
-                        "mods/${dependencyMod.slug}.sculk.json",
-                        "mods/${mod.slug}.sculk.json"
-                    )
-
-                    addMod(terminal, pack, dependencyGraph, dependencyMod)
+                    if (addMod(terminal, pack, dependencyGraph, dependencyMod) || dependencyGraph.containsKey("mods/${dependencyMod.slug}.sculk.json")) {
+                        dependencyGraph.addDependency(
+                            "mods/${dependencyMod.slug}.sculk.json",
+                            "mods/${mod.slug}.sculk.json"
+                        )
+                    }
                 }
             }
 
             else -> {}
         }
     }
+
+    return true
 }
 
 fun ModLoader.toCurseforge(): CurseforgeModLoader = when (this) {

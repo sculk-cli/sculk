@@ -5,6 +5,8 @@ import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.options.option
 import io.ktor.http.*
 import kotlinx.coroutines.runBlocking
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import tech.jamalam.*
 import tech.jamalam.pack.*
 import tech.jamalam.util.digestSha1
@@ -21,10 +23,10 @@ class AddByUrl : CliktCommand(name = "url", help = "Add a project to the manifes
     private val type by option().prettyPrompt<Type>("Select type")
     private val side by option().prettyPrompt<Side>("Select side")
 
-    override fun run() {
+    override fun run() = runBlocking {
         val transformedSlug = slug.lowercase().replace(" ", "-")
         val pack = InMemoryPack(ctx.json, terminal = terminal)
-        val tempFile = runBlocking { downloadFileTemp(url) }
+        val tempFile = downloadFileTemp(url)
         val contents = tempFile.readBytes()
 
         val dir = when (type) {

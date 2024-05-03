@@ -8,10 +8,10 @@ private val migrators = listOf(
     Migrator1_0(),
 )
 
-fun migrateFile(fileType: MigrationFileType, json: JsonObject): Pair<Boolean, JsonObject> {
+fun migrateFile(fileType: MigrationFileType, json: JsonObject, currentVersion: FormatVersion): Pair<Boolean, JsonObject> {
     var doneAny = false
     var migratedJson = json
-    var currentVersion = json["formatVersion"]?.jsonPrimitive?.content?.let { FormatVersion.fromString(it) } ?: FormatVersion(0, 0)
+    var currentVersion = currentVersion
 
     for (migrator in migrators) {
         if (currentVersion == migrator.getOutputVersion()) {
@@ -29,6 +29,22 @@ fun migrateFile(fileType: MigrationFileType, json: JsonObject): Pair<Boolean, Js
 class FormatVersion(private val major: Int, private val minor: Int) {
     override fun toString(): String {
         return "$major.$minor"
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is FormatVersion) return false
+
+        if (major != other.major) return false
+        if (minor != other.minor) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = major
+        result = 31 * result + minor
+        return result
     }
 
     companion object {

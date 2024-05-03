@@ -5,6 +5,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import tech.jamalam.pack.migration.FormatVersion
 import tech.jamalam.pack.migration.MigrationFileType
 import tech.jamalam.pack.migration.migrateFile
 import tech.jamalam.util.digestSha256
@@ -26,12 +27,14 @@ class InMemoryPack(json: Json, private val basePath: Path = Paths.get(""), termi
 
         val manifest = manifestPath.toFile().readText()
         var rootManifestJson = json.parseToJsonElement(manifest).jsonObject
-        val migrationResult = migrateFile(MigrationFileType.ROOT_MANIFEST, rootManifestJson)
+        var currentVersion = rootManifestJson["formatVersion"]?.jsonPrimitive?.content?.let { FormatVersion.fromString(it) } ?: FormatVersion(0, 0)
+        val migrationResult = migrateFile(MigrationFileType.ROOT_MANIFEST, rootManifestJson, currentVersion)
 
         if (migrationResult.first) {
-            terminal.info("Migrated root manifest from ${migrationResult.second["formatVersion"]?.jsonPrimitive?.content} to ${migrationResult.second["formatVersion"]?.jsonPrimitive?.content}")
+            terminal.info("Migrated root manifest from $currentVersion to ${migrationResult.second["formatVersion"]?.jsonPrimitive?.content}")
             manifestPath.toFile().writeText(json.encodeToString(migrationResult.second))
             rootManifestJson = migrationResult.second.jsonObject
+            currentVersion = FormatVersion.fromString(migrationResult.second["formatVersion"]?.jsonPrimitive?.content ?: "0.0")
         }
 
         val serialManifest =
@@ -51,7 +54,7 @@ class InMemoryPack(json: Json, private val basePath: Path = Paths.get(""), termi
             }
 
             var fileManifestJson = json.parseToJsonElement(fileManifest).jsonObject
-            val migrationResult = migrateFile(MigrationFileType.FILE_MANIFEST, fileManifestJson)
+            val migrationResult = migrateFile(MigrationFileType.FILE_MANIFEST, fileManifestJson, currentVersion)
 
             if (migrationResult.first) {
                 terminal.info("Migrated file manifest")

@@ -53,7 +53,7 @@ private suspend fun addProject(
     dependencyGraph: DependencyGraph,
     project: ModrinthProject,
     ignoreIfExists: Boolean = true,
-) {
+): Boolean {
     val versions = runBlocking {
         ctx.modrinthApi.getProjectVersions(
             project.slug,
@@ -88,7 +88,7 @@ private suspend fun addProject(
     val fileManifest = if (existingManifest != null) {
         if (existingManifest.sources.modrinth != null) {
             if (ignoreIfExists) {
-                return
+                return false
             }
 
             error("Existing manifest already has a Modrinth source (did you mean to use the update command?)")
@@ -130,12 +130,18 @@ private suspend fun addProject(
                 val dependencyProject = ctx.modrinthApi.getProject(dependency.projectId)
                     ?: error("Dependency not found")
 
-                dependencyGraph.addDependency(
-                    "mods/${dependencyProject.slug}.sculk.json",
-                    "mods/${project.slug}.sculk.json"
-                )
-
-                addProject(terminal, pack, dependencyGraph, dependencyProject)
+                if (addProject(
+                        terminal,
+                        pack,
+                        dependencyGraph,
+                        dependencyProject
+                    ) || dependencyGraph.containsKey("mods/${dependencyProject.slug}.sculk.json")
+                ) {
+                    dependencyGraph.addDependency(
+                        "mods/${dependencyProject.slug}.sculk.json",
+                        "mods/${project.slug}.sculk.json"
+                    )
+                }
             }
 
             ModrinthVersionDependencyType.Optional -> {
@@ -160,6 +166,8 @@ private suspend fun addProject(
             else -> {}
         }
     }
+
+    return true
 }
 
 fun modrinthEnvTypePairToSide(clientSide: ModrinthEnvSupport, serverSide: ModrinthEnvSupport) =
