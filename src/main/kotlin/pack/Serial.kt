@@ -29,9 +29,7 @@ data class SerialPackManifestManifest(
 
 @Serializable
 data class SerialPackManifestFile(
-    val path: String,
-    val side: Side,
-    val sha256: String
+    val path: String, val side: Side, val sha256: String
 )
 
 @Serializable
@@ -45,7 +43,7 @@ data class SerialFileManifest(
 
 @Serializable
 data class SerialFileManifestHashes(
-    val sha1: String, val sha512: String
+    val sha1: String, val sha512: String, val murmur2: Long,
 )
 
 @Serializable
@@ -100,14 +98,11 @@ fun SerialPackManifest.load(): PackManifest {
 
 fun SerialFileManifest.load(): FileManifest {
     return FileManifest(
-        filename = filename,
-        side = side,
-        hashes = FileManifestHashes(
+        filename = filename, side = side, hashes = FileManifestHashes(
             sha1 = hashes.sha1,
             sha512 = hashes.sha512,
-        ),
-        fileSize = fileSize,
-        sources = FileManifestSources(
+            murmur2 = hashes.murmur2,
+        ), fileSize = fileSize, sources = FileManifestSources(
             curseforge = sources.curseforge?.let {
                 FileManifestCurseforgeSource(
                     projectId = it.projectId,

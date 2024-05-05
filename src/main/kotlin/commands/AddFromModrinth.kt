@@ -24,7 +24,7 @@ class AddFromModrinth : CliktCommand(name = "modrinth", help = "Add a project to
         if (versionId != null) {
             val version = ctx.modrinthApi.getVersion(versionId!!) ?: error("Version not found")
             val project = ctx.modrinthApi.getProject(version.projectId) ?: error("Project not found")
-            addModrinthVersion(pack, dependencyGraph, project, version, terminal, false)
+            addModrinthVersion(pack, dependencyGraph, project, version, terminal, ignoreIfExists = false)
         } else {
             addModrinthProject(pack, dependencyGraph, query ?: error("Query must be provided if version ID is not"), terminal)
         }

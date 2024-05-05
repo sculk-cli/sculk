@@ -78,7 +78,7 @@ private suspend fun addModrinthProject(
 
     val version = versions.elementAtOrNull(0)
         ?: error("No valid versions found for ${project.title} (Minecraft: ${pack.getManifest().minecraft}, loader: ${pack.getManifest().loader.type})")
-    return addModrinthVersion(pack, dependencyGraph, project, version, terminal, ignoreIfExists)
+    return addModrinthVersion(pack, dependencyGraph, project, version, terminal, ignoreIfExists = ignoreIfExists)
 }
 
 suspend fun addModrinthVersion(
@@ -87,13 +87,16 @@ suspend fun addModrinthVersion(
     project: ModrinthProject,
     version: ModrinthVersion,
     terminal: Terminal,
+    manifestPath: String? = null,
     ignoreIfExists: Boolean = true,
+    downloadDependencies: Boolean = true
 ): Boolean {
     val modrinthFile = version.files.first { it.primary }
-    val tempFile = runBlocking { downloadFileTemp(parseUrl(modrinthFile.downloadUrl)) }
+    val tempFile = downloadFileTemp(parseUrl(modrinthFile.downloadUrl))
     val dir = version.loaders.first().getSaveDir()
 
-    val existingManifest = pack.getManifest("$dir/${project.slug}.sculk.json")
+    val path = manifestPath ?: "$dir/${project.slug}.sculk.json"
+    val existingManifest = pack.getManifest(path)
     val fileManifest = if (existingManifest != null) {
         if (existingManifest.sources.modrinth != null) {
             if (ignoreIfExists) {
@@ -115,7 +118,9 @@ suspend fun addModrinthVersion(
     } else {
         FileManifest(
             filename = modrinthFile.filename, hashes = FileManifestHashes(
-                sha1 = modrinthFile.hashes.sha1, sha512 = modrinthFile.hashes.sha512
+                sha1 = modrinthFile.hashes.sha1,
+                sha512 = modrinthFile.hashes.sha512,
+                murmur2 = tempFile.readBytes().digestMurmur2()
             ),
             fileSize = tempFile.readBytes().size,
             side = modrinthEnvTypePairToSide(
@@ -130,10 +135,10 @@ suspend fun addModrinthVersion(
         )
     }
 
-    pack.setManifest("$dir/${project.slug}.sculk.json", fileManifest)
+    pack.setManifest(path, fileManifest)
     terminal.info("Added ${project.title} to manifest")
 
-    if (dir == "mods") { // only supporting mod dependencies for now
+    if (dir == "mods" && downloadDependencies) { // only supporting mod dependencies for now
         for (dependency in version.dependencies) {
             when (dependency.type) {
                 ModrinthVersionDependencyType.Required -> {
@@ -149,7 +154,7 @@ suspend fun addModrinthVersion(
                     ) {
                         dependencyGraph.addDependency(
                             "$dir/${dependencyProject.slug}.sculk.json",
-                            "$dir/${project.slug}.sculk.json"
+                            path
                         )
                     }
                 }
@@ -166,7 +171,7 @@ suspend fun addModrinthVersion(
                     if (prompt.ask() == "Yes") {
                         dependencyGraph.addDependency(
                             "$dir/${dependencyProject.slug}.sculk.json",
-                            "$dir/${project.slug}.sculk.json"
+                            path
                         )
 
                         addModrinthProject(terminal, pack, dependencyGraph, dependencyProject)

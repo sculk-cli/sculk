@@ -44,7 +44,7 @@ suspend fun findAndAddCurseforgeProject(
     addCurseforgeProject(terminal, pack, dependencyGraph, mod, false)
 }
 
-private suspend fun addCurseforgeProject(
+suspend fun addCurseforgeProject(
     terminal: Terminal,
     pack: InMemoryPack,
     dependencyGraph: DependencyGraph,
@@ -52,7 +52,8 @@ private suspend fun addCurseforgeProject(
     ignoreIfExists: Boolean = true,
 ): Boolean {
     if (mod.allowModDistribution == false) {
-        error("${mod.name} does not allow distribution")
+        terminal.warning("${mod.name} does not allow distribution")
+        return false
     }
 
     val files =
@@ -69,9 +70,22 @@ private suspend fun addCurseforgeProject(
     }
 
     val file = files[0] // Most recent version
+    return addCurseforgeFile(terminal, pack, dependencyGraph, mod, file, ignoreIfExists = ignoreIfExists)
+}
 
+suspend fun addCurseforgeFile(
+    terminal: Terminal,
+    pack: InMemoryPack,
+    dependencyGraph: DependencyGraph,
+    mod: CurseforgeMod,
+    file: CurseforgeFile,
+    manifestPath: String? = null,
+    ignoreIfExists: Boolean = true,
+    downloadDependencies: Boolean = true,
+): Boolean {
     if (file.downloadUrl == null) {
-        error("No download URL for ${file.fileName}")
+        terminal.warning("No download URL for ${file.fileName}")
+        return false
     }
 
     val dir = when (mod.classId) {
@@ -84,8 +98,11 @@ private suspend fun addCurseforgeProject(
     val tempFile = downloadFileTemp(parseUrl(file.downloadUrl!!)).readBytes()
     val sha1 = tempFile.digestSha1()
     val sha512 = tempFile.digestSha512()
+    val murmur2 = tempFile.digestMurmur2()
 
-    val existingManifest = pack.getManifest("$dir/${mod.slug}.sculk.json")
+    val path = manifestPath ?: "$dir/${mod.slug}.sculk.json"
+
+    val existingManifest = pack.getManifest(path)
     val fileManifest = if (existingManifest != null) {
         if (existingManifest.sources.curseforge != null) {
             if (ignoreIfExists) {
@@ -107,7 +124,7 @@ private suspend fun addCurseforgeProject(
     } else {
         FileManifest(
             filename = file.fileName, hashes = FileManifestHashes(
-                sha1 = sha1, sha512 = sha512
+                sha1 = sha1, sha512 = sha512, murmur2 = murmur2
             ),
             fileSize = tempFile.size,
             side = file.getSide().toSide(),
@@ -119,10 +136,10 @@ private suspend fun addCurseforgeProject(
         )
     }
 
-    pack.setManifest("$dir/${mod.slug}.sculk.json", fileManifest)
+    pack.setManifest(path, fileManifest)
     terminal.info("Added ${mod.name} to manifest")
 
-    if (dir == "mods") {
+    if (dir == "mods" && downloadDependencies) {
         for (dependency in file.dependencies) {
             when (dependency.relationType) {
                 CurseforgeFileRelationType.RequiredDependency -> {
@@ -138,7 +155,7 @@ private suspend fun addCurseforgeProject(
                     ) {
                         dependencyGraph.addDependency(
                             "$dir/${dependencyMod.slug}.sculk.json",
-                            "$dir/${mod.slug}.sculk.json"
+                            path
                         )
                     }
                 }
@@ -162,7 +179,7 @@ private suspend fun addCurseforgeProject(
                         ) {
                             dependencyGraph.addDependency(
                                 "$dir/${dependencyMod.slug}.sculk.json",
-                                "$dir/${mod.slug}.sculk.json"
+                                path
                             )
                         }
                     }

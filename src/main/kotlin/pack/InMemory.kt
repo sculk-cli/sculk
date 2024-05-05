@@ -27,14 +27,16 @@ class InMemoryPack(json: Json, private val basePath: Path = Paths.get(""), termi
 
         val manifest = manifestPath.toFile().readText()
         var rootManifestJson = json.parseToJsonElement(manifest).jsonObject
-        var currentVersion = rootManifestJson["formatVersion"]?.jsonPrimitive?.content?.let { FormatVersion.fromString(it) } ?: FormatVersion(0, 0)
-        val migrationResult = migrateFile(MigrationFileType.ROOT_MANIFEST, rootManifestJson, currentVersion)
+        val preMigrationVersion = rootManifestJson["formatVersion"]?.jsonPrimitive?.content?.let {
+            FormatVersion.fromString(it)
+        } ?: FormatVersion(0, 0)
+        val migrationResult =
+            migrateFile(MigrationFileType.ROOT_MANIFEST, rootManifestJson, preMigrationVersion)
 
         if (migrationResult.first) {
-            terminal.info("Migrated root manifest from $currentVersion to ${migrationResult.second["formatVersion"]?.jsonPrimitive?.content}")
+            terminal.info("Migrated root manifest from $preMigrationVersion to ${migrationResult.second["formatVersion"]?.jsonPrimitive?.content}")
             manifestPath.toFile().writeText(json.encodeToString(migrationResult.second))
             rootManifestJson = migrationResult.second.jsonObject
-            currentVersion = FormatVersion.fromString(migrationResult.second["formatVersion"]?.jsonPrimitive?.content ?: "0.0")
         }
 
         val serialManifest =
@@ -54,7 +56,8 @@ class InMemoryPack(json: Json, private val basePath: Path = Paths.get(""), termi
             }
 
             var fileManifestJson = json.parseToJsonElement(fileManifest).jsonObject
-            val migrationResult = migrateFile(MigrationFileType.FILE_MANIFEST, fileManifestJson, currentVersion)
+            val migrationResult =
+                migrateFile(MigrationFileType.FILE_MANIFEST, fileManifestJson, preMigrationVersion)
 
             if (migrationResult.first) {
                 terminal.info("Migrated file manifest")
@@ -192,7 +195,7 @@ data class FileManifest(
 )
 
 data class FileManifestHashes(
-    var sha1: String, var sha512: String
+    var sha1: String, var sha512: String, var murmur2: Long
 )
 
 data class FileManifestSources(
@@ -248,6 +251,7 @@ fun FileManifest.toSerial(): SerialFileManifest {
         hashes = SerialFileManifestHashes(
             sha1 = hashes.sha1,
             sha512 = hashes.sha512,
+            murmur2 = hashes.murmur2,
         ),
         fileSize = fileSize,
         sources = SerialFileManifestSources(

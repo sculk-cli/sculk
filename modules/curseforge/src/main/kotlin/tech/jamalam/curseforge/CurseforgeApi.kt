@@ -10,6 +10,7 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import tech.jamalam.curseforge.models.*
 import tech.jamalam.url.buildUrl
@@ -86,8 +87,7 @@ public class CurseforgeApi(
                 }
             )
             optionalParameter("modLoader", modLoader?.ordinal?.plus(1))
-            optionalParameter(
-                "modLoader",
+            optionalParameter("modLoader",
                 modLoaders?.joinToString(",") { (it.ordinal + 1).toString() })
             optionalParameter("gameVersionTypeId", gameVersionTypeId)
             optionalParameter("authorId", authorId)
@@ -152,10 +152,16 @@ public class CurseforgeApi(
         }
     }
 
+    public suspend fun getFingerprintMatches(
+        fingerprint: Long,
+        gameId: Int = MINECRAFT_GAME_ID,
+    ): List<CurseforgeFile> {
+        val response = post(buildUrl {
+            host(apiUrl)
+            path("$basePath/fingerprints/$gameId")
+        }, FingerprintRequestBody(listOf(fingerprint)))
 
-    public fun getFingerprintMatches(
-    ) {
-        TODO("Curseforge does not document what hashing algorithm it expects the fingerprints to be from?")
+        return response.body<CurseforgeResponse<CurseforgeFingerprintMatchesResult>>().data.exactMatches.map { it.file }
     }
 
     private suspend fun get(url: Url): HttpResponse {
@@ -165,9 +171,22 @@ public class CurseforgeApi(
             }
         }
     }
+
+    private suspend fun post(url: Url, body: Any): HttpResponse {
+        return client.post(url) {
+            if (token != null) {
+                header(HEADER_API_KEY, token)
+            }
+
+            contentType(ContentType.Application.Json)
+            setBody(body)
+        }
+    }
 }
 
 public data class CurseforgePaginationParameters(
-    public val firstIndex: Int = 0,
-    public val pageSize: Int = 20
+    public val firstIndex: Int = 0, public val pageSize: Int = 20
 )
+
+@Serializable
+private data class FingerprintRequestBody(val fingerprints: List<Long>)

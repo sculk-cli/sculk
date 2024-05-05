@@ -15,8 +15,8 @@ def build_distribution():
     if not os.path.exists("./build.gradle.kts"):
         raise Exception("Not in a Gradle project directory")
     
-    # process = subprocess.run(["./gradlew", ":installDist"])
-    # process.check_returncode()
+    process = subprocess.run(["./gradlew", ":installDist"])
+    process.check_returncode()
 
     for file in os.listdir(sculk_dir):
         if os.path.isdir(os.path.join(sculk_dir, file)):

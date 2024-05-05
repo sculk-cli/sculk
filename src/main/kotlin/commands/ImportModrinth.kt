@@ -54,7 +54,8 @@ class ImportModrinth : CliktCommand(name = "modrinth", help = "Import a Modrinth
                     side = file.env?.toSide() ?: Side.Both,
                     hashes = FileManifestHashes(
                         sha1 = file.hashes.sha1,
-                        sha512 = file.hashes.sha512
+                        sha512 = file.hashes.sha512,
+                        murmur2 = -1, // Updated later in the loop
                     ),
                     fileSize = file.fileSizeInBytes,
                     sources = FileManifestSources(
@@ -69,6 +70,11 @@ class ImportModrinth : CliktCommand(name = "modrinth", help = "Import a Modrinth
                 for (downloadUrl in file.downloadUrls) {
                     progress.advance(1)
                     progress.update { context = downloadUrl }
+
+                    if (fileManifest.hashes.murmur2 == -1L) {
+                        val file = downloadFileTemp(parseUrl(downloadUrl))
+                        fileManifest.hashes.murmur2 = file.readBytes().digestMurmur2()
+                    }
 
                     if (parseUrl(downloadUrl).host == "cdn.modrinth.com") {
                         val version = ctx.modrinthApi.getVersionFromHash(file.hashes.sha1)

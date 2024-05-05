@@ -7,10 +7,7 @@ import io.ktor.http.*
 import kotlinx.coroutines.runBlocking
 import tech.jamalam.ctx
 import tech.jamalam.pack.*
-import tech.jamalam.util.digestSha1
-import tech.jamalam.util.digestSha512
-import tech.jamalam.util.downloadFileTemp
-import tech.jamalam.util.prettyPrompt
+import tech.jamalam.util.*
 
 class AddByUrl :
     CliktCommand(name = "url", help = "Add a project to the manifest from a direct download URL") {
@@ -49,7 +46,8 @@ class AddByUrl :
                 side = side,
                 hashes = FileManifestHashes(
                     sha1 = contents.digestSha1(),
-                    sha512 = contents.digestSha512()
+                    sha512 = contents.digestSha512(),
+                    murmur2 = contents.digestMurmur2()
                 ),
                 fileSize = contents.size,
                 sources = FileManifestSources(

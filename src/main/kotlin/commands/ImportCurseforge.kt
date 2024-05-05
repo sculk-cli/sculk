@@ -73,7 +73,8 @@ class ImportCurseforge : CliktCommand(name = "curseforge", help = "Import a Curs
                     side = cfFile.getSide().toSide(),
                     hashes = FileManifestHashes(
                         sha1 = tempFile.digestSha1(),
-                        sha512 = tempFile.digestSha512()
+                        sha512 = tempFile.digestSha512(),
+                        murmur2 = tempFile.digestMurmur2()
                     ),
                     fileSize = tempFile.size,
                     sources = FileManifestSources(
