@@ -122,6 +122,7 @@ fun main(args: Array<String>) {
         )
         .subcommands(Update())
         .subcommands(Link())
+        .subcommands(Migrate())
         .subcommands(Refresh())
         .subcommands(Remove())
         .subcommands(Install())

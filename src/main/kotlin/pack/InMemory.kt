@@ -1,13 +1,10 @@
 package tech.jamalam.pack
 
 import com.github.ajalt.mordant.terminal.Terminal
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import tech.jamalam.pack.migration.FormatVersion
-import tech.jamalam.pack.migration.MigrationFileType
-import tech.jamalam.pack.migration.migrateFile
 import tech.jamalam.util.digestSha256
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -26,17 +23,13 @@ class InMemoryPack(json: Json, private val basePath: Path = Paths.get(""), termi
         }
 
         val manifest = manifestPath.toFile().readText()
-        var rootManifestJson = json.parseToJsonElement(manifest).jsonObject
-        val preMigrationVersion = rootManifestJson["formatVersion"]?.jsonPrimitive?.content?.let {
+        val rootManifestJson = json.parseToJsonElement(manifest).jsonObject
+        val formatVersion = rootManifestJson["formatVersion"]?.jsonPrimitive?.content?.let {
             FormatVersion.fromString(it)
         } ?: FormatVersion(0, 0)
-        val migrationResult =
-            migrateFile(MigrationFileType.ROOT_MANIFEST, rootManifestJson, preMigrationVersion)
 
-        if (migrationResult.first) {
-            terminal.info("Migrated root manifest from $preMigrationVersion to ${migrationResult.second["formatVersion"]?.jsonPrimitive?.content}")
-            manifestPath.toFile().writeText(json.encodeToString(migrationResult.second))
-            rootManifestJson = migrationResult.second.jsonObject
+        if (formatVersion != FormatVersion.CURRENT) {
+            error("Format version $formatVersion is out of date, please run the migrate command")
         }
 
         val serialManifest =
@@ -55,18 +48,8 @@ class InMemoryPack(json: Json, private val basePath: Path = Paths.get(""), termi
                 error("File hashes do not match for manifest at ${file.path}")
             }
 
-            var fileManifestJson = json.parseToJsonElement(fileManifest).jsonObject
-            val migrationResult =
-                migrateFile(MigrationFileType.FILE_MANIFEST, fileManifestJson, preMigrationVersion)
-
-            if (migrationResult.first) {
-                terminal.info("Migrated file manifest")
-                fileManifestPath.toFile().writeText(json.encodeToString(migrationResult.second))
-                fileManifestJson = migrationResult.second.jsonObject
-            }
-
             val serialFileManifest =
-                json.decodeFromJsonElement(SerialFileManifest.serializer(), fileManifestJson)
+                json.decodeFromString<SerialFileManifest>(fileManifest)
             manifests[file.path] = serialFileManifest.load()
         }
 
