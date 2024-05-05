@@ -81,13 +81,7 @@ suspend fun addCurseforgeFile(
         return false
     }
 
-    val dir = when (mod.classId) {
-        6552 -> "shaderpacks"
-        6 -> "mods"
-        6945 -> "datapacks"
-        12 -> "resourcepacks"
-        else -> error("Unsupported class ID ${mod.classId}")
-    }
+    val dir = getClassIdDir(mod.classId ?: 6)
     val tempFile = downloadFileTemp(parseUrl(file.downloadUrl!!)).readBytes()
     val sha1 = tempFile.digestSha1()
     val sha512 = tempFile.digestSha512()
@@ -240,4 +234,12 @@ fun CurseforgeSide.toSide(): Side = when (this) {
     CurseforgeSide.Client -> Side.ClientOnly
     CurseforgeSide.Server -> Side.ServerOnly
     CurseforgeSide.Both -> Side.Both
+}
+
+fun getClassIdDir(classId: Int): String = when (classId) {
+    6552 -> "shaderpacks"
+    6 -> "mods"
+    6945 -> "datapacks"
+    12 -> "resourcepacks"
+    else -> error("Unsupported class ID $classId")
 }

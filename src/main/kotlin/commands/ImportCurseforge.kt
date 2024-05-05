@@ -92,7 +92,7 @@ class ImportCurseforge :
 
                 // TODO: will need unhardcoding when we add support for stuff other than mods
                 val manifestFile =
-                    File("mods").resolve("${mod.slug}.sculk.json")
+                    File(getClassIdDir(mod.classId ?: 6)).resolve("${mod.slug}.sculk.json")
                 manifestFile.mkdirsAndWriteJson(ctx.json, fileManifest.toSerial())
 
                 manifests += SerialPackManifestManifest(
