@@ -5,19 +5,19 @@ import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.types.file
 import kotlinx.coroutines.runBlocking
-import tech.jamalam.ctx
-import tech.jamalam.pack.InMemoryPack
-import tech.jamalam.pack.loadDependencyGraph
+import tech.jamalam.Context
 import tech.jamalam.pack.save
-import tech.jamalam.util.findAndAddCurseforgeProject
 import tech.jamalam.util.addModrinthProject
+import tech.jamalam.util.findAndAddCurseforgeProject
 
-class AddFromList : CliktCommand(name = "list", help = "Add projects to the manifest from a userscript export list") {
+class AddFromList : CliktCommand(
+    name = "list",
+    help = "Add projects to the manifest from a userscript export list"
+) {
     private val listFile by argument().file(mustExist = true, mustBeReadable = true)
 
     override fun run() = runBlocking {
-        val pack = InMemoryPack(ctx.json, terminal = terminal)
-        val dependencyGraph = loadDependencyGraph()
+        val ctx = Context.getOrCreate(terminal)
 
         listFile.forEachLine { line ->
             runBlocking {
@@ -28,8 +28,8 @@ class AddFromList : CliktCommand(name = "list", help = "Add projects to the mani
                         val (site, slug) = parts
 
                         when (site) {
-                            "curseforge" -> findAndAddCurseforgeProject(pack, dependencyGraph, slug, terminal)
-                            "modrinth" -> addModrinthProject(pack, dependencyGraph, slug, terminal)
+                            "curseforge" -> findAndAddCurseforgeProject(ctx, slug)
+                            "modrinth" -> addModrinthProject(ctx, slug)
                             else -> terminal.println("Invalid site: $site")
                         }
                     }
@@ -39,7 +39,7 @@ class AddFromList : CliktCommand(name = "list", help = "Add projects to the mani
             }
         }
 
-        dependencyGraph.save()
-        pack.save(ctx.json)
+        ctx.dependencyGraph.save()
+        ctx.pack.save(ctx.json)
     }
 }

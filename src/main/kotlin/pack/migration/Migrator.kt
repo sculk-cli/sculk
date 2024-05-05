@@ -5,7 +5,7 @@ package tech.jamalam.pack.migration
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.*
-import tech.jamalam.ctx
+import tech.jamalam.Context
 import tech.jamalam.curseforge.calculateCurseforgeMurmur2Hash
 import tech.jamalam.util.digestSha256
 import tech.jamalam.util.downloadFileTemp
@@ -107,13 +107,15 @@ class Migrator1_1 : Migrator {
 
             set("hashes", JsonObject(hashes))
 
-            this@Migrator1_1.hashes[path] = ctx.json.encodeToString(json).toByteArray().digestSha256()
+            this@Migrator1_1.hashes[path] =
+                Context.getOrCreate().json.encodeToString(json).toByteArray().digestSha256()
         })
     }
 
     override fun manipulateRootPostMigration(json: JsonObject): JsonObject {
         return JsonObject(json.toMutableMap().apply {
-            val fileManifests = json["manifests"]?.jsonArray!!.map { it.jsonObject }.map { it.toMutableMap() }
+            val fileManifests =
+                json["manifests"]?.jsonArray!!.map { it.jsonObject }.map { it.toMutableMap() }
 
             for (fileManifest in fileManifests) {
                 val path = fileManifest["path"]!!.jsonPrimitive.content

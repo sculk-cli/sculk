@@ -4,15 +4,19 @@ import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.option
-import tech.jamalam.ctx
+import tech.jamalam.Context
 import tech.jamalam.pack.*
 import tech.jamalam.util.digestSha256
 import java.nio.file.Paths
 
-class Refresh : CliktCommand(name = "refresh", help = "Check all hashes in the manifest and update them if needed") {
+class Refresh : CliktCommand(
+    name = "refresh",
+    help = "Check all hashes in the manifest and update them if needed"
+) {
     private val check by option().flag()
 
     override fun run() {
+        val ctx = Context.getOrCreate(terminal)
         val basePath = Paths.get("")
         val manifestFile = basePath.resolve("manifest.sculk.json").toFile()
         val manifest =

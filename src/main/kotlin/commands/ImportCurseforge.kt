@@ -10,7 +10,7 @@ import com.github.ajalt.mordant.widgets.progress.*
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import tech.jamalam.*
+import tech.jamalam.Context
 import tech.jamalam.curseforge.importCurseforgePack
 import tech.jamalam.curseforge.models.getSide
 import tech.jamalam.pack.*
@@ -19,11 +19,13 @@ import tech.jamalam.util.*
 import java.io.File
 import java.nio.file.Paths
 
-class ImportCurseforge : CliktCommand(name = "curseforge", help = "Import a Curseforge modpack (.zip)") {
+class ImportCurseforge :
+    CliktCommand(name = "curseforge", help = "Import a Curseforge modpack (.zip)") {
     private val curseforgePackPath by argument().file(mustExist = true, mustBeReadable = true)
 
     override fun run() = runBlocking {
         coroutineScope {
+            val ctx = Context.getOrCreate(terminal)
             val importedPack = importCurseforgePack(curseforgePackPath.toPath())
             terminal.info("Loaded Curseforge pack with name ${importedPack.manifest.name}; creating Sculk modpack")
             val manifests = mutableListOf<SerialPackManifestManifest>()
@@ -47,14 +49,14 @@ class ImportCurseforge : CliktCommand(name = "curseforge", help = "Import a Curs
                 progress.advance(1)
                 progress.update { context = "project: ${file.projectId}, file: ${file.fileId}" }
 
-                val mod = ctx.curseforgeApi.getMod(file.projectId)
+                val mod = ctx.curseforge.getMod(file.projectId)
 
                 if (mod == null) {
                     terminal.warning("Skipping file ${file.projectId}:${file.fileId} as the project does not exist")
                     continue
                 }
 
-                val cfFile = ctx.curseforgeApi.getModFile(file.projectId, file.fileId)
+                val cfFile = ctx.curseforge.getModFile(file.projectId, file.fileId)
 
                 if (cfFile == null) {
                     terminal.warning("Skipping file ${file.projectId}:${file.fileId} as the file does not exist")

@@ -25,5 +25,10 @@ fun loadSculkIgnore(basePath: Path = Paths.get("")): SculkIgnore {
 }
 
 fun SculkIgnore.isFileIgnored(path: String): Boolean {
-    return this.any { pathMatchesGlob(path, it) } || defaultIgnoredGlobs.any { pathMatchesGlob(path, it) }
+    return this.any { pathMatchesGlob(path, it) } || defaultIgnoredGlobs.any {
+        pathMatchesGlob(
+            path,
+            it
+        )
+    }
 }

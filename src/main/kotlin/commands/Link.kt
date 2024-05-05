@@ -13,9 +13,10 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import tech.jamalam.BooleanPrettyPrompt
-import tech.jamalam.ctx
+import tech.jamalam.Context
 import tech.jamalam.modrinth.models.ModrinthHashAlgorithm
-import tech.jamalam.pack.*
+import tech.jamalam.pack.FileManifest
+import tech.jamalam.pack.save
 import tech.jamalam.util.addCurseforgeFile
 import tech.jamalam.util.addModrinthVersion
 
@@ -25,10 +26,9 @@ class Link : CliktCommand(name = "link") {
 
     override fun run() = runBlocking {
         coroutineScope {
-            val pack = InMemoryPack(ctx.json, terminal = terminal)
-            val dependencyGraph = loadDependencyGraph()
+            val ctx = Context.getOrCreate(terminal)
 
-            val manifests = pack.getManifests().filter {
+            val manifests = ctx.pack.getManifests().filter {
                 when (target) {
                     Target.Curseforge -> {
                         it.value.sources.curseforge == null && (it.value.sources.modrinth != null || it.value.sources.url != null)
@@ -57,22 +57,21 @@ class Link : CliktCommand(name = "link") {
             for (manifest in manifests) {
                 progress.advance(1)
                 progress.update { context = manifest.key }
-                tryLinkManifest(pack, dependencyGraph, manifest)
+                tryLinkManifest(ctx, manifest)
             }
 
-            pack.save(ctx.json)
-            dependencyGraph.save()
+            ctx.pack.save(ctx.json)
+            ctx.dependencyGraph.save()
         }
     }
 
     private suspend fun tryLinkManifest(
-        pack: InMemoryPack,
-        dependencyGraph: DependencyGraph,
+        ctx: Context,
         manifest: Map.Entry<String, FileManifest>
     ) {
         when (target) {
             Target.Curseforge -> {
-                val matches = ctx.curseforgeApi.getFingerprintMatches(manifest.value.hashes.murmur2)
+                val matches = ctx.curseforge.getFingerprintMatches(manifest.value.hashes.murmur2)
 
                 if (matches.isEmpty()) {
                     terminal.info("No match found for ${manifest.key}")
@@ -85,15 +84,21 @@ class Link : CliktCommand(name = "link") {
                     file = matches.first()
                 }
 
-                val mod = ctx.curseforgeApi.getMod(file.modId) ?: error("File's mod does not exist")
+                val mod = ctx.curseforge.getMod(file.modId) ?: error("File's mod does not exist")
 
                 if (showConfirmation(manifest.key, "${mod.name} (${mod.id})")) {
-                    addCurseforgeFile(terminal, pack, dependencyGraph, mod, file, downloadDependencies = false, manifestPath = manifest.key)
+                    addCurseforgeFile(
+                        ctx,
+                        mod,
+                        file,
+                        downloadDependencies = false,
+                        manifestPath = manifest.key
+                    )
                 }
             }
 
             Target.Modrinth -> {
-                val version = ctx.modrinthApi.getVersionFromHash(
+                val version = ctx.modrinth.getVersionFromHash(
                     manifest.value.hashes.sha512,
                     ModrinthHashAlgorithm.SHA512
                 )
@@ -103,11 +108,17 @@ class Link : CliktCommand(name = "link") {
                     return
                 }
 
-                val project = ctx.modrinthApi.getProject(version.projectId)
+                val project = ctx.modrinth.getProject(version.projectId)
                     ?: error("Version's project does not exist")
 
                 if (showConfirmation(manifest.key, "${project.title} (${project.id})")) {
-                    addModrinthVersion(pack, dependencyGraph, project, version, terminal, downloadDependencies = false, manifestPath = manifest.key)
+                    addModrinthVersion(
+                        ctx,
+                        project,
+                        version,
+                        downloadDependencies = false,
+                        manifestPath = manifest.key
+                    )
                 }
             }
         }

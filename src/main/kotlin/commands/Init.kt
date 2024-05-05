@@ -4,8 +4,8 @@ import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.options.option
 import kotlinx.coroutines.runBlocking
+import tech.jamalam.Context
 import tech.jamalam.PrettyListPrompt
-import tech.jamalam.ctx
 import tech.jamalam.pack.ModLoader
 import tech.jamalam.pack.SerialPackManifest
 import tech.jamalam.pack.SerialPackManifestModLoader
@@ -16,16 +16,15 @@ import java.io.File
 
 class Init : CliktCommand(name = "init", help = "Initialize a new Sculk modpack") {
     private val path by option().prettyPrompt<File>(
-        "Enter modpack path",
-        default = File(".")
+        "Enter modpack path", default = File(".")
     )
     private val name by option().prettyPrompt<String>("Enter modpack name")
     private val loader by option().prettyPrompt<ModLoader>("Select mod loader")
-    private val minecraftVersion by option().prettyPrompt<String>(
-        "Select Minecraft version",
-        choices = runBlocking { ctx.pistonMeta.getMcVersions() })
+    private val minecraftVersion by option().prettyPrompt<String>("Select Minecraft version",
+        choices = runBlocking { Context.getOrCreate().pistonMeta.getMcVersions() })
 
     override fun run() {
+        val ctx = Context.getOrCreate(terminal)
         if (!path.exists()) {
             path.mkdirs()
         }
@@ -49,9 +48,7 @@ class Init : CliktCommand(name = "init", help = "Initialize a new Sculk modpack"
                     }
 
                     PrettyListPrompt(
-                        "Select Fabric version",
-                        versions,
-                        terminal
+                        "Select Fabric version", versions, terminal
                     ).ask()
                 }
 
@@ -63,9 +60,7 @@ class Init : CliktCommand(name = "init", help = "Initialize a new Sculk modpack"
                     }
 
                     PrettyListPrompt(
-                        "Select Forge version",
-                        versions,
-                        terminal
+                        "Select Forge version", versions, terminal
                     ).ask()
                 }
 
@@ -77,9 +72,7 @@ class Init : CliktCommand(name = "init", help = "Initialize a new Sculk modpack"
                     }
 
                     PrettyListPrompt(
-                        "Select NeoForge version",
-                        versions,
-                        terminal
+                        "Select NeoForge version", versions, terminal
                     ).ask()
                 }
 
@@ -92,9 +85,7 @@ class Init : CliktCommand(name = "init", help = "Initialize a new Sculk modpack"
                     }
 
                     PrettyListPrompt(
-                        "Select Fabric version",
-                        versions,
-                        terminal
+                        "Select Fabric version", versions, terminal
                     ).ask()
                 }
             }

@@ -1,35 +1,32 @@
 package tech.jamalam.util
 
-import com.github.ajalt.mordant.terminal.Terminal
+import tech.jamalam.Context
 import tech.jamalam.PrettyListPrompt
-import tech.jamalam.ctx
 import tech.jamalam.curseforge.CURSEFORGE_MODS_CLASS
 import tech.jamalam.curseforge.models.*
 import tech.jamalam.pack.*
 
 suspend fun findAndAddCurseforgeProject(
-    pack: InMemoryPack,
-    dependencyGraph: DependencyGraph,
+    ctx: Context,
     query: String,
-    terminal: Terminal,
 ) {
-    val directMatches = ctx.curseforgeApi.search(
+    val directMatches = ctx.curseforge.search(
         slug = query,
-        gameVersion = pack.getManifest().minecraft,
+        gameVersion = ctx.pack.getManifest().minecraft,
         classId = CURSEFORGE_MODS_CLASS
     )
 
     val mod = if (directMatches.isNotEmpty()) {
         if (directMatches.size > 1) {
-            PrettyListPrompt("Select a project", directMatches.map { it.name }, terminal).ask()
+            PrettyListPrompt("Select a project", directMatches.map { it.name }, ctx.terminal).ask()
                 .let { directMatches.find { p -> p.name == it } }!!
         } else {
             directMatches[0]
         }
     } else {
-        val mods = ctx.curseforgeApi.search(
+        val mods = ctx.curseforge.search(
             searchFilter = query,
-            gameVersion = pack.getManifest().minecraft,
+            gameVersion = ctx.pack.getManifest().minecraft,
             classId = CURSEFORGE_MODS_CLASS
         )
 
@@ -37,30 +34,28 @@ suspend fun findAndAddCurseforgeProject(
             error("No projects found")
         }
 
-        PrettyListPrompt("Select a project", mods.map { it.name }, terminal).ask()
+        PrettyListPrompt("Select a project", mods.map { it.name }, ctx.terminal).ask()
             .let { mods.find { p -> p.name == it } }!!
     }
 
-    addCurseforgeProject(terminal, pack, dependencyGraph, mod, false)
+    addCurseforgeProject(ctx, mod, false)
 }
 
 suspend fun addCurseforgeProject(
-    terminal: Terminal,
-    pack: InMemoryPack,
-    dependencyGraph: DependencyGraph,
+    ctx: Context,
     mod: CurseforgeMod,
     ignoreIfExists: Boolean = true,
 ): Boolean {
     if (mod.allowModDistribution == false) {
-        terminal.warning("${mod.name} does not allow distribution")
+        ctx.terminal.warning("${mod.name} does not allow distribution")
         return false
     }
 
     val files =
-        ctx.curseforgeApi.getModFiles(
+        ctx.curseforge.getModFiles(
             modId = mod.id,
-            modLoader = pack.getManifest().loader.type.toCurseforge(),
-            gameVersion = pack.getManifest().minecraft
+            modLoader = ctx.pack.getManifest().loader.type.toCurseforge(),
+            gameVersion = ctx.pack.getManifest().minecraft
         ).sortedBy {
             it.fileDate
         }.reversed()
@@ -70,13 +65,11 @@ suspend fun addCurseforgeProject(
     }
 
     val file = files[0] // Most recent version
-    return addCurseforgeFile(terminal, pack, dependencyGraph, mod, file, ignoreIfExists = ignoreIfExists)
+    return addCurseforgeFile(ctx, mod, file, ignoreIfExists = ignoreIfExists)
 }
 
 suspend fun addCurseforgeFile(
-    terminal: Terminal,
-    pack: InMemoryPack,
-    dependencyGraph: DependencyGraph,
+    ctx: Context,
     mod: CurseforgeMod,
     file: CurseforgeFile,
     manifestPath: String? = null,
@@ -84,7 +77,7 @@ suspend fun addCurseforgeFile(
     downloadDependencies: Boolean = true,
 ): Boolean {
     if (file.downloadUrl == null) {
-        terminal.warning("No download URL for ${file.fileName}")
+        ctx.terminal.warning("No download URL for ${file.fileName}")
         return false
     }
 
@@ -102,7 +95,7 @@ suspend fun addCurseforgeFile(
 
     val path = manifestPath ?: "$dir/${mod.slug}.sculk.json"
 
-    val existingManifest = pack.getManifest(path)
+    val existingManifest = ctx.pack.getManifest(path)
     val fileManifest = if (existingManifest != null) {
         if (existingManifest.sources.curseforge != null) {
             if (ignoreIfExists) {
@@ -136,24 +129,22 @@ suspend fun addCurseforgeFile(
         )
     }
 
-    pack.setManifest(path, fileManifest)
-    terminal.info("Added ${mod.name} to manifest")
+    ctx.pack.setManifest(path, fileManifest)
+    ctx.terminal.info("Added ${mod.name} to manifest")
 
     if (dir == "mods" && downloadDependencies) {
         for (dependency in file.dependencies) {
             when (dependency.relationType) {
                 CurseforgeFileRelationType.RequiredDependency -> {
-                    val dependencyMod = ctx.curseforgeApi.getMod(dependency.modId)
+                    val dependencyMod = ctx.curseforge.getMod(dependency.modId)
                         ?: error("Dependency not found")
 
                     if (addCurseforgeProject(
-                            terminal,
-                            pack,
-                            dependencyGraph,
+                            ctx,
                             dependencyMod
-                        ) || dependencyGraph.containsKey("$dir/${dependencyMod.slug}.sculk.json")
+                        ) || ctx.dependencyGraph.containsKey("$dir/${dependencyMod.slug}.sculk.json")
                     ) {
-                        dependencyGraph.addDependency(
+                        ctx.dependencyGraph.addDependency(
                             "$dir/${dependencyMod.slug}.sculk.json",
                             path
                         )
@@ -161,23 +152,21 @@ suspend fun addCurseforgeFile(
                 }
 
                 CurseforgeFileRelationType.OptionalDependency -> {
-                    val dependencyMod = ctx.curseforgeApi.getMod(dependency.modId)
+                    val dependencyMod = ctx.curseforge.getMod(dependency.modId)
                         ?: error("Dependency not found")
                     val prompt = PrettyListPrompt(
                         "Add optional dependency ${dependencyMod.name}?",
                         listOf("Yes", "No"),
-                        terminal
+                        ctx.terminal
                     )
 
                     if (prompt.ask() == "Yes") {
                         if (addCurseforgeProject(
-                                terminal,
-                                pack,
-                                dependencyGraph,
+                                ctx,
                                 dependencyMod
-                            ) || dependencyGraph.containsKey("$dir/${dependencyMod.slug}.sculk.json")
+                            ) || ctx.dependencyGraph.containsKey("$dir/${dependencyMod.slug}.sculk.json")
                         ) {
-                            dependencyGraph.addDependency(
+                            ctx.dependencyGraph.addDependency(
                                 "$dir/${dependencyMod.slug}.sculk.json",
                                 path
                             )
@@ -194,21 +183,21 @@ suspend fun addCurseforgeFile(
 }
 
 suspend fun updateCurseforgeProject(
-    pack: InMemoryPack,
+    ctx: Context,
     manifest: FileManifest,
 ): Boolean {
     if (manifest.sources.curseforge == null) {
         return false
     }
 
-    val mod = ctx.curseforgeApi.getMod(manifest.sources.curseforge!!.projectId)
+    val mod = ctx.curseforge.getMod(manifest.sources.curseforge!!.projectId)
         ?: error("Project not found")
 
     val files =
-        ctx.curseforgeApi.getModFiles(
+        ctx.curseforge.getModFiles(
             modId = mod.id,
-            modLoader = pack.getManifest().loader.type.toCurseforge(),
-            gameVersion = pack.getManifest().minecraft
+            modLoader = ctx.pack.getManifest().loader.type.toCurseforge(),
+            gameVersion = ctx.pack.getManifest().minecraft
         ).sortedBy {
             it.fileDate
         }.reversed()

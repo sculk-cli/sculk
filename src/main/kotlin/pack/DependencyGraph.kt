@@ -1,7 +1,7 @@
 package tech.jamalam.pack
 
 import kotlinx.serialization.encodeToString
-import tech.jamalam.ctx
+import tech.jamalam.Context
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -10,6 +10,7 @@ import java.nio.file.Paths
 typealias DependencyGraph = HashMap<String, MutableList<String>>
 
 fun loadDependencyGraph(basePath: Path = Paths.get("")): DependencyGraph {
+    val ctx = Context.getOrCreate()
     val file = basePath.resolve("dependency-graph.sculk.json").toFile()
 
     return if (file.exists()) {
@@ -39,8 +40,10 @@ fun DependencyGraph.addDependency(dependency: String, dependant: String) {
     }
 }
 
-fun DependencyGraph.getUnusedDependencies(): List<String> = this.filter { it.value.isEmpty() }.keys.toList()
+fun DependencyGraph.getUnusedDependencies(): List<String> =
+    this.filter { it.value.isEmpty() }.keys.toList()
 
 fun DependencyGraph.save(basePath: Path = Paths.get("")) =
-    basePath.resolve("dependency-graph.sculk.json").toFile().writeText(ctx.json.encodeToString(this))
+    basePath.resolve("dependency-graph.sculk.json").toFile()
+        .writeText(Context.getOrCreate().json.encodeToString(this))
 

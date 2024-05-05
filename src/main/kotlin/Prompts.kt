@@ -260,7 +260,7 @@ class UrlPrettyPrompt(
 
 class BooleanPrettyPrompt(
     prompt: String, terminal: Terminal, default: Boolean? = null
-): PrettyPrompt<Boolean>(prompt, terminal, default = default) {
+) : PrettyPrompt<Boolean>(prompt, terminal, default = default) {
     override fun convert(input: String): ConversionResult<Boolean> {
         return when (input) {
             "y" -> ConversionResult.Valid(true)

@@ -10,9 +10,8 @@ import com.github.ajalt.mordant.widgets.progress.*
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import tech.jamalam.ctx
+import tech.jamalam.Context
 import tech.jamalam.pack.FileManifest
-import tech.jamalam.pack.InMemoryPack
 import tech.jamalam.util.updateCurseforgeProject
 import tech.jamalam.util.updateModrinthProject
 
@@ -21,12 +20,12 @@ class Update : CliktCommand(name = "update") {
 
     override fun run() = runBlocking {
         coroutineScope {
-            val pack = InMemoryPack(ctx.json, terminal = terminal)
+            val ctx = Context.getOrCreate(terminal)
 
             if (project != null) {
-                if (pack.getManifest(project!!) == null) error("Project not found")
+                if (ctx.pack.getManifest(project!!) == null) error("Project not found")
 
-                updateProject(pack, project!!, pack.getManifest(project!!)!!)
+                updateProject(ctx, project!!, ctx.pack.getManifest(project!!)!!)
             } else {
                 val progress = progressBarContextLayout {
                     text(terminal.theme.info("Checking for updates"))
@@ -35,7 +34,7 @@ class Update : CliktCommand(name = "update") {
                     progressBar()
                     completed(style = terminal.theme.success)
                 }.animateInCoroutine(terminal,
-                    total = pack.getManifests()
+                    total = ctx.pack.getManifests()
                         .filter { it.value.sources.modrinth != null || it.value.sources.curseforge != null }
                         .size
                         .toLong(),
@@ -43,34 +42,34 @@ class Update : CliktCommand(name = "update") {
 
                 launch { progress.execute() }
 
-                for ((path, manifest) in pack.getManifests()
+                for ((path, manifest) in ctx.pack.getManifests()
                     .filter { it.value.sources.modrinth != null || it.value.sources.curseforge != null }) {
                     progress.advance()
                     progress.update { context = path }
-                    updateProject(pack, path, manifest)
+                    updateProject(ctx, path, manifest)
                 }
             }
 
-            pack.save(ctx.json)
+            ctx.pack.save(ctx.json)
         }
     }
 
     private suspend fun updateProject(
-        pack: InMemoryPack, manifestPath: String, manifest: FileManifest
+        ctx: Context, manifestPath: String, manifest: FileManifest
     ) {
         var any = false
-        if (manifest.sources.curseforge != null && updateCurseforgeProject(pack, manifest)) {
+        if (manifest.sources.curseforge != null && updateCurseforgeProject(ctx, manifest)) {
             terminal.info("Updated $manifestPath (Curseforge)")
             any = true
         }
 
-        if (manifest.sources.modrinth != null && updateModrinthProject(pack, manifest)) {
+        if (manifest.sources.modrinth != null && updateModrinthProject(ctx, manifest)) {
             terminal.info("Updated $manifestPath (Modrinth)")
             any = true
         }
 
         if (any) {
-            pack.setManifest(manifestPath, manifest)
+            ctx.pack.setManifest(manifestPath, manifest)
         } else {
             terminal.info("No updates for $manifestPath")
         }

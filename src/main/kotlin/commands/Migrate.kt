@@ -7,7 +7,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import tech.jamalam.ctx
+import tech.jamalam.Context
 import tech.jamalam.pack.migration.FormatVersion
 import tech.jamalam.pack.migration.Migrator
 import tech.jamalam.pack.migration.migrators
@@ -17,6 +17,7 @@ class Migrate : CliktCommand(name = "migrate") {
     private val basePath = Paths.get("")
 
     override fun run() {
+        val ctx = Context.getOrCreate(terminal)
         val manifestPath = basePath.resolve("manifest.sculk.json")
         if (!manifestPath.toFile().exists()) {
             error("Attempted to open a pack at $basePath, but no manifest was found")

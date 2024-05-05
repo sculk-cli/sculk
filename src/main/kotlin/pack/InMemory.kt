@@ -1,15 +1,15 @@
 package tech.jamalam.pack
 
-import com.github.ajalt.mordant.terminal.Terminal
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import tech.jamalam.Context
 import tech.jamalam.pack.migration.FormatVersion
 import tech.jamalam.util.digestSha256
 import java.nio.file.Path
 import java.nio.file.Paths
 
-class InMemoryPack(json: Json, private val basePath: Path = Paths.get(""), terminal: Terminal) {
+class InMemoryPack(ctx: Context, private val basePath: Path = Paths.get("")) {
     private val packManifest: PackManifest
     private val manifests = mutableMapOf<String, FileManifest>()
     private val files = mutableListOf<PackManifestFile>()
@@ -23,7 +23,7 @@ class InMemoryPack(json: Json, private val basePath: Path = Paths.get(""), termi
         }
 
         val manifest = manifestPath.toFile().readText()
-        val rootManifestJson = json.parseToJsonElement(manifest).jsonObject
+        val rootManifestJson = ctx.json.parseToJsonElement(manifest).jsonObject
         val formatVersion = rootManifestJson["formatVersion"]?.jsonPrimitive?.content?.let {
             FormatVersion.fromString(it)
         } ?: FormatVersion(0, 0)
@@ -33,7 +33,7 @@ class InMemoryPack(json: Json, private val basePath: Path = Paths.get(""), termi
         }
 
         val serialManifest =
-            json.decodeFromJsonElement(SerialPackManifest.serializer(), rootManifestJson)
+            ctx.json.decodeFromJsonElement(SerialPackManifest.serializer(), rootManifestJson)
         packManifest = serialManifest.load()
 
         for (file in packManifest.manifests) {
@@ -49,7 +49,7 @@ class InMemoryPack(json: Json, private val basePath: Path = Paths.get(""), termi
             }
 
             val serialFileManifest =
-                json.decodeFromString<SerialFileManifest>(fileManifest)
+                ctx.json.decodeFromString<SerialFileManifest>(fileManifest)
             manifests[file.path] = serialFileManifest.load()
         }
 

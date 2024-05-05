@@ -1,9 +1,8 @@
 package tech.jamalam.util
 
-import com.github.ajalt.mordant.terminal.Terminal
 import kotlinx.coroutines.runBlocking
+import tech.jamalam.Context
 import tech.jamalam.PrettyListPrompt
-import tech.jamalam.ctx
 import tech.jamalam.modrinth.ModrinthPackFileEnv
 import tech.jamalam.modrinth.models.*
 import tech.jamalam.pack.*
@@ -16,77 +15,61 @@ private val MODRINTH_DEFAULT_LOADERS = listOf(
 ).toTypedArray()
 
 suspend fun addModrinthProject(
-    pack: InMemoryPack,
-    dependencyGraph: DependencyGraph,
+    ctx: Context,
     query: String,
-    terminal: Terminal,
 ) {
-    val directMatch = ctx.modrinthApi.getProject(query)
+    val directMatch = ctx.modrinth.getProject(query)
 
     val projectSlug = directMatch?.slug ?: run {
-        val projects =
-            ctx.modrinthApi.search(
-                query,
-                loaders = listOf(
-                    pack.getManifest().loader.type.toModrinth(),
-                    *MODRINTH_DEFAULT_LOADERS
-                ),
-                gameVersions = listOf(pack.getManifest().minecraft)
-            ).hits
+        val projects = ctx.modrinth.search(
+            query, loaders = listOf(
+                ctx.pack.getManifest().loader.type.toModrinth(), *MODRINTH_DEFAULT_LOADERS
+            ), gameVersions = listOf(ctx.pack.getManifest().minecraft)
+        ).hits
 
         if (projects.isEmpty()) {
             error("No projects found")
         }
 
-        PrettyListPrompt("Select a project", projects.map { it.title }, terminal).ask()
+        PrettyListPrompt("Select a project", projects.map { it.title }, ctx.terminal).ask()
             .let { projects.find { p -> p.title == it } }!!.slug
     }
 
     addModrinthProject(
-        terminal,
-        pack,
-        dependencyGraph,
-        directMatch ?: ctx.modrinthApi.getProject(projectSlug)!!,
-        false
+        ctx, directMatch ?: ctx.modrinth.getProject(projectSlug)!!, false
     )
 }
 
 private suspend fun addModrinthProject(
-    terminal: Terminal,
-    pack: InMemoryPack,
-    dependencyGraph: DependencyGraph,
+    ctx: Context,
     project: ModrinthProject,
     ignoreIfExists: Boolean = true,
 ): Boolean {
     val versions = runBlocking {
-        ctx.modrinthApi.getProjectVersions(
-            project.slug,
-            loaders = listOf(
-                pack.getManifest().loader.type.toModrinth(),
-                *if (pack.getManifest().loader.type == ModLoader.Quilt) {
+        ctx.modrinth.getProjectVersions(
+            project.slug, loaders = listOf(
+                ctx.pack.getManifest().loader.type.toModrinth(),
+                *if (ctx.pack.getManifest().loader.type == ModLoader.Quilt) {
                     arrayOf(ModrinthLoader.Fabric)
                 } else {
                     emptyArray()
                 },
                 *MODRINTH_DEFAULT_LOADERS
-            ),
-            gameVersions = listOf(pack.getManifest().minecraft)
+            ), gameVersions = listOf(ctx.pack.getManifest().minecraft)
         )
     }.sortedBy {
         it.publishedTime
     }.reversed()
 
     val version = versions.elementAtOrNull(0)
-        ?: error("No valid versions found for ${project.title} (Minecraft: ${pack.getManifest().minecraft}, loader: ${pack.getManifest().loader.type})")
-    return addModrinthVersion(pack, dependencyGraph, project, version, terminal, ignoreIfExists = ignoreIfExists)
+        ?: error("No valid versions found for ${project.title} (Minecraft: ${ctx.pack.getManifest().minecraft}, loader: ${ctx.pack.getManifest().loader.type})")
+    return addModrinthVersion(ctx, project, version, ignoreIfExists = ignoreIfExists)
 }
 
 suspend fun addModrinthVersion(
-    pack: InMemoryPack,
-    dependencyGraph: DependencyGraph,
+    ctx: Context,
     project: ModrinthProject,
     version: ModrinthVersion,
-    terminal: Terminal,
     manifestPath: String? = null,
     ignoreIfExists: Boolean = true,
     downloadDependencies: Boolean = true
@@ -96,7 +79,7 @@ suspend fun addModrinthVersion(
     val dir = version.loaders.first().getSaveDir()
 
     val path = manifestPath ?: "$dir/${project.slug}.sculk.json"
-    val existingManifest = pack.getManifest(path)
+    val existingManifest = ctx.pack.getManifest(path)
     val fileManifest = if (existingManifest != null) {
         if (existingManifest.sources.modrinth != null) {
             if (ignoreIfExists) {
@@ -121,13 +104,9 @@ suspend fun addModrinthVersion(
                 sha1 = modrinthFile.hashes.sha1,
                 sha512 = modrinthFile.hashes.sha512,
                 murmur2 = tempFile.readBytes().digestMurmur2()
-            ),
-            fileSize = tempFile.readBytes().size,
-            side = modrinthEnvTypePairToSide(
-                project.clientSideSupport,
-                project.serverSideSupport
-            ),
-            sources = FileManifestSources(
+            ), fileSize = tempFile.readBytes().size, side = modrinthEnvTypePairToSide(
+                project.clientSideSupport, project.serverSideSupport
+            ), sources = FileManifestSources(
                 curseforge = null, modrinth = FileManifestModrinthSource(
                     projectId = project.id, fileUrl = modrinthFile.downloadUrl
                 ), url = null
@@ -135,46 +114,41 @@ suspend fun addModrinthVersion(
         )
     }
 
-    pack.setManifest(path, fileManifest)
-    terminal.info("Added ${project.title} to manifest")
+    ctx.pack.setManifest(path, fileManifest)
+    ctx.terminal.info("Added ${project.title} to manifest")
 
     if (dir == "mods" && downloadDependencies) { // only supporting mod dependencies for now
         for (dependency in version.dependencies) {
             when (dependency.type) {
                 ModrinthVersionDependencyType.Required -> {
-                    val dependencyProject = ctx.modrinthApi.getProject(dependency.projectId)
+                    val dependencyProject = ctx.modrinth.getProject(dependency.projectId)
                         ?: error("Dependency not found")
 
                     if (addModrinthProject(
-                            terminal,
-                            pack,
-                            dependencyGraph,
-                            dependencyProject
-                        ) || dependencyGraph.containsKey("$dir/${dependencyProject.slug}.sculk.json")
+                            ctx, dependencyProject
+                        ) || ctx.dependencyGraph.containsKey("$dir/${dependencyProject.slug}.sculk.json")
                     ) {
-                        dependencyGraph.addDependency(
-                            "$dir/${dependencyProject.slug}.sculk.json",
-                            path
+                        ctx.dependencyGraph.addDependency(
+                            "$dir/${dependencyProject.slug}.sculk.json", path
                         )
                     }
                 }
 
                 ModrinthVersionDependencyType.Optional -> {
-                    val dependencyProject = ctx.modrinthApi.getProject(dependency.projectId)
+                    val dependencyProject = ctx.modrinth.getProject(dependency.projectId)
                         ?: error("Dependency not found")
                     val prompt = PrettyListPrompt(
                         "Add optional dependency ${dependencyProject.title}?",
                         listOf("Yes", "No"),
-                        terminal
+                        ctx.terminal
                     )
 
                     if (prompt.ask() == "Yes") {
-                        dependencyGraph.addDependency(
-                            "$dir/${dependencyProject.slug}.sculk.json",
-                            path
+                        ctx.dependencyGraph.addDependency(
+                            "$dir/${dependencyProject.slug}.sculk.json", path
                         )
 
-                        addModrinthProject(terminal, pack, dependencyGraph, dependencyProject)
+                        addModrinthProject(ctx, dependencyProject)
                     }
                 }
 
@@ -187,24 +161,23 @@ suspend fun addModrinthVersion(
 }
 
 suspend fun updateModrinthProject(
-    pack: InMemoryPack,
+    ctx: Context,
     manifest: FileManifest,
 ): Boolean {
     if (manifest.sources.modrinth == null) {
         return false
     }
 
-    val mod = ctx.modrinthApi.getProject(manifest.sources.modrinth!!.projectId)
-        ?: error("Project not found")
+    val mod =
+        ctx.modrinth.getProject(manifest.sources.modrinth!!.projectId) ?: error("Project not found")
 
-    val versions =
-        ctx.modrinthApi.getProjectVersions(
-            idOrSlug = mod.id,
-            loaders = listOf(pack.getManifest().loader.type.toModrinth()),
-            gameVersions = listOf(pack.getManifest().minecraft)
-        ).sortedBy {
-            it.publishedTime
-        }.reversed()
+    val versions = ctx.modrinth.getProjectVersions(
+        idOrSlug = mod.id,
+        loaders = listOf(ctx.pack.getManifest().loader.type.toModrinth()),
+        gameVersions = listOf(ctx.pack.getManifest().minecraft)
+    ).sortedBy {
+        it.publishedTime
+    }.reversed()
 
     if (versions.isEmpty()) {
         error("No versions found for ${mod.title}")

@@ -10,7 +10,7 @@ import com.github.ajalt.mordant.widgets.progress.*
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import tech.jamalam.ctx
+import tech.jamalam.Context
 import tech.jamalam.modrinth.getLoaderVersionPair
 import tech.jamalam.modrinth.importModrinthPack
 import tech.jamalam.pack.*
@@ -19,11 +19,13 @@ import tech.jamalam.util.*
 import java.io.File
 import java.nio.file.Paths
 
-class ImportModrinth : CliktCommand(name = "modrinth", help = "Import a Modrinth modpack (.mrpack)") {
+class ImportModrinth :
+    CliktCommand(name = "modrinth", help = "Import a Modrinth modpack (.mrpack)") {
     private val mrpack by argument().file(mustExist = true, mustBeReadable = true)
 
     override fun run() = runBlocking {
         coroutineScope {
+            val ctx = Context.getOrCreate(terminal)
             val importedPack = importModrinthPack(mrpack.toPath())
             terminal.info("Loaded Modrinth pack with name ${importedPack.index.name}; creating Sculk modpack")
             val manifests = mutableListOf<SerialPackManifestManifest>()
@@ -77,7 +79,7 @@ class ImportModrinth : CliktCommand(name = "modrinth", help = "Import a Modrinth
                     }
 
                     if (parseUrl(downloadUrl).host == "cdn.modrinth.com") {
-                        val version = ctx.modrinthApi.getVersionFromHash(file.hashes.sha1)
+                        val version = ctx.modrinth.getVersionFromHash(file.hashes.sha1)
                             ?: run {
                                 terminal.warning("File ${file.path} includes a Modrinth file that does not seem to exist")
                                 null
@@ -88,7 +90,7 @@ class ImportModrinth : CliktCommand(name = "modrinth", help = "Import a Modrinth
                             fileUrl = downloadUrl
                         )
 
-                        slug = ctx.modrinthApi.getProject(version.projectId)!!.slug
+                        slug = ctx.modrinth.getProject(version.projectId)!!.slug
                     } else if (fileManifest.sources.url == null) {
                         fileManifest.sources.url = FileManifestUrlSource(downloadUrl)
                     } else {

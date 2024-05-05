@@ -3,7 +3,7 @@ package tech.jamalam.util
 import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.http.*
-import tech.jamalam.ctx
+import tech.jamalam.Context
 import java.io.File
 
 fun parseUrl(url: String): Url {
@@ -24,7 +24,7 @@ suspend fun tryReq(url: Url, maxAttempts: Int = 3): ByteArray {
 
     while (attempts < maxAttempts) {
         try {
-            val response = ctx.client.get(url)
+            val response = Context.getOrCreate().client.get(url)
             return response.body()
         } catch (e: Exception) {
             attempts += 1

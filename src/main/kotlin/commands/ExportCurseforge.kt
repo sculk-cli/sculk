@@ -3,34 +3,34 @@ package tech.jamalam.commands
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
 import kotlinx.coroutines.runBlocking
-import tech.jamalam.ctx
+import tech.jamalam.Context
 import tech.jamalam.curseforge.*
-import tech.jamalam.pack.InMemoryPack
 import tech.jamalam.pack.ModLoader
 import java.nio.file.Paths
 
-class ExportCurseforge : CliktCommand(name = "curseforge", help = "Export a Curseforge modpack (.zip)") {
+class ExportCurseforge :
+    CliktCommand(name = "curseforge", help = "Export a Curseforge modpack (.zip)") {
     override fun run() = runBlocking {
-        val pack = InMemoryPack(ctx.json, terminal = terminal)
-        val curseforgeManifest = createCurseforgeManifest(pack)
-        val overrides = pack
+        val ctx = Context.getOrCreate(terminal)
+        val curseforgeManifest = createCurseforgeManifest(ctx)
+        val overrides = ctx.pack
             .getFiles()
-            .map { it.path to pack.getBasePath().resolve(it.path).toFile().readBytes() }
+            .map { it.path to ctx.pack.getBasePath().resolve(it.path).toFile().readBytes() }
 
         createCurseforgePack(
             path = Paths.get("")
-                .resolve("${pack.getManifest().name}-${pack.getManifest().version}.zip"),
+                .resolve("${ctx.pack.getManifest().name}-${ctx.pack.getManifest().version}.zip"),
             manifest = curseforgeManifest,
             overrides = overrides.toMap(),
         )
 
-        terminal.info("Exported ${pack.getManifest().name} to ${pack.getManifest().name}-${pack.getManifest().version}.zip")
+        terminal.info("Exported ${ctx.pack.getManifest().name} to ${ctx.pack.getManifest().name}-${ctx.pack.getManifest().version}.zip")
     }
 
-    private fun createCurseforgeManifest(pack: InMemoryPack): CurseforgePackManifest {
+    private fun createCurseforgeManifest(ctx: Context): CurseforgePackManifest {
         val files = mutableListOf<CurseforgePackFile>()
 
-        for ((path, fileManifest) in pack.getManifests().entries) {
+        for ((path, fileManifest) in ctx.pack.getManifests().entries) {
             if (fileManifest.sources.curseforge != null) {
                 files += CurseforgePackFile(
                     projectId = fileManifest.sources.curseforge!!.projectId,
@@ -42,7 +42,7 @@ class ExportCurseforge : CliktCommand(name = "curseforge", help = "Export a Curs
             }
         }
 
-        val modLoaderId = when (pack.getManifest().loader.type) {
+        val modLoaderId = when (ctx.pack.getManifest().loader.type) {
             ModLoader.Fabric -> "fabric"
             ModLoader.Forge -> "forge"
             ModLoader.Neoforge -> "neoforge"
@@ -51,17 +51,17 @@ class ExportCurseforge : CliktCommand(name = "curseforge", help = "Export a Curs
 
         return CurseforgePackManifest(
             minecraft = CurseforgePackMinecraft(
-                version = pack.getManifest().minecraft,
+                version = ctx.pack.getManifest().minecraft,
                 modLoaders = listOf(
                     CurseforgePackModLoader(
-                        id = "$modLoaderId-${pack.getManifest().loader.version}",
+                        id = "$modLoaderId-${ctx.pack.getManifest().loader.version}",
                         primary = true
                     )
                 )
             ),
-            name = pack.getManifest().name,
-            version = pack.getManifest().version,
-            author = pack.getManifest().author ?: "Unknown",
+            name = ctx.pack.getManifest().name,
+            version = ctx.pack.getManifest().version,
+            author = ctx.pack.getManifest().author ?: "Unknown",
             manifestType = CURSEFORGE_PACK_MINECRAFT_TYPE,
             manifestVersion = CURSEFORGE_PACK_MANIFEST_VERSION,
             files = files,

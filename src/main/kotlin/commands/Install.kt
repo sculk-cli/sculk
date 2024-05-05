@@ -15,7 +15,7 @@ import io.ktor.client.statement.*
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import tech.jamalam.ctx
+import tech.jamalam.Context
 import tech.jamalam.pack.SerialFileManifest
 import tech.jamalam.pack.SerialPackManifest
 import tech.jamalam.pack.Side
@@ -23,13 +23,15 @@ import tech.jamalam.util.digestSha256
 import tech.jamalam.util.digestSha512
 import java.io.File
 
-class Install : CliktCommand(name = "install", help = "Install a Sculk modpack from a URL or local directory") {
+class Install :
+    CliktCommand(name = "install", help = "Install a Sculk modpack from a URL or local directory") {
     private val packLocation by argument()
     private val installLocation by argument().default(".")
     private val side by option().enum<InstallSide>().default(InstallSide.SERVER)
 
     override fun run() = runBlocking {
         coroutineScope {
+            val ctx = Context.getOrCreate(terminal)
             val manifest =
                 ctx.json.decodeFromString(
                     SerialPackManifest.serializer(),
@@ -122,7 +124,7 @@ class Install : CliktCommand(name = "install", help = "Install a Sculk modpack f
 
     private suspend fun readFile(path: String): String {
         return if (packLocation.startsWith("http")) {
-            ctx.client.get("$packLocation/$path").bodyAsText()
+            Context.getOrCreate(terminal).client.get("$packLocation/$path").bodyAsText()
         } else {
             File(packLocation).resolve(path).readText()
         }

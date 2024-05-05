@@ -3,10 +3,9 @@ package tech.jamalam.commands
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
 import kotlinx.coroutines.runBlocking
-import tech.jamalam.ctx
+import tech.jamalam.Context
 import tech.jamalam.modrinth.*
 import tech.jamalam.modrinth.models.ModrinthVersionFileHashes
-import tech.jamalam.pack.InMemoryPack
 import tech.jamalam.pack.ModLoader
 import tech.jamalam.pack.PackManifest
 import tech.jamalam.util.parseUrl
@@ -15,30 +14,31 @@ import tech.jamalam.util.toModrinthEnvServerSupport
 import java.io.File
 import java.nio.file.Paths
 
-class ExportModrinth : CliktCommand(name = "modrinth", help = "Export a Modrinth modpack (.mrpack)") {
+class ExportModrinth :
+    CliktCommand(name = "modrinth", help = "Export a Modrinth modpack (.mrpack)") {
     override fun run() = runBlocking {
-        val pack = InMemoryPack(ctx.json, terminal = terminal)
-        val mrpackIndex = createMrpackIndex(pack)
-        val overrides = pack
+        val ctx = Context.getOrCreate(terminal)
+        val mrpackIndex = createMrpackIndex(ctx)
+        val overrides = ctx.pack
             .getFiles()
-            .map { it.path to pack.getBasePath().resolve(it.path).toFile().readBytes() }
+            .map { it.path to ctx.pack.getBasePath().resolve(it.path).toFile().readBytes() }
 
         createModrinthPack(
             path = Paths.get("")
-                .resolve("${pack.getManifest().name}-${pack.getManifest().version}.mrpack"),
+                .resolve("${ctx.pack.getManifest().name}-${ctx.pack.getManifest().version}.mrpack"),
             index = mrpackIndex,
             overrides = overrides.toMap(),
             clientOverrides = emptyMap(),
             serverOverrides = emptyMap()
         )
 
-        terminal.info("Exported ${pack.getManifest().name} to ${pack.getManifest().name}-${pack.getManifest().version}.mrpack")
+        terminal.info("Exported ${ctx.pack.getManifest().name} to ${ctx.pack.getManifest().name}-${ctx.pack.getManifest().version}.mrpack")
     }
 
-    private fun createMrpackIndex(pack: InMemoryPack): ModrinthPackIndex {
+    private fun createMrpackIndex(ctx: Context): ModrinthPackIndex {
         val files = mutableListOf<ModrinthPackFile>()
 
-        for ((path, fileManifest) in pack.getManifests().entries) {
+        for ((path, fileManifest) in ctx.pack.getManifests().entries) {
             val downloadUrls = mutableListOf<String>()
 
             if (fileManifest.sources.modrinth != null) {
@@ -75,19 +75,19 @@ class ExportModrinth : CliktCommand(name = "modrinth", help = "Export a Modrinth
         }
 
         val dependencies = ModrinthPackDependencies(
-            minecraftVersion = pack.getManifest().minecraft,
-            forgeVersion = pack.getManifest().getLoaderVersionOrNull(ModLoader.Forge),
-            neoforgeVersion = pack.getManifest().getLoaderVersionOrNull(ModLoader.Neoforge),
-            fabricLoaderVersion = pack.getManifest().getLoaderVersionOrNull(ModLoader.Fabric),
-            quiltLoaderVersion = pack.getManifest().getLoaderVersionOrNull(ModLoader.Quilt)
+            minecraftVersion = ctx.pack.getManifest().minecraft,
+            forgeVersion = ctx.pack.getManifest().getLoaderVersionOrNull(ModLoader.Forge),
+            neoforgeVersion = ctx.pack.getManifest().getLoaderVersionOrNull(ModLoader.Neoforge),
+            fabricLoaderVersion = ctx.pack.getManifest().getLoaderVersionOrNull(ModLoader.Fabric),
+            quiltLoaderVersion = ctx.pack.getManifest().getLoaderVersionOrNull(ModLoader.Quilt)
         )
 
         return ModrinthPackIndex(
             formatVersion = MRPACK_FORMAT_VERSION,
             game = MRPACK_MINECRAFT_GAME,
-            versionId = pack.getManifest().version,
-            name = pack.getManifest().name,
-            summary = pack.getManifest().summary,
+            versionId = ctx.pack.getManifest().version,
+            name = ctx.pack.getManifest().name,
+            summary = ctx.pack.getManifest().summary,
             files = files,
             dependencies = dependencies
         )
