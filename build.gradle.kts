@@ -74,7 +74,19 @@ tasks {
         }
     }
 
+    create("createVersionFile") {
+        val fileName = "version"
+        outputs.file(generatedResourcesDir.get().asFile.resolve(fileName))
+
+        doLast {
+            FileOutputStream(generatedResourcesDir.get().asFile.resolve(fileName)).use {
+                it.write(project.version.toString().toByteArray())
+            }
+        }
+    }
+
     getByName("processResources") {
         dependsOn("createCurseforgeCredentialsFile")
+        dependsOn("createVersionFile")
     }
 }

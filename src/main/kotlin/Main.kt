@@ -4,6 +4,7 @@ import com.github.ajalt.clikt.completion.CompletionCommand
 import com.github.ajalt.clikt.core.CliktError
 import com.github.ajalt.clikt.core.NoOpCliktCommand
 import com.github.ajalt.clikt.core.subcommands
+import com.github.ajalt.clikt.parameters.options.versionOption
 import com.github.ajalt.mordant.terminal.Terminal
 import tech.jamalam.commands.*
 import kotlin.system.exitProcess
@@ -32,35 +33,28 @@ class ExportCmd :
 class ImportCmd :
     NoOpCliktCommand(name = "import", help = "Import a pack from a different format") {
     override fun aliases(): Map<String, List<String>> = mapOf(
-        "mr" to listOf("modrinth"),
-        "cf" to listOf("curseforge")
+        "mr" to listOf("modrinth"), "cf" to listOf("curseforge")
     )
 }
 
 fun main(args: Array<String>) {
+    val version = Cli::class.java.getResourceAsStream("/version").use {
+        String(it?.readAllBytes() ?: "???".toByteArray())
+    }
+
     val cli = Cli()
-        .subcommands(Init())
-        .subcommands(
+        .versionOption(version)
+        .subcommands(Init()).subcommands(
             AddCmd().subcommands(
-                AddByUrl(),
-                AddFromModrinth(),
-                AddFromCurseforge(),
-                AddFromList()
+                AddByUrl(), AddFromModrinth(), AddFromCurseforge(), AddFromList()
             )
-        )
-        .subcommands(Update())
-        .subcommands(Link())
-        .subcommands(Migrate())
-        .subcommands(Refresh())
-        .subcommands(Remove())
-        .subcommands(Install())
+        ).subcommands(Update()).subcommands(Link()).subcommands(Migrate()).subcommands(Refresh())
+        .subcommands(Remove()).subcommands(Install())
         .subcommands(ImportCmd().subcommands(ImportModrinth()).subcommands(ImportCurseforge()))
         .subcommands(ExportCmd().subcommands(ExportModrinth()).subcommands(ExportCurseforge()))
-        .subcommands(ModList())
-        .subcommands(
+        .subcommands(ModList()).subcommands(
             CompletionCommand(
-                name = "completion",
-                help = "Generate a completion script for your shell"
+                name = "completion", help = "Generate a completion script for your shell"
             )
         )
 
