@@ -1,0 +1,1 @@
+- Add help text to all commands and options.

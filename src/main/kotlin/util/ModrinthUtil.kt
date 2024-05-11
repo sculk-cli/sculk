@@ -124,6 +124,10 @@ suspend fun addModrinthVersion(
                     val dependencyProject = ctx.modrinth.getProject(dependency.projectId)
                         ?: error("Dependency not found")
 
+                    if (ctx.pack.getManifest("$dir/${dependencyProject.slug}.sculk.json") != null) {
+                        continue
+                    }
+
                     if (addModrinthProject(
                             ctx, dependencyProject
                         ) || ctx.dependencyGraph.containsKey("$dir/${dependencyProject.slug}.sculk.json")
@@ -137,6 +141,11 @@ suspend fun addModrinthVersion(
                 ModrinthVersionDependencyType.Optional -> {
                     val dependencyProject = ctx.modrinth.getProject(dependency.projectId)
                         ?: error("Dependency not found")
+
+                    if (ctx.pack.getManifest("$dir/${dependencyProject.slug}.sculk.json") != null) {
+                        continue
+                    }
+
                     val prompt = PrettyListPrompt(
                         "Add optional dependency ${dependencyProject.title}?",
                         listOf("Yes", "No"),

@@ -3,6 +3,7 @@ package tech.jamalam.commands
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.options.flag
+import com.github.ajalt.clikt.parameters.options.help
 import com.github.ajalt.clikt.parameters.options.option
 import tech.jamalam.Context
 import tech.jamalam.pack.*
@@ -13,7 +14,7 @@ class Refresh : CliktCommand(
     name = "refresh",
     help = "Check all hashes in the manifest and update them if needed"
 ) {
-    private val check by option().flag()
+    private val check by option().flag().help("Check hashes without updating them")
 
     override fun run() {
         val ctx = Context.getOrCreate(terminal)

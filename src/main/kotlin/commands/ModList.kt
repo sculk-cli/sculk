@@ -3,6 +3,7 @@ package tech.jamalam.commands
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.arguments.argument
+import com.github.ajalt.clikt.parameters.arguments.help
 import com.github.ajalt.clikt.parameters.types.file
 import com.github.ajalt.mordant.animation.coroutines.animateInCoroutine
 import com.github.ajalt.mordant.animation.progress.advance
@@ -13,7 +14,7 @@ import kotlinx.coroutines.runBlocking
 import tech.jamalam.Context
 
 class ModList : CliktCommand(name = "modlist", help = "Generate a markdown mod list") {
-    private val file by argument().file()
+    private val file by argument().file().help("The file to write the modlist to")
 
     override fun run() = runBlocking {
         coroutineScope {

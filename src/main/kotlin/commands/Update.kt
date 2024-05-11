@@ -3,6 +3,7 @@ package tech.jamalam.commands
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.arguments.argument
+import com.github.ajalt.clikt.parameters.arguments.help
 import com.github.ajalt.clikt.parameters.arguments.optional
 import com.github.ajalt.mordant.animation.coroutines.animateInCoroutine
 import com.github.ajalt.mordant.animation.progress.advance
@@ -15,8 +16,8 @@ import tech.jamalam.pack.FileManifest
 import tech.jamalam.util.updateCurseforgeProject
 import tech.jamalam.util.updateModrinthProject
 
-class Update : CliktCommand(name = "update") {
-    private val project by argument().optional()
+class Update : CliktCommand(name = "update", help = "Update projects from Curseforge and Modrinth") {
+    private val project by argument().optional().help("The project to update, or all projects if not specified")
 
     override fun run() = runBlocking {
         coroutineScope {

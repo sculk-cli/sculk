@@ -2,6 +2,7 @@ package tech.jamalam.commands
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
+import com.github.ajalt.clikt.parameters.options.help
 import com.github.ajalt.clikt.parameters.options.option
 import io.ktor.http.*
 import kotlinx.coroutines.runBlocking
@@ -11,13 +12,15 @@ import tech.jamalam.util.*
 
 class AddByUrl :
     CliktCommand(name = "url", help = "Add a project to the manifest from a direct download URL") {
-    private val slug by option()
-        .prettyPrompt<String>("Enter project name")
-    private val url by option()
-        .prettyPrompt<Url>("Enter download URL")
+    private val slug by option().prettyPrompt<String>("Enter project name")
+        .help("The slug of the project, used for naming the file manifest")
+    private val url by option().prettyPrompt<Url>("Enter download URL")
+        .help("The download URL of the file")
     private val filename by option().prettyPrompt<String>("Enter file name")
-    private val type by option().prettyPrompt<Type>("Select type")
+        .help("The name of the file (e.g. sodium-1.2.3.jar")
+    private val type by option().prettyPrompt<Type>("Select type").help("The project type")
     private val side by option().prettyPrompt<Side>("Select side")
+        .help("The side the project is for")
 
     override fun run() = runBlocking {
         val transformedSlug = slug.lowercase().replace(" ", "-")
@@ -42,18 +45,12 @@ class AddByUrl :
             existingManifest
         } else {
             FileManifest(
-                filename = filename,
-                side = side,
-                hashes = FileManifestHashes(
+                filename = filename, side = side, hashes = FileManifestHashes(
                     sha1 = contents.digestSha1(),
                     sha512 = contents.digestSha512(),
                     murmur2 = contents.digestMurmur2()
-                ),
-                fileSize = contents.size,
-                sources = FileManifestSources(
-                    curseforge = null,
-                    modrinth = null,
-                    url = FileManifestUrlSource(url.toString())
+                ), fileSize = contents.size, sources = FileManifestSources(
+                    curseforge = null, modrinth = null, url = FileManifestUrlSource(url.toString())
                 )
             )
         }
@@ -64,9 +61,6 @@ class AddByUrl :
     }
 
     enum class Type {
-        Mod,
-        Shaderpack,
-        Resourcepack,
-        Datapack,
+        Mod, Shaderpack, Resourcepack, Datapack,
     }
 }

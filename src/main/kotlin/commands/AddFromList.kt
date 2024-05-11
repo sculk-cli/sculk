@@ -3,6 +3,7 @@ package tech.jamalam.commands
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.arguments.argument
+import com.github.ajalt.clikt.parameters.arguments.help
 import com.github.ajalt.clikt.parameters.types.file
 import kotlinx.coroutines.runBlocking
 import tech.jamalam.Context
@@ -15,6 +16,7 @@ class AddFromList : CliktCommand(
     help = "Add projects to the manifest from a userscript export list"
 ) {
     private val listFile by argument().file(mustExist = true, mustBeReadable = true)
+        .help("The path to the list file")
 
     override fun run() = runBlocking {
         val ctx = Context.getOrCreate(terminal)

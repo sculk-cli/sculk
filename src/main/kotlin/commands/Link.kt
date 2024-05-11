@@ -3,7 +3,9 @@ package tech.jamalam.commands
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.arguments.argument
+import com.github.ajalt.clikt.parameters.arguments.help
 import com.github.ajalt.clikt.parameters.options.flag
+import com.github.ajalt.clikt.parameters.options.help
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.enum
 import com.github.ajalt.mordant.animation.coroutines.animateInCoroutine
@@ -20,9 +22,9 @@ import tech.jamalam.pack.save
 import tech.jamalam.util.addCurseforgeFile
 import tech.jamalam.util.addModrinthVersion
 
-class Link : CliktCommand(name = "link") {
-    private val target by argument().enum<Target>()
-    private val yes by option().flag("yes", "y", default = false)
+class Link : CliktCommand(name = "link", help = "Finds Curseforge/Modrinth projects for files in the manifest") {
+    private val target by argument().enum<Target>().help("The site to search for projects on")
+    private val yes by option().flag("yes", "y", default = false).help("Automatically accept matches")
 
     override fun run() = runBlocking {
         coroutineScope {

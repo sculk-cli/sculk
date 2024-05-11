@@ -13,7 +13,7 @@ import tech.jamalam.pack.migration.Migrator
 import tech.jamalam.pack.migration.migrators
 import java.nio.file.Paths
 
-class Migrate : CliktCommand(name = "migrate") {
+class Migrate : CliktCommand(name = "migrate", help = "Migrate a pack to the latest format version") {
     private val basePath = Paths.get("")
 
     override fun run() {

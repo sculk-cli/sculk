@@ -3,6 +3,7 @@ package tech.jamalam.commands
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.arguments.argument
+import com.github.ajalt.clikt.parameters.arguments.help
 import com.github.ajalt.clikt.parameters.types.file
 import com.github.ajalt.mordant.animation.coroutines.animateInCoroutine
 import com.github.ajalt.mordant.animation.progress.advance
@@ -22,6 +23,7 @@ import java.nio.file.Paths
 class ImportCurseforge :
     CliktCommand(name = "curseforge", help = "Import a Curseforge modpack (.zip)") {
     private val curseforgePackPath by argument().file(mustExist = true, mustBeReadable = true)
+        .help("The path to the Curseforge modpack")
 
     override fun run() = runBlocking {
         coroutineScope {

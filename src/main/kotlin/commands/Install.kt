@@ -4,7 +4,9 @@ import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.default
+import com.github.ajalt.clikt.parameters.arguments.help
 import com.github.ajalt.clikt.parameters.options.default
+import com.github.ajalt.clikt.parameters.options.help
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.enum
 import com.github.ajalt.mordant.animation.coroutines.animateInCoroutine
@@ -25,18 +27,18 @@ import java.io.File
 
 class Install :
     CliktCommand(name = "install", help = "Install a Sculk modpack from a URL or local directory") {
-    private val packLocation by argument()
-    private val installLocation by argument().default(".")
-    private val side by option().enum<InstallSide>().default(InstallSide.SERVER)
+    private val packLocation by argument().help("The URL or path to the modpack")
+    private val installLocation by argument().help("The path to install the modpack to")
+        .default(".")
+    private val side by option().enum<InstallSide>().help("The side to install for")
+        .default(InstallSide.SERVER)
 
     override fun run() = runBlocking {
         coroutineScope {
             val ctx = Context.getOrCreate(terminal)
-            val manifest =
-                ctx.json.decodeFromString(
-                    SerialPackManifest.serializer(),
-                    readFile("manifest.sculk.json")
-                )
+            val manifest = ctx.json.decodeFromString(
+                SerialPackManifest.serializer(), readFile("manifest.sculk.json")
+            )
 
             val progress = progressBarContextLayout {
                 text(terminal.theme.info("Downloading files"))
@@ -61,11 +63,9 @@ class Install :
                     error("File ${file.path} was corrupted or hash was incorrect")
                 }
 
-                val fileManifest =
-                    ctx.json.decodeFromString(
-                        SerialFileManifest.serializer(),
-                        manifestText
-                    )
+                val fileManifest = ctx.json.decodeFromString(
+                    SerialFileManifest.serializer(), manifestText
+                )
 
                 if (fileManifest.side != Side.Both) {
                     if ((fileManifest.side == Side.ServerOnly && side == InstallSide.CLIENT) || (fileManifest.side == Side.ClientOnly && side == InstallSide.SERVER)) {
@@ -84,8 +84,8 @@ class Install :
                     error("No valid source found for ${file.path}")
                 }
 
-                val fileFile = File(installLocation).resolve(file.path)
-                    .resolveSibling(fileManifest.filename)
+                val fileFile =
+                    File(installLocation).resolve(file.path).resolveSibling(fileManifest.filename)
 
                 fileFile.parentFile.mkdirs()
                 val request = ctx.client.get(downloadLink)
@@ -131,7 +131,6 @@ class Install :
     }
 
     enum class InstallSide {
-        CLIENT,
-        SERVER
+        CLIENT, SERVER
     }
 }

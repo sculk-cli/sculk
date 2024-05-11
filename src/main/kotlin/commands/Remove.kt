@@ -3,6 +3,7 @@ package tech.jamalam.commands
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.arguments.argument
+import com.github.ajalt.clikt.parameters.arguments.help
 import com.github.ajalt.clikt.parameters.types.file
 import kotlinx.coroutines.runBlocking
 import tech.jamalam.Context
@@ -12,6 +13,7 @@ import java.nio.file.Paths
 
 class Remove : CliktCommand(name = "remove", help = "Remove a file or manifest") {
     private val filename by argument().file(mustExist = true, canBeDir = false)
+        .help("The file to remove")
 
     override fun run() = runBlocking {
         val ctx = Context.getOrCreate(terminal)

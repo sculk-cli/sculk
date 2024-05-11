@@ -2,6 +2,7 @@ package tech.jamalam.commands
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
+import com.github.ajalt.clikt.parameters.options.help
 import com.github.ajalt.clikt.parameters.options.option
 import kotlinx.coroutines.runBlocking
 import tech.jamalam.Context
@@ -17,11 +18,14 @@ import java.io.File
 class Init : CliktCommand(name = "init", help = "Initialize a new Sculk modpack") {
     private val path by option().prettyPrompt<File>(
         "Enter modpack path", default = File(".")
-    )
+    ).help("The path to the modpack folder")
     private val name by option().prettyPrompt<String>("Enter modpack name")
+        .help("The name of the modpack")
     private val loader by option().prettyPrompt<ModLoader>("Select mod loader")
+        .help("The mod loader to use")
     private val minecraftVersion by option().prettyPrompt<String>("Select Minecraft version",
         choices = runBlocking { Context.getOrCreate().pistonMeta.getMcVersions() })
+        .help("The Minecraft version to use")
 
     override fun run() {
         val ctx = Context.getOrCreate(terminal)

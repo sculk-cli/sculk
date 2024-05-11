@@ -3,7 +3,9 @@ package tech.jamalam.commands
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.arguments.argument
+import com.github.ajalt.clikt.parameters.arguments.help
 import com.github.ajalt.clikt.parameters.arguments.optional
+import com.github.ajalt.clikt.parameters.options.help
 import com.github.ajalt.clikt.parameters.options.option
 import kotlinx.coroutines.runBlocking
 import tech.jamalam.Context
@@ -14,7 +16,8 @@ import tech.jamalam.util.addModrinthVersion
 class AddFromModrinth :
     CliktCommand(name = "modrinth", help = "Add a project to the manifest from Modrinth") {
     private val query by argument().optional()
-    private val versionId by option()
+        .help("The slug of the project, or a query to search for")
+    private val versionId by option().help("The version ID to add. If this is provided, the query will be ignored.")
 
     override fun run() = runBlocking {
         val ctx = Context.getOrCreate(terminal)
