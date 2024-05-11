@@ -3,9 +3,6 @@
 
 import os
 import subprocess
-import tempfile
-import json
-import zipfile
 
 sculk_dir = os.path.expanduser("~/.sculk")
 

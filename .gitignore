@@ -1,6 +1,6 @@
 packs/**
 !packs/test
-TODO.md
+docgen
 
 .gradle
 build/
