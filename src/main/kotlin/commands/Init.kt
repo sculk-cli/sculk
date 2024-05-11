@@ -2,8 +2,12 @@ package tech.jamalam.commands
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
+import com.github.ajalt.clikt.parameters.arguments.argument
+import com.github.ajalt.clikt.parameters.arguments.default
+import com.github.ajalt.clikt.parameters.arguments.help
 import com.github.ajalt.clikt.parameters.options.help
 import com.github.ajalt.clikt.parameters.options.option
+import com.github.ajalt.clikt.parameters.types.file
 import kotlinx.coroutines.runBlocking
 import tech.jamalam.Context
 import tech.jamalam.PrettyListPrompt
@@ -14,11 +18,12 @@ import tech.jamalam.pack.migration.FormatVersion
 import tech.jamalam.util.mkdirsAndWriteJson
 import tech.jamalam.util.prettyPrompt
 import java.io.File
+import java.nio.file.Paths
 
 class Init : CliktCommand(name = "init", help = "Initialize a new Sculk modpack") {
-    private val path by option().prettyPrompt<File>(
-        "Enter modpack path", default = File(".")
-    ).help("The path to the modpack folder")
+    private val path by argument().file().help("The path to the modpack folder")
+        .default(Paths.get("").toFile())
+
     private val name by option().prettyPrompt<String>("Enter modpack name")
         .help("The name of the modpack")
     private val loader by option().prettyPrompt<ModLoader>("Select mod loader")
