@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # Python 3 script to install or update Sculk.
 # This script builds the latest Sculk distribution and copies it to $HOME/.sculk.
 
