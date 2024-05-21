@@ -2,7 +2,6 @@ package tech.jamalam.commands
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
@@ -11,9 +10,11 @@ import tech.jamalam.Context
 import tech.jamalam.pack.migration.FormatVersion
 import tech.jamalam.pack.migration.Migrator
 import tech.jamalam.pack.migration.migrators
+import tech.jamalam.util.mkdirsAndWriteJson
 import java.nio.file.Paths
 
-class Migrate : CliktCommand(name = "migrate", help = "Migrate a pack to the latest format version") {
+class Migrate :
+    CliktCommand(name = "migrate", help = "Migrate a pack to the latest format version") {
     private val basePath = Paths.get("")
 
     override fun run() {
@@ -55,11 +56,11 @@ class Migrate : CliktCommand(name = "migrate", help = "Migrate a pack to the lat
             terminal.info("Migrated pack to format version ${migrator.getOutputVersion()}")
         }
 
-        manifestPath.toFile().writeText(ctx.json.encodeToString(rootManifestJson))
+        manifestPath.toFile().mkdirsAndWriteJson(ctx.json, rootManifestJson)
 
         for ((path, fileManifest) in fileManifests) {
             val file = basePath.resolve(path).toFile()
-            file.writeText(ctx.json.encodeToString(fileManifest))
+            file.mkdirsAndWriteJson(ctx.json, fileManifest)
         }
     }
 

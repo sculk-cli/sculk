@@ -1,7 +1,7 @@
 package tech.jamalam.pack
 
-import kotlinx.serialization.encodeToString
 import tech.jamalam.Context
+import tech.jamalam.util.mkdirsAndWriteJson
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -45,5 +45,5 @@ fun DependencyGraph.getUnusedDependencies(): List<String> =
 
 fun DependencyGraph.save(basePath: Path = Paths.get("")) =
     basePath.resolve("dependency-graph.sculk.json").toFile()
-        .writeText(Context.getOrCreate().json.encodeToString(this))
+        .mkdirsAndWriteJson(Context.getOrCreate().json, this)
 

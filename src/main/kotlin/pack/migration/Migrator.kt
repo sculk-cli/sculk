@@ -3,12 +3,12 @@
 package tech.jamalam.pack.migration
 
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.*
 import tech.jamalam.Context
 import tech.jamalam.curseforge.calculateCurseforgeMurmur2Hash
 import tech.jamalam.util.digestSha256
 import tech.jamalam.util.downloadFileTemp
+import tech.jamalam.util.mkdirsAndWriteJson
 import tech.jamalam.util.parseUrl
 import java.io.File
 
@@ -70,7 +70,7 @@ abstract class Migrator {
     fun migrateFileManifest(path: String, json: JsonObject): JsonObject {
         val migrated = migrateFileManifest2(path, json)
         val tempFile = File.createTempFile("migrated", ".json")
-        tempFile.writeText(Context.getOrCreate().json.encodeToString(migrated))
+        tempFile.mkdirsAndWriteJson(Context.getOrCreate().json, migrated)
         hashes[path] = tempFile.readBytes().digestSha256()
         return migrated
     }

@@ -8,6 +8,7 @@ import com.github.ajalt.clikt.parameters.options.option
 import tech.jamalam.Context
 import tech.jamalam.pack.*
 import tech.jamalam.util.digestSha256
+import tech.jamalam.util.mkdirsAndWriteJson
 import java.nio.file.Paths
 
 class Refresh : CliktCommand(
@@ -128,10 +129,9 @@ class Refresh : CliktCommand(
         if (!check) {
             if (updated) {
                 val newManifest = manifest.toSerial()
-                manifestFile.writeBytes(
-                    ctx.json.encodeToString(
-                        SerialPackManifest.serializer(), newManifest
-                    ).toByteArray()
+                manifestFile.mkdirsAndWriteJson(
+                    ctx.json,
+                    newManifest
                 )
                 terminal.info("Updated manifest.sculk.json")
             } else {

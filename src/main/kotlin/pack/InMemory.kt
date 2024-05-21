@@ -6,6 +6,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import tech.jamalam.Context
 import tech.jamalam.pack.migration.FormatVersion
 import tech.jamalam.util.digestSha256
+import tech.jamalam.util.mkdirsAndWriteJson
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -97,15 +98,7 @@ class InMemoryPack(ctx: Context, private val basePath: Path = Paths.get("")) {
 
         for ((path, fileManifest) in manifests) {
             val fileManifestFile = basePath.resolve(path).toFile()
-            fileManifestFile.parentFile.mkdirs()
-            fileManifestFile.writeText(
-                "${
-                    json.encodeToString(
-                        SerialFileManifest.serializer(),
-                        fileManifest.toSerial()
-                    )
-                }\n"
-            )
+            fileManifestFile.mkdirsAndWriteJson(json, fileManifest.toSerial())
 
             if (packManifest.manifests.none { it.path == path }) {
                 packManifest.manifests += PackManifestManifest(
@@ -130,14 +123,7 @@ class InMemoryPack(ctx: Context, private val basePath: Path = Paths.get("")) {
             }
         }
 
-        manifestPath.toFile().writeText(
-            "${
-                json.encodeToString(
-                    SerialPackManifest.serializer(),
-                    packManifest.toSerial()
-                )
-            }\n"
-        )
+        manifestPath.toFile().mkdirsAndWriteJson(json, packManifest.toSerial())
     }
 }
 
