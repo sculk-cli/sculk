@@ -10,6 +10,7 @@ import tech.jamalam.curseforge.calculateCurseforgeMurmur2Hash
 import tech.jamalam.util.digestSha256
 import tech.jamalam.util.downloadFileTemp
 import tech.jamalam.util.parseUrl
+import java.io.File
 
 val migrators = listOf(
     Migrator1_0(),
@@ -57,36 +58,57 @@ class FormatVersion(private val major: Int, private val minor: Int) {
     }
 }
 
-interface Migrator {
-    fun migrateRootManifest(json: JsonObject): JsonObject {
+abstract class Migrator {
+    private val hashes: MutableMap<String, String> = mutableMapOf()
+
+    open fun migrateRootManifest(json: JsonObject): JsonObject {
         return JsonObject(json.toMutableMap().apply {
             put("formatVersion", JsonPrimitive(getOutputVersion().toString()))
         })
     }
 
     fun migrateFileManifest(path: String, json: JsonObject): JsonObject {
-        return json
+        val migrated = migrateFileManifest2(path, json)
+        val tempFile = File.createTempFile("migrated", ".json")
+        tempFile.writeText(Context.getOrCreate().json.encodeToString(migrated))
+        hashes[path] = tempFile.readBytes().digestSha256()
+        return migrated
     }
 
-    fun manipulateRootPostMigration(json: JsonObject): JsonObject {
-        return json
+    abstract fun migrateFileManifest2(path: String, json: JsonObject): JsonObject
+
+    open fun manipulateRootPostMigration(json: JsonObject): JsonObject {
+        Context.getOrCreate().terminal.info(hashes)
+        return JsonObject(json.toMutableMap().apply {
+            val fileManifests =
+                json["manifests"]?.jsonArray!!.map { it.jsonObject }.map { it.toMutableMap() }
+
+            for (fileManifest in fileManifests) {
+                val path = fileManifest["path"]!!.jsonPrimitive.content
+                fileManifest["sha256"] = JsonPrimitive(hashes[path])
+            }
+
+            set("manifests", JsonArray(fileManifests.map { JsonObject(it) }))
+        })
     }
 
-    fun getOutputVersion(): FormatVersion
+    abstract fun getOutputVersion(): FormatVersion
 }
 
 // Adds `formatVersion` to root manifest
-class Migrator1_0 : Migrator {
+class Migrator1_0 : Migrator() {
+    override fun migrateFileManifest2(path: String, json: JsonObject): JsonObject {
+        return json
+    }
+
     override fun getOutputVersion(): FormatVersion {
         return FormatVersion(1, 0)
     }
 }
 
 // Adds a `murmur2` hash to file manifests
-class Migrator1_1 : Migrator {
-    private val hashes: MutableMap<String, String> = mutableMapOf()
-
-    override fun migrateFileManifest(path: String, json: JsonObject): JsonObject {
+class Migrator1_1 : Migrator() {
+    override fun migrateFileManifest2(path: String, json: JsonObject): JsonObject {
         return JsonObject(json.toMutableMap().apply {
             val sources = json["sources"]?.jsonObject!!.toMap()
 
@@ -106,23 +128,6 @@ class Migrator1_1 : Migrator {
             }
 
             set("hashes", JsonObject(hashes))
-
-            this@Migrator1_1.hashes[path] =
-                Context.getOrCreate().json.encodeToString(json).toByteArray().digestSha256()
-        })
-    }
-
-    override fun manipulateRootPostMigration(json: JsonObject): JsonObject {
-        return JsonObject(json.toMutableMap().apply {
-            val fileManifests =
-                json["manifests"]?.jsonArray!!.map { it.jsonObject }.map { it.toMutableMap() }
-
-            for (fileManifest in fileManifests) {
-                val path = fileManifest["path"]!!.jsonPrimitive.content
-                fileManifest["sha256"] = JsonPrimitive(hashes[path])
-            }
-
-            set("manifests", JsonArray(fileManifests.map { JsonObject(it) }))
         })
     }
 
