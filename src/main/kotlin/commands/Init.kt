@@ -22,7 +22,7 @@ import java.nio.file.Paths
 
 class Init : CliktCommand(name = "init", help = "Initialize a new Sculk modpack") {
     private val path by argument().file().help("The path to the modpack folder")
-        .default(Paths.get("").toFile())
+        .default(Paths.get("").toFile().canonicalFile)
 
     private val name by option().prettyPrompt<String>("Enter modpack name")
         .help("The name of the modpack")
