@@ -8,11 +8,6 @@ import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.help
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.enum
-import com.github.ajalt.mordant.animation.coroutines.animateInCoroutine
-import com.github.ajalt.mordant.animation.progress.advance
-import com.github.ajalt.mordant.widgets.progress.*
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import tech.jamalam.BooleanPrettyPrompt
 import tech.jamalam.Context
@@ -22,49 +17,38 @@ import tech.jamalam.pack.save
 import tech.jamalam.util.addCurseforgeFile
 import tech.jamalam.util.addModrinthVersion
 
-class Link : CliktCommand(name = "link", help = "Finds Curseforge/Modrinth projects for files in the manifest") {
+class Link : CliktCommand(
+    name = "link",
+    help = "Finds Curseforge/Modrinth projects for files in the manifest"
+) {
     private val target by argument().enum<Target>().help("The site to search for projects on")
-    private val yes by option().flag("yes", "y", default = false).help("Automatically accept matches")
+    private val yes by option().flag("yes", "y", default = false)
+        .help("Automatically accept matches")
 
     override fun run() = runBlocking {
-        coroutineScope {
-            val ctx = Context.getOrCreate(terminal)
+        val ctx = Context.getOrCreate(terminal)
 
-            val manifests = ctx.pack.getManifests().filter {
-                when (target) {
-                    Target.Curseforge -> {
-                        it.value.sources.curseforge == null && (it.value.sources.modrinth != null || it.value.sources.url != null)
-                    }
+        val manifests = ctx.pack.getManifests().filter {
+            when (target) {
+                Target.Curseforge -> {
+                    it.value.sources.curseforge == null && (it.value.sources.modrinth != null || it.value.sources.url != null)
+                }
 
-                    Target.Modrinth -> {
-                        it.value.sources.modrinth == null && (it.value.sources.curseforge != null || it.value.sources.url != null)
-                    }
+                Target.Modrinth -> {
+                    it.value.sources.modrinth == null && (it.value.sources.curseforge != null || it.value.sources.url != null)
                 }
             }
-
-            val progress = progressBarContextLayout {
-                text(terminal.theme.info("Trying to find $target projects"))
-                marquee(width = 40) { terminal.theme.warning(context) }
-                percentage()
-                progressBar()
-                completed(style = terminal.theme.success)
-            }.animateInCoroutine(
-                terminal,
-                total = manifests.size.toLong(),
-                context = ""
-            )
-
-            launch { progress.execute() }
-
-            for (manifest in manifests) {
-                progress.advance(1)
-                progress.update { context = manifest.key }
-                tryLinkManifest(ctx, manifest)
-            }
-
-            ctx.pack.save(ctx.json)
-            ctx.dependencyGraph.save()
         }
+
+        var i = 1
+        for (manifest in manifests) {
+            terminal.info("Attempting to find matches for ${manifest.key} (${i}/${manifests.size})")
+            tryLinkManifest(ctx, manifest)
+            i += 1
+        }
+
+        ctx.pack.save(ctx.json)
+        ctx.dependencyGraph.save()
     }
 
     private suspend fun tryLinkManifest(

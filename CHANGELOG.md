@@ -1,8 +1,1 @@
-- Add help text to all commands and options.
-- Add SLF4J for logging.
-- Support for project types other than mods
-- Internal refactors
-- `sculk add list`
-- `sculk update`
-- `sculk link`
-- `sculk migrate`
+- Improve the user interface of the link command (#8)
