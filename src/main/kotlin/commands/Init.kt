@@ -28,11 +28,8 @@ class Init : CliktCommand(name = "init", help = "Initialize a new Sculk modpack"
         .help("The name of the modpack")
     private val loader by option().prettyPrompt<ModLoader>("Select mod loader")
         .help("The mod loader to use")
-    private val minecraftVersion by option().prettyPrompt<String>("Select Minecraft version",
-        choices = runBlocking { Context.getOrCreate().pistonMeta.getMcVersions() })
-        .help("The Minecraft version to use")
 
-    override fun run() {
+    override fun run() = runBlocking {
         val ctx = Context.getOrCreate(terminal)
         if (!path.exists()) {
             path.mkdirs()
@@ -46,57 +43,61 @@ class Init : CliktCommand(name = "init", help = "Initialize a new Sculk modpack"
             error("Directory is not empty")
         }
 
-        val loaderVersion = runBlocking {
-            when (loader) {
-                ModLoader.Fabric -> {
-                    val versions =
-                        ctx.fabricMeta.getLoaderVersions(minecraftVersion).map { it.version }
+        val minecraftVersion = PrettyListPrompt(
+            "Select Minecraft version",
+            ctx.pistonMeta.getMcVersions(),
+            terminal
+        ).ask()
 
-                    if (versions.isEmpty()) {
-                        error("No Fabric versions found for $minecraftVersion")
-                    }
+        val loaderVersion = when (loader) {
+            ModLoader.Fabric -> {
+                val versions =
+                    ctx.fabricMeta.getLoaderVersions(minecraftVersion).map { it.version }
 
-                    PrettyListPrompt(
-                        "Select Fabric version", versions, terminal
-                    ).ask()
+                if (versions.isEmpty()) {
+                    error("No Fabric versions found for $minecraftVersion")
                 }
 
-                ModLoader.Forge -> {
-                    val versions = ctx.forgeMeta.getLoaderVersions(minecraftVersion)
+                PrettyListPrompt(
+                    "Select Fabric version", versions, terminal
+                ).ask()
+            }
 
-                    if (versions.isEmpty()) {
-                        error("No Forge versions found for $minecraftVersion")
-                    }
+            ModLoader.Forge -> {
+                val versions = ctx.forgeMeta.getLoaderVersions(minecraftVersion)
 
-                    PrettyListPrompt(
-                        "Select Forge version", versions, terminal
-                    ).ask()
+                if (versions.isEmpty()) {
+                    error("No Forge versions found for $minecraftVersion")
                 }
 
-                ModLoader.Neoforge -> {
-                    val versions = ctx.neoForgeMeta.getLoaderVersions(minecraftVersion)
+                PrettyListPrompt(
+                    "Select Forge version", versions, terminal
+                ).ask()
+            }
 
-                    if (versions.isEmpty()) {
-                        error("No NeoForge versions found for $minecraftVersion")
-                    }
+            ModLoader.Neoforge -> {
+                val versions = ctx.neoForgeMeta.getLoaderVersions(minecraftVersion)
 
-                    PrettyListPrompt(
-                        "Select NeoForge version", versions, terminal
-                    ).ask()
+                if (versions.isEmpty()) {
+                    error("No NeoForge versions found for $minecraftVersion")
                 }
 
-                ModLoader.Quilt -> {
-                    val versions =
-                        ctx.quiltMeta.getLoaderVersions(minecraftVersion).map { it.version }
+                PrettyListPrompt(
+                    "Select NeoForge version", versions, terminal
+                ).ask()
+            }
 
-                    if (versions.isEmpty()) {
-                        error("No Quilt versions found for $minecraftVersion")
-                    }
+            ModLoader.Quilt -> {
+                val versions =
+                    ctx.quiltMeta.getLoaderVersions(minecraftVersion).map { it.version }
 
-                    PrettyListPrompt(
-                        "Select Fabric version", versions, terminal
-                    ).ask()
+                if (versions.isEmpty()) {
+                    error("No Quilt versions found for $minecraftVersion")
                 }
+
+                PrettyListPrompt(
+                    "Select Fabric version", versions, terminal
+                ).ask()
             }
         }
 

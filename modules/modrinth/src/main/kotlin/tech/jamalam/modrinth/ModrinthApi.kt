@@ -2,14 +2,8 @@ package tech.jamalam.modrinth
 
 import io.ktor.client.*
 import io.ktor.client.call.*
-import io.ktor.client.engine.cio.*
-import io.ktor.client.plugins.*
-import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.http.*
-import io.ktor.serialization.kotlinx.json.*
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.json.Json
 import tech.jamalam.modrinth.models.*
 import tech.jamalam.url.buildUrl
 
@@ -17,22 +11,9 @@ public const val MODRINTH_API_URL: String = "api.modrinth.com"
 public const val MODRINTH_STAGING_API_URL: String = "staging-api.modrinth.com"
 
 public class ModrinthApi(
-    private val userAgent: String,
+    private val client: HttpClient,
     private val apiUrl: String = MODRINTH_API_URL,
 ) {
-    @OptIn(ExperimentalSerializationApi::class)
-    private val client: HttpClient = HttpClient(CIO) {
-        install(UserAgent) {
-            agent = userAgent
-        }
-
-        install(ContentNegotiation) {
-            json(Json {
-                explicitNulls = false
-                coerceInputValues = true
-            })
-        }
-    }
 
     public suspend fun search(
         query: String,

@@ -2,16 +2,10 @@ package tech.jamalam.curseforge
 
 import io.ktor.client.*
 import io.ktor.client.call.*
-import io.ktor.client.engine.cio.*
-import io.ktor.client.plugins.*
-import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
-import io.ktor.serialization.kotlinx.json.*
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 import tech.jamalam.curseforge.models.*
 import tech.jamalam.url.buildUrl
 
@@ -29,27 +23,12 @@ private const val HEADER_API_KEY: String = "x-api-key"
 private const val MINECRAFT_GAME_ID: Int = 432
 
 // Much less complete than the Modrinth API wrapper, because the Curseforge API is a pain so I only did what was necessary
-// The models are still
 public class CurseforgeApi(
-    private val userAgent: String,
+    private val client: HttpClient,
     private val apiUrl: String = CURSE_TOOLS_API_URL,
     private val basePath: String = CURSE_TOOLS_API_BASE_PATH,
     private val token: String? = null
 ) {
-    @OptIn(ExperimentalSerializationApi::class)
-    private val client: HttpClient = HttpClient(CIO) {
-        install(UserAgent) {
-            agent = userAgent
-        }
-
-        install(ContentNegotiation) {
-            json(Json {
-                explicitNulls = false
-                coerceInputValues = true
-            })
-        }
-    }
-
     public suspend fun search(
         gameId: Int = MINECRAFT_GAME_ID,
         classId: Int? = null,

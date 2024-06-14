@@ -18,39 +18,45 @@ const val USER_AGENT = "sculk-cli/sculk (email: james<at>jamalam<dot>tech / disc
 
 class Context(val terminal: Terminal) {
     @OptIn(ExperimentalSerializationApi::class)
-    val json = Json {
-        prettyPrint = true
-        ignoreUnknownKeys = true
-        explicitNulls = false
-        coerceInputValues = true
-    }
-
-    val client = HttpClient {
-        install(UserAgent) {
-            agent = USER_AGENT
-        }
-
-        install(ContentNegotiation) {
-            json(json)
+    val json by lazy {
+        Json {
+            prettyPrint = true
+            ignoreUnknownKeys = true
+            explicitNulls = false
+            coerceInputValues = true
         }
     }
 
-    val pistonMeta = PistonMeta(client)
-    val fabricMeta = FabricMeta(client)
-    val neoForgeMeta = NeoForgeMeta(client)
-    val forgeMeta = ForgeMeta(client)
-    val quiltMeta = QuiltMeta(client)
-    val modrinth = ModrinthApi(USER_AGENT)
-    val curseforge = run {
-        Cli::class.java.getResourceAsStream("/curseforge-credentials.properties").use {
-            val properties = Properties()
-            properties.load(it)
-            CurseforgeApi(
-                userAgent = USER_AGENT,
-                apiUrl = properties.getProperty("api_url"),
-                basePath = properties.getProperty("api_base_path"),
-                token = properties.getProperty("api_key")
-            )
+    val client by lazy {
+        HttpClient {
+            install(UserAgent) {
+                agent = USER_AGENT
+            }
+
+            install(ContentNegotiation) {
+                json(json)
+            }
+        }
+    }
+
+    val pistonMeta by lazy { PistonMeta(client) }
+    val fabricMeta by lazy { FabricMeta(client) }
+    val neoForgeMeta by lazy { NeoForgeMeta(client) }
+    val forgeMeta by lazy { ForgeMeta(client) }
+    val quiltMeta by lazy { QuiltMeta(client) }
+    val modrinth by lazy { ModrinthApi(client) }
+    val curseforge by lazy {
+        run {
+            Cli::class.java.getResourceAsStream("/curseforge-credentials.properties").use {
+                val properties = Properties()
+                properties.load(it)
+                CurseforgeApi(
+                    client,
+                    apiUrl = properties.getProperty("api_url"),
+                    basePath = properties.getProperty("api_base_path"),
+                    token = properties.getProperty("api_key")
+                )
+            }
         }
     }
 

@@ -154,10 +154,6 @@ suspend fun addModrinthVersion(
                     )
 
                     if (prompt.ask() == "Yes") {
-                        ctx.dependencyGraph.addDependency(
-                            "$dir/${dependencyProject.slug}.sculk.json", path
-                        )
-
                         addModrinthProject(ctx, dependencyProject)
                     }
                 }

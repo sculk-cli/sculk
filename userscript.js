@@ -12,6 +12,14 @@
 
 const MODRINTH_HOST = "modrinth.com";
 const CURSEFORGE_HOST = "www.curseforge.com";
+const MODRINTH_PATHS = [
+  "mod",
+  "plugin", // Some plugins are mods
+  "datapack",
+  "shader",
+  "resourcepack",
+];
+const CURSEFORGE_PATHS = ["mc-mods", "texture-packs", "data-packs", "shaders"];
 
 (function () {
   "use strict";
@@ -23,14 +31,22 @@ const CURSEFORGE_HOST = "www.curseforge.com";
     }
 
     addProject(project) {
-			this.projects.push(project);
-			this.save();
+      this.load(); // Load to make sure we have the most up to date list (other tabs could have modified)
+      this.projects.push(project);
+      this.save();
       console.log("Added project", project);
-		}
+    }
+
+    removeProject(project) {
+      this.load(); // Load to make sure we have the most up to date list (other tabs could have modified)
+      this.projects = this.projects.filter((p) => p !== project);
+      this.save();
+      console.log("Removed project", project);
+    }
 
     clear() {
-			this.projects = [];
-			this.save();
+      this.projects = [];
+      this.save();
       console.log("Cleared install list");
     }
 
@@ -46,17 +62,17 @@ const CURSEFORGE_HOST = "www.curseforge.com";
       setTimeout(() => {
         URL.revokeObjectURL(blob);
         a.remove();
-			}, 1000);
-			
-			this.clear();
+      }, 1000);
+
+      this.clear();
     }
 
     save() {
-      GM_setValue("projects", JSON.stringify(this.projects));
+      localStorage.setItem("sculk__projects", JSON.stringify(this.projects));
     }
 
     load() {
-      const projects = GM_getValue("projects");
+      const projects = localStorage.getItem("sculk__projects");
       if (projects) {
         this.projects = JSON.parse(projects);
       }
@@ -69,7 +85,7 @@ const CURSEFORGE_HOST = "www.curseforge.com";
     }
 
     init() {
-      if (window.location.pathname.startsWith("/mod/")) {
+      if (MODRINTH_PATHS.find((p) => window.location.pathname.startsWith(`/${p}`))) {
         this.addButtons();
       }
     }
@@ -80,9 +96,14 @@ const CURSEFORGE_HOST = "www.curseforge.com";
       buttonDiv.style.display = "flex";
       buttonDiv.style.flexDirection = "column";
       buttonDiv.style.alignItems = "center";
-      buttonDiv.append(this.createButton("Add to Sculk Install List", () => this.addProject()));
-      buttonDiv.append(this.createButton("Export Sculk Install List", () => this.list.export()));
-      buttonDiv.append(this.createButton("Clear Sculk Install List", () => this.list.clear()));
+
+      this.addButton = this.createButton("Add to Sculk Install List", () => this.addProject());
+      buttonDiv.append(this.addButton);
+      this.removeButton = this.createButton("Remove from Sculk Install List", () => this.removeProject());
+      buttonDiv.append(this.removeButton);
+      buttonDiv.append(this.createButton("Export Sculk Install List", () => this.export()));
+      buttonDiv.append(this.createButton("Clear Sculk Install List", () => this.clear()));
+      this.updateButtons();
       document.querySelector(".normal-page__sidebar").prepend(buttonDiv);
     }
 
@@ -99,16 +120,45 @@ const CURSEFORGE_HOST = "www.curseforge.com";
     addProject() {
       const slug = window.location.pathname.split("/")[2];
       this.list.addProject(`modrinth:${slug}`);
+      this.updateButtons();
     }
-	}
-	
-	class Curseforge {
+
+    removeProject() {
+      const slug = window.location.pathname.split("/")[2];
+      this.list.removeProject(`modrinth:${slug}`);
+      this.updateButtons();
+    }
+
+    export() {
+      this.list.export();
+      this.updateButtons();
+    }
+
+    clear() {
+      this.list.clear();
+      this.updateButtons();
+    }
+
+    updateButtons() {
+      const slug = window.location.pathname.split("/")[2];
+
+      if (this.list.projects.includes(`modrinth:${slug}`)) {
+        this.addButton.style.display = "none";
+        this.removeButton.style.display = "flex";
+      } else {
+        this.addButton.style.display = "flex";
+        this.removeButton.style.display = "none";
+      }
+    }
+  }
+
+  class Curseforge {
     constructor(list) {
       this.list = list;
     }
 
     init() {
-      if (window.location.pathname.startsWith("/minecraft/")) {
+      if (CURSEFORGE_PATHS.find((p) => window.location.pathname.startsWith(`/minecraft/${p}`))) {
         this.addButtons();
       }
     }
@@ -119,9 +169,14 @@ const CURSEFORGE_HOST = "www.curseforge.com";
       buttonDiv.style.display = "flex";
       buttonDiv.style.flexDirection = "column";
       buttonDiv.style.alignItems = "center";
-      buttonDiv.append(this.createButton("Add to Sculk Install List", () => this.addProject()));
-      buttonDiv.append(this.createButton("Export Sculk Install List", () => this.list.export()));
-      buttonDiv.append(this.createButton("Clear Sculk Install List", () => this.list.clear()));
+
+      this.addButton = this.createButton("Add to Sculk Install List", () => this.addProject());
+      buttonDiv.append(this.addButton);
+      this.removeButton = this.createButton("Remove from Sculk Install List", () => this.removeProject());
+      buttonDiv.append(this.removeButton);
+      buttonDiv.append(this.createButton("Export Sculk Install List", () => this.export()));
+      buttonDiv.append(this.createButton("Clear Sculk Install List", () => this.clear()));
+      this.updateButtons();
       document.querySelector(".tab-content").prepend(buttonDiv);
     }
 
@@ -138,6 +193,35 @@ const CURSEFORGE_HOST = "www.curseforge.com";
     addProject() {
       const slug = window.location.pathname.split("/")[3];
       this.list.addProject(`curseforge:${slug}`);
+      this.updateButtons();
+    }
+
+    removeProject() {
+      const slug = window.location.pathname.split("/")[3];
+      this.list.removeProject(`curseforge:${slug}`);
+      this.updateButtons();
+    }
+
+    export() {
+      this.list.export();
+      this.updateButtons();
+    }
+
+    clear() {
+      this.list.clear();
+      this.updateButtons();
+    }
+
+    updateButtons() {
+      const slug = window.location.pathname.split("/")[3];
+
+      if (this.list.projects.includes(`curseforge:${slug}`)) {
+        this.addButton.style.display = "none";
+        this.removeButton.style.display = "flex";
+      } else {
+        this.addButton.style.display = "flex";
+        this.removeButton.style.display = "none";
+      }
     }
   }
 

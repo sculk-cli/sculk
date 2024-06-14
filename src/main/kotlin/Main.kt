@@ -39,6 +39,7 @@ class ImportCmd :
 }
 
 fun main(args: Array<String>) {
+    val startTime = System.currentTimeMillis()
     val version = Cli::class.java.getResourceAsStream("/version").use {
         String(it?.readAllBytes() ?: "???".toByteArray())
     }
@@ -74,4 +75,6 @@ fun main(args: Array<String>) {
         e.printStackTrace()
         exitProcess(0)
     }
+
+//    println("Finished in ${System.currentTimeMillis() - time}ms")
 }
