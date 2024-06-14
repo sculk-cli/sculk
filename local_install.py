@@ -15,8 +15,10 @@ def build_distribution():
   if not os.path.exists("./build.gradle.kts"):
     raise Exception("Not in a Gradle project directory")
 
-  shutil.rmtree(os.path.join(".", "build", "libs"))
-  shutil.rmtree(os.path.join(sculk_dir))
+  if os.path.exists(os.path.join(".", "build", "libs")):
+    shutil.rmtree(os.path.join(".", "build", "libs"))
+  if os.path.exists(sculk_dir):
+    shutil.rmtree(sculk_dir)
   os.makedirs(sculk_dir)
 
   process = subprocess.run(["./gradlew", ":build"])

@@ -35,7 +35,7 @@ public data class ModrinthProject(
     public val followers: Int,
     public val status: ModrinthProjectStatus,
     @SerialName("requested_status") public val requestedStatus: ModrinthProjectRequestedStatus? = null,
-    @SerialName("moderator_message") public val moderatorMessage: String? = null,
+    @SerialName("moderator_message") public val moderatorMessage: ModrinthProjectModeratorMessage? = null,
     @SerialName("thread_id") public val threadId: String? = null,
     @SerialName("monetization_status") public val monetizationStatus: ModrinthMonetizationStatus? = null,
     @SerialName("team") public val teamId: String,
@@ -101,6 +101,11 @@ public enum class ModrinthProjectRequestedStatus {
     @SerialName("draft")
     Draft
 }
+
+@Serializable
+public data class ModrinthProjectModeratorMessage(
+    public val message: String, public val body: String?
+)
 
 @Serializable
 public data class ModrinthProjectDonationUrl(

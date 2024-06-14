@@ -1,1 +1,2 @@
 - fix: list command no longer dies if the project already exists
+- fix: update `moderator_message` in Modrinth deserialization
