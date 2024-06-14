@@ -30,8 +30,8 @@ class AddFromList : CliktCommand(
                         val (site, slug) = parts
 
                         when (site) {
-                            "curseforge" -> findAndAddCurseforgeProject(ctx, slug)
-                            "modrinth" -> addModrinthProject(ctx, slug)
+                            "curseforge" -> findAndAddCurseforgeProject(ctx, slug, ignoreIfExists = true)
+                            "modrinth" -> addModrinthProject(ctx, slug, ignoreIfExists = true)
                             else -> terminal.println("Invalid site: $site")
                         }
                     }

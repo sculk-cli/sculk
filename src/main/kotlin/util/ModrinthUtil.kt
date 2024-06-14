@@ -17,6 +17,7 @@ private val MODRINTH_DEFAULT_LOADERS = listOf(
 suspend fun addModrinthProject(
     ctx: Context,
     query: String,
+    ignoreIfExists: Boolean = false
 ) {
     val directMatch = ctx.modrinth.getProject(query)
 
@@ -36,7 +37,7 @@ suspend fun addModrinthProject(
     }
 
     addModrinthProject(
-        ctx, directMatch ?: ctx.modrinth.getProject(projectSlug)!!, false
+        ctx, directMatch ?: ctx.modrinth.getProject(projectSlug)!!, ignoreIfExists
     )
 }
 

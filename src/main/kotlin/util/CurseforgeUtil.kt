@@ -9,6 +9,7 @@ import tech.jamalam.pack.*
 suspend fun findAndAddCurseforgeProject(
     ctx: Context,
     query: String,
+    ignoreIfExists: Boolean = false
 ) {
     val directMatches = ctx.curseforge.search(
         slug = query,
@@ -38,7 +39,7 @@ suspend fun findAndAddCurseforgeProject(
             .let { mods.find { p -> p.name == it } }!!
     }
 
-    addCurseforgeProject(ctx, mod, false)
+    addCurseforgeProject(ctx, mod, ignoreIfExists)
 }
 
 suspend fun addCurseforgeProject(
