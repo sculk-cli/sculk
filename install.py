@@ -9,6 +9,7 @@ import os
 import subprocess
 import tempfile
 from urllib.request import urlopen, Request
+import urllib.parse
 
 sculk_dir = os.path.expanduser("~/.sculk")
 
@@ -39,17 +40,19 @@ def download_latest_distribution():
       continue
     os.remove(os.path.join(sculk_dir, file))
 
-  download_path = tempfile.mkstemp()[1]
   latest_release = get_latest_release_name("sculk-cli", "sculk")
-  print(f"Downloading Sculk {latest_release}...")
   sculk_jar_name = f"sculk-{latest_release}.jar"
+  download_path = os.path.join(sculk_dir, sculk_jar_name)
+  print(f"Downloading {sculk_jar_name} to {download_path}...")
+
+  download_url = f"https://github.com/sculk-cli/sculk/releases/download/{latest_release}/{sculk_jar_name}"
+  encoded_url = urllib.parse.quote(download_url, safe=":/")
   download_file(
-    f"https://github.com/sculk-cli/sculk/releases/download/{latest_release}/{sculk_jar_name}",
+    encoded_url,
     download_path,
   )
 
   return sculk_jar_name
-
 
 def create_run_script(jar_name):
   """Create scripts to run Sculk."""
