@@ -27,6 +27,7 @@ class ExportCmd :
     override fun aliases(): Map<String, List<String>> = mapOf(
         "mr" to listOf("modrinth"),
         "cf" to listOf("curseforge"),
+        "mmc" to listOf("multimc")
     )
 }
 
@@ -44,14 +45,18 @@ fun main(args: Array<String>) {
 
     val cli = Cli()
         .versionOption(version)
-        .subcommands(Init()).subcommands(
+        .subcommands(Init())
+        .subcommands(
             AddCmd().subcommands(
                 AddByUrl(), AddFromModrinth(), AddFromCurseforge(), AddFromList()
             )
-        ).subcommands(Update()).subcommands(Link()).subcommands(Migrate()).subcommands(Refresh())
-        .subcommands(Remove()).subcommands(Install())
-        .subcommands(ImportCmd().subcommands(ImportModrinth()).subcommands(ImportCurseforge()))
-        .subcommands(ExportCmd().subcommands(ExportModrinth()).subcommands(ExportCurseforge()))
+        )
+        .subcommands(Update())
+        .subcommands(Link(), Migrate(), Refresh())
+        .subcommands(Remove())
+        .subcommands(Install())
+        .subcommands(ImportCmd().subcommands(ImportModrinth(), ImportCurseforge()))
+        .subcommands(ExportCmd().subcommands(ExportModrinth(), ExportCurseforge(), ExportMultiMc()))
         .subcommands(ModList()).subcommands(
             CompletionCommand(
                 name = "completion", help = "Generate a completion script for your shell"

@@ -1,8 +1,8 @@
+import org.gradle.jvm.tasks.Jar
 import java.io.FileOutputStream
 import java.util.*
 
 plugins {
-    application
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlin.plugin.serialization)
 }
@@ -32,14 +32,11 @@ dependencies {
 
     implementation(project(":modules:modrinth"))
     implementation(project(":modules:curseforge"))
+    implementation(project(":modules:multimc"))
 }
 
 kotlin {
     jvmToolchain(17)
-}
-
-application {
-    mainClass = "tech.jamalam.MainKt"
 }
 
 val generatedResourcesDir = layout.buildDirectory.dir("generated-resources")
@@ -89,4 +86,23 @@ tasks {
         dependsOn("createCurseforgeCredentialsFile")
         dependsOn("createVersionFile")
     }
+
+    jar {
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+        manifest {
+            attributes["Main-Class"] = "tech.jamalam.MainKt"
+        }
+
+        fromConfiguration(configurations.runtimeClasspath)
+        fromConfiguration(configurations.compileClasspath)
+    }
+}
+
+fun Jar.fromConfiguration(configuration: NamedDomainObjectProvider<Configuration>) {
+    from(configuration.get().map {
+        if (it.isDirectory) {
+            it
+        } else zipTree(it)
+    })
 }

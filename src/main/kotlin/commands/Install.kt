@@ -74,6 +74,16 @@ class Install :
                     }
                 }
 
+                val fileFile =
+                    File(installLocation).resolve(file.path).resolveSibling(fileManifest.filename)
+
+                if (fileFile.exists()) {
+                    if (fileFile.readBytes().digestSha512() == fileManifest.hashes.sha512) {
+                        terminal.info("Skipping ${file.path} because it's already downloaded")
+                        continue
+                    }
+                }
+
                 val downloadLink = if (fileManifest.sources.url != null) {
                     fileManifest.sources.url.url
                 } else if (fileManifest.sources.modrinth != null) {
@@ -83,9 +93,6 @@ class Install :
                 } else {
                     error("No valid source found for ${file.path}")
                 }
-
-                val fileFile =
-                    File(installLocation).resolve(file.path).resolveSibling(fileManifest.filename)
 
                 fileFile.parentFile.mkdirs()
                 val request = ctx.client.get(downloadLink)
