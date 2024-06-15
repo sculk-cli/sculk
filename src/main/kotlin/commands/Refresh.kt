@@ -9,17 +9,55 @@ import tech.jamalam.Context
 import tech.jamalam.pack.*
 import tech.jamalam.util.digestSha256
 import tech.jamalam.util.mkdirsAndWriteJson
+import java.nio.file.FileSystems
+import java.nio.file.Path
 import java.nio.file.Paths
+import java.nio.file.StandardWatchEventKinds
 
 class Refresh : CliktCommand(
     name = "refresh",
     help = "Check all hashes in the manifest and update them if needed"
 ) {
     private val check by option().flag().help("Check hashes without updating them")
+    private val watch by option().flag().help("Watch for changes in the filesystem and update the manifest automatically")
 
     override fun run() {
         val ctx = Context.getOrCreate(terminal)
         val basePath = Paths.get("")
+        refresh(ctx, basePath)
+
+        if (watch) {
+            terminal.info("Watching for changes in the filesystem...")
+            val svc = FileSystems.getDefault().newWatchService()
+            basePath.register(svc, StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_DELETE, StandardWatchEventKinds.ENTRY_MODIFY)
+
+            poll_loop@ while (true) {
+                val key = svc.take()
+
+                for (event in key.pollEvents()) {
+                    val changed = event.context() as Path
+
+                    if (changed.fileName.toString() == "manifest.sculk.json") {
+                        key.reset()
+                        continue@poll_loop
+                    }
+                }
+
+                terminal.info("Detected changes in the filesystem...")
+
+                try {
+                    refresh(ctx, basePath)
+                } catch (e: Exception) {
+                    terminal.warning("Error refreshing manifest: ${e.message}")
+                    terminal.warning("Waiting for next change...")
+                }
+
+                key.reset()
+            }
+        }
+    }
+
+    private fun refresh(ctx: Context, basePath: Path) {
         val manifestFile = basePath.resolve("manifest.sculk.json").toFile()
         val manifest =
             ctx.json.decodeFromString<SerialPackManifest>(String(manifestFile.readBytes())).load()
