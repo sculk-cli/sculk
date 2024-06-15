@@ -1,5 +1,1 @@
-- fix: list command no longer dies if the project already exists
-- fix(modrinth): update `moderator_message` in Modrinth deserialization
-- feat(perf): make a lot of stuff lazily initialized for performance reasons
-- fix(modrinth): don't add optional dependencies to the dependency graph
-- fix(userscript): lots of improvements 
+- [#10] fix(modrinth): assume mods need to be loaded on both sides (see comments in code for reasoning)

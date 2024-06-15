@@ -209,27 +209,33 @@ suspend fun updateModrinthProject(
     return true
 }
 
+// Modrinth made a mistake with their V3 migration, the upshot being that we need to assume
+// that all mods need to be loaded on both sides. Hopefully mods have their metadata set correctly
+// so that they only load on the correct side.
+// See https://discord.com/channels/734077874708938864/1103139849852162158/1251553321433432205
 fun modrinthEnvTypePairToSide(clientSide: ModrinthEnvSupport, serverSide: ModrinthEnvSupport) =
     when (clientSide to serverSide) {
-        ModrinthEnvSupport.Unsupported to ModrinthEnvSupport.Required -> Side.ServerOnly
-        ModrinthEnvSupport.Unsupported to ModrinthEnvSupport.Optional -> Side.ClientOnly
-        ModrinthEnvSupport.Required to ModrinthEnvSupport.Unsupported -> Side.ClientOnly
-        ModrinthEnvSupport.Optional to ModrinthEnvSupport.Unsupported -> Side.ServerOnly
+//        ModrinthEnvSupport.Unsupported to ModrinthEnvSupport.Required -> Side.ServerOnly
+//        ModrinthEnvSupport.Unsupported to ModrinthEnvSupport.Optional -> Side.ClientOnly
+//        ModrinthEnvSupport.Required to ModrinthEnvSupport.Unsupported -> Side.ClientOnly
+//        ModrinthEnvSupport.Optional to ModrinthEnvSupport.Unsupported -> Side.ServerOnly
         else -> Side.Both
     }
 
 fun ModrinthPackFileEnv.toSide() = modrinthEnvTypePairToSide(clientSupport, serverSupport)
 
 fun Side.toModrinthEnvServerSupport() = when (this) {
-    Side.ServerOnly -> ModrinthEnvSupport.Required
-    Side.ClientOnly -> ModrinthEnvSupport.Unsupported
-    Side.Both -> ModrinthEnvSupport.Required
+//    Side.ServerOnly -> ModrinthEnvSupport.Required
+//    Side.ClientOnly -> ModrinthEnvSupport.Unsupported
+//    Side.Both -> ModrinthEnvSupport.Required
+    else -> ModrinthEnvSupport.Required
 }
 
 fun Side.toModrinthEnvClientSupport() = when (this) {
-    Side.ServerOnly -> ModrinthEnvSupport.Unsupported
-    Side.ClientOnly -> ModrinthEnvSupport.Required
-    Side.Both -> ModrinthEnvSupport.Required
+//    Side.ServerOnly -> ModrinthEnvSupport.Unsupported
+//    Side.ClientOnly -> ModrinthEnvSupport.Required
+//    Side.Both -> ModrinthEnvSupport.Required
+    else -> ModrinthEnvSupport.Required
 }
 
 fun ModrinthLoader.toModLoader(): ModLoader = when (this) {
