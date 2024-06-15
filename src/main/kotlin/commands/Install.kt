@@ -17,6 +17,7 @@ import io.ktor.client.statement.*
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.Serializable
 import tech.jamalam.Context
 import tech.jamalam.pack.SerialFileManifest
 import tech.jamalam.pack.SerialPackManifest
@@ -39,6 +40,15 @@ class Install :
             val manifest = ctx.json.decodeFromString(
                 SerialPackManifest.serializer(), readFile("manifest.sculk.json")
             )
+            val installManifestFile = File(installLocation).resolve("install.sculk.json")
+            val installManifest = if (installManifestFile.exists()) {
+                ctx.json.decodeFromString(
+                    InstallManifest.serializer(), installManifestFile.readText()
+                )
+            } else {
+                InstallManifest(mutableListOf())
+            }
+            val installedItems = mutableListOf<String>()
 
             val progress = progressBarContextLayout {
                 text(terminal.theme.info("Downloading files"))
@@ -76,6 +86,8 @@ class Install :
 
                 val fileFile =
                     File(installLocation).resolve(file.path).resolveSibling(fileManifest.filename)
+
+                installedItems += fileFile.path.toString()
 
                 if (fileFile.exists()) {
                     if (fileFile.readBytes().digestSha512() == fileManifest.hashes.sha512) {
@@ -122,10 +134,21 @@ class Install :
                 }
 
                 val fileFile = File(installLocation).resolve(file.path)
+                installedItems += fileFile.path.toString()
                 fileFile.parentFile.mkdirs()
                 fileFile.writeText(fileText)
                 terminal.info("Downloaded ${file.path}")
             }
+
+            for (previouslyInstalledItem in installManifest.sculkInstalledItems) {
+                if (previouslyInstalledItem !in installedItems) {
+                    terminal.info("Removing $previouslyInstalledItem as it is no longer part of the pack")
+                    File(installLocation).resolve(previouslyInstalledItem).delete()
+                }
+            }
+
+            installManifest.sculkInstalledItems = installedItems
+            installManifestFile.writeText(ctx.json.encodeToString(InstallManifest.serializer(), installManifest))
         }
     }
 
@@ -140,4 +163,9 @@ class Install :
     enum class InstallSide {
         CLIENT, SERVER
     }
+
+    @Serializable
+    data class InstallManifest(
+        var sculkInstalledItems: MutableList<String>,
+    )
 }

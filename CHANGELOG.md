@@ -1,1 +1,2 @@
 - [#10] fix(modrinth): assume mods need to be loaded on both sides (see comments in code for reasoning)
+- [#12] fix(installer): removing a file from the pack now correctly removes it when updating with `sculk install` (files not managed by Sculk will not be touched).
