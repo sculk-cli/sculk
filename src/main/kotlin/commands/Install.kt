@@ -12,6 +12,7 @@ import com.github.ajalt.clikt.parameters.types.enum
 import com.github.ajalt.mordant.animation.coroutines.animateInCoroutine
 import com.github.ajalt.mordant.animation.progress.advance
 import com.github.ajalt.mordant.widgets.progress.*
+import io.ktor.client.plugins.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import kotlinx.coroutines.coroutineScope
@@ -80,7 +81,8 @@ class Install :
                 )
 
                 if (fileManifest.side != Side.Both) {
-                    if ((fileManifest.side == Side.ServerOnly && side == InstallSide.CLIENT) || (fileManifest.side == Side.ClientOnly && side == InstallSide.SERVER)) {
+                    // 'Server only' should still be installed on the client generally
+                    if (fileManifest.side == Side.ClientOnly && side == InstallSide.SERVER) {
                         terminal.info("Ignoring ${file.path} because it's not for the selected side ($side)")
                         continue
                     }
@@ -109,7 +111,12 @@ class Install :
                 }
 
                 fileFile.parentFile.mkdirs()
-                val request = ctx.client.get(downloadLink)
+                val request = ctx.client.get(downloadLink) {
+                    timeout {
+                        // Some mods are large.
+                        requestTimeoutMillis = HttpTimeout.INFINITE_TIMEOUT_MS
+                    }
+                }
                 fileFile.writeBytes(request.readBytes())
 
                 if (fileFile.readBytes().digestSha512() != fileManifest.hashes.sha512) {

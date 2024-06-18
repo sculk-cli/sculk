@@ -1,1 +1,1 @@
-- Improved exception handling
+- improvements to the install (disable HTTP timeout, siding fixes)

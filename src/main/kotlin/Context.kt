@@ -36,6 +36,8 @@ class Context(val terminal: Terminal) {
             install(ContentNegotiation) {
                 json(json)
             }
+
+            install(HttpTimeout) { }
         }
     }
 
