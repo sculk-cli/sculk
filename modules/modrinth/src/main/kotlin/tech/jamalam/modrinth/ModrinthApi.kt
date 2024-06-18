@@ -5,7 +5,7 @@ import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import tech.jamalam.modrinth.models.*
-import tech.jamalam.url.buildUrl
+import tech.jamalam.util.buildUrl
 
 public const val MODRINTH_API_URL: String = "api.modrinth.com"
 public const val MODRINTH_STAGING_API_URL: String = "staging-api.modrinth.com"

@@ -73,7 +73,7 @@ fun main(args: Array<String>) {
         val terminal = Terminal()
         terminal.danger(e.message ?: "An unknown error occurred")
         e.printStackTrace()
-        exitProcess(0)
+        exitProcess(1)
     }
 
 //    println("Finished in ${System.currentTimeMillis() - time}ms")

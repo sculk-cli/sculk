@@ -7,6 +7,7 @@ import tech.jamalam.Context
 import tech.jamalam.pack.migration.FormatVersion
 import tech.jamalam.util.digestSha256
 import tech.jamalam.util.mkdirsAndWriteJson
+import tech.jamalam.util.tryWithContext
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -23,8 +24,11 @@ class InMemoryPack(ctx: Context, private val basePath: Path = Paths.get("")) {
             error("Attempted to open a pack at $basePath, but no manifest was found")
         }
 
-        val manifest = manifestPath.toFile().readText()
-        val rootManifestJson = ctx.json.parseToJsonElement(manifest).jsonObject
+        val manifest =
+            tryWithContext("while reading root manifest") { manifestPath.toFile().readText() }
+        val rootManifestJson = tryWithContext("while deserializing root manifest") {
+            ctx.json.parseToJsonElement(manifest).jsonObject
+        }
         val formatVersion = rootManifestJson["formatVersion"]?.jsonPrimitive?.content?.let {
             FormatVersion.fromString(it)
         } ?: FormatVersion(0, 0)
@@ -34,7 +38,12 @@ class InMemoryPack(ctx: Context, private val basePath: Path = Paths.get("")) {
         }
 
         val serialManifest =
-            ctx.json.decodeFromJsonElement(SerialPackManifest.serializer(), rootManifestJson)
+            tryWithContext("while deserializing root manifest") {
+                ctx.json.decodeFromJsonElement(
+                    SerialPackManifest.serializer(),
+                    rootManifestJson
+                )
+            }
         packManifest = serialManifest.load()
 
         for (file in packManifest.manifests) {
@@ -43,14 +52,20 @@ class InMemoryPack(ctx: Context, private val basePath: Path = Paths.get("")) {
                 error("Attempted to open a file manifest at ${file.path}, but no manifest was found")
             }
 
-            val fileManifest = fileManifestPath.toFile().readText()
+            val fileManifest = tryWithContext("while reading ${file.path}") {
+                fileManifestPath.toFile().readText()
+            }
 
             if (fileManifest.toByteArray().digestSha256() != file.sha256) {
                 error("File hashes do not match for manifest at ${file.path}")
             }
 
             val serialFileManifest =
-                ctx.json.decodeFromString<SerialFileManifest>(fileManifest)
+                tryWithContext("while deserializing ${file.path}") {
+                    ctx.json.decodeFromString<SerialFileManifest>(
+                        fileManifest
+                    )
+                }
             manifests[file.path] = serialFileManifest.load()
         }
 

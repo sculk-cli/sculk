@@ -33,6 +33,7 @@ dependencies {
     implementation(project(":modules:modrinth"))
     implementation(project(":modules:curseforge"))
     implementation(project(":modules:multimc"))
+    implementation(project(":modules:util"))
 }
 
 kotlin {

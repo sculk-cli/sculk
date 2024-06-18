@@ -27,8 +27,10 @@ fun ByteArray.digestMurmur2(): Long {
 }
 
 fun File.mkdirsAndWriteText(text: String) {
-    this.canonicalFile.parentFile.mkdirs()
-    writeText(text)
+    tryWithContext("while writing to ${this.name}") {
+        this.canonicalFile.parentFile.mkdirs()
+        writeText(text)
+    }
 }
 
 inline fun <reified T> File.mkdirsAndWriteJson(json: Json, value: T) {

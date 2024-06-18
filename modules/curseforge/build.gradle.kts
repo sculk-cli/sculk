@@ -11,7 +11,7 @@ dependencies {
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.serialization.kotlinx.json)
 
-    implementation(project(":modules:url-builder"))
+    implementation(project(":modules:util"))
 }
 
 kotlin {

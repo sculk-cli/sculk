@@ -50,6 +50,8 @@ class Install :
             }
             val installedItems = mutableListOf<String>()
 
+            terminal.info("Installing pack ${manifest.name} to $installLocation")
+
             val progress = progressBarContextLayout {
                 text(terminal.theme.info("Downloading files"))
                 marquee(width = 60) { terminal.theme.warning(context) }

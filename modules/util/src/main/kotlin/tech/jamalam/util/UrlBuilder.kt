@@ -1,4 +1,4 @@
-package tech.jamalam.url
+package tech.jamalam.util
 
 import io.ktor.http.*
 import io.ktor.util.*

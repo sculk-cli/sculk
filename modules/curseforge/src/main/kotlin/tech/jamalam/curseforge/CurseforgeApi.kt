@@ -7,7 +7,7 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import kotlinx.serialization.Serializable
 import tech.jamalam.curseforge.models.*
-import tech.jamalam.url.buildUrl
+import tech.jamalam.util.buildUrl
 
 public const val CURSEFORGE_OFFICIAL_API_URL: String = "api.curseforge.com"
 public const val CURSE_TOOLS_API_URL: String = "api.curse.tools"
