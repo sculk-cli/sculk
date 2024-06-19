@@ -38,6 +38,7 @@ class Install :
     override fun run() = runBlocking {
         coroutineScope {
             val ctx = Context.getOrCreate(terminal)
+            terminal.info("Getting pack manifest from $packLocation/manifest.sculk.json")
             val manifest = ctx.json.decodeFromString(
                 SerialPackManifest.serializer(), readFile("manifest.sculk.json")
             )
