@@ -23,9 +23,9 @@ suspend fun addModrinthProject(
 
     val projectSlug = directMatch?.slug ?: run {
         val projects = ctx.modrinth.search(
-            query, loaders = listOf(
-                ctx.pack.getManifest().loader.type.toModrinth(), *MODRINTH_DEFAULT_LOADERS
-            ), gameVersions = listOf(ctx.pack.getManifest().minecraft)
+            query,
+            loaders = getAllLoaders(ctx.pack.getManifest().loader.type),
+            gameVersions = listOf(ctx.pack.getManifest().minecraft)
         ).hits
 
         if (projects.isEmpty()) {
@@ -48,22 +48,22 @@ private suspend fun addModrinthProject(
 ): Boolean {
     val versions = runBlocking {
         ctx.modrinth.getProjectVersions(
-            project.slug, loaders = listOf(
-                ctx.pack.getManifest().loader.type.toModrinth(),
-                *if (ctx.pack.getManifest().loader.type == ModLoader.Quilt) {
-                    arrayOf(ModrinthLoader.Fabric)
-                } else {
-                    emptyArray()
-                },
-                *MODRINTH_DEFAULT_LOADERS
-            ), gameVersions = listOf(ctx.pack.getManifest().minecraft)
+            project.slug,
+            loaders = getAllLoaders(ctx.pack.getManifest().loader.type),
+            gameVersions = listOf(ctx.pack.getManifest().minecraft)
         )
     }.sortedBy {
         it.publishedTime
     }.reversed()
 
-    val version = versions.elementAtOrNull(0)
-        ?: error("No valid versions found for ${project.title} (Minecraft: ${ctx.pack.getManifest().minecraft}, loader: ${ctx.pack.getManifest().loader.type})")
+    // Prefer mod versions over datapack versions
+    val nonDatapackVersions = versions.filter { it.loaders.none { loader -> loader == ModrinthLoader.Datapack } }
+    val version = if (nonDatapackVersions.isNotEmpty()) {
+        nonDatapackVersions[0]
+    } else {
+        versions.elementAtOrNull(0)
+    } ?: error("No valid versions found for ${project.title} (Minecraft: ${ctx.pack.getManifest().minecraft}, loader: ${ctx.pack.getManifest().loader.type})")
+
     return addModrinthVersion(ctx, project, version, ignoreIfExists = ignoreIfExists)
 }
 
@@ -179,7 +179,7 @@ suspend fun updateModrinthProject(
 
     val versions = ctx.modrinth.getProjectVersions(
         idOrSlug = mod.id,
-        loaders = listOf(ctx.pack.getManifest().loader.type.toModrinth()),
+        loaders = getAllLoaders(ctx.pack.getManifest().loader.type),
         gameVersions = listOf(ctx.pack.getManifest().minecraft)
     ).sortedBy {
         it.publishedTime
@@ -266,3 +266,13 @@ fun ModrinthLoader.getSaveDir(): String = when (this) {
     ModrinthLoader.Vanilla -> "resourcepacks"
     else -> error("Unsupported Modrinth loader: $this")
 }
+
+fun getAllLoaders(loader: ModLoader): List<ModrinthLoader> = listOf(
+    loader.toModrinth(),
+    *if (loader == ModLoader.Quilt) {
+        arrayOf(ModrinthLoader.Fabric)
+    } else {
+        emptyArray()
+    },
+    *MODRINTH_DEFAULT_LOADERS
+)
