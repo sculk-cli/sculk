@@ -11,7 +11,7 @@ stdenv.mkDerivation rec {
 
   src = fetchurl {
     url = "https://github.com/sculk-cli/${pname}/releases/download/${version}/${pname}-${version}.jar";
-    sha256 = "sha256-haeAwo9GgXRePFfpGWnwfDkU1sH9cZu/35jdhh5Qbhg=";
+    hash = "sha256-haeAwo9GgXRePFfpGWnwfDkU1sH9cZu/35jdhh5Qbhg=";
   };
 
   dontUnpack = true;

@@ -37,3 +37,26 @@ jobs:
           prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') }}
           files: |
             build/libs/*.jar
+  update-nix-flake:
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Nix
+        uses: cachix/install-nix-action@v13
+      - uses: denoland/setup-deno@v1
+        with:
+          deno-version: v1.x
+      - run: deno run --allow-read --allow-write --allow-run --allow-net .github/workflows/update_nix_flake.ts
+      - uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: update flake"
+          commit_user_name: GitHub Actions
+          commit_options: --no-verify --signoff
+          commit_author: GitHub Actions <actions@github.com>
+          branch: main
+          skip_dirty_check: false
+          skip_fetch: true
