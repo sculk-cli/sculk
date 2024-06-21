@@ -21,7 +21,9 @@ const prefetchData = await new Deno.Command("nix", {
   args: ["store", "prefetch-file", `https://github.com/sculk-cli/sculk/releases/download/${newVersion}/sculk-${newVersion}.jar`],
 	stderr: "piped",
 }).output();
-const newHash = new TextDecoder().decode(prefetchData.stderr).trim().split("sha256-")[1].split("'")[0];
+const output = new TextDecoder().decode(prefetchData.stderr);
+console.log(output);
+const newHash = output.trim().split("sha256-")[1].split("'")[0];
 
 const newConfig = config
 	.replace(version, newVersion)
