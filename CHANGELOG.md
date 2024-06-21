@@ -1,3 +1,0 @@
-- Debug logging.
-- [#14] (modrinth) prefer mod versions over datapack versions, for projects which have both
-- [#15] (modrinth) update no longer fails on shaderpacks
