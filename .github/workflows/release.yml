@@ -46,7 +46,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Set up Nix
-        uses: cachix/install-nix-action@v13
+        uses: cachix/install-nix-action@v27
       - uses: denoland/setup-deno@v1
         with:
           deno-version: v1.x
