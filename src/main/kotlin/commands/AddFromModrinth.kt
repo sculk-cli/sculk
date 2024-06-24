@@ -5,6 +5,7 @@ import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.help
 import com.github.ajalt.clikt.parameters.arguments.optional
+import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.help
 import com.github.ajalt.clikt.parameters.options.option
 import kotlinx.coroutines.runBlocking
@@ -18,6 +19,7 @@ class AddFromModrinth :
     private val query by argument().optional()
         .help("The slug of the project, or a query to search for")
     private val versionId by option().help("The version ID to add. If this is provided, the query will be ignored.")
+    private val skipDependencies by option().flag().help("Whether to skip checking for and adding dependencies.")
 
     override fun run() = runBlocking {
         val ctx = Context.getOrCreate(terminal)
@@ -25,9 +27,9 @@ class AddFromModrinth :
         if (versionId != null) {
             val version = ctx.modrinth.getVersion(versionId!!) ?: error("Version not found")
             val project = ctx.modrinth.getProject(version.projectId) ?: error("Project not found")
-            addModrinthVersion(ctx, project, version, ignoreIfExists = false)
+            addModrinthVersion(ctx, project, version, ignoreIfExists = false, downloadDependencies = !skipDependencies)
         } else {
-            addModrinthProject(ctx, query ?: error("Query must be provided if version ID is not"))
+            addModrinthProject(ctx, query ?: error("Query must be provided if version ID is not"), skipDependencies = skipDependencies)
         }
 
         ctx.dependencyGraph.save()

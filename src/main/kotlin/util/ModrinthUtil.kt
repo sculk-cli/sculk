@@ -17,7 +17,8 @@ private val MODRINTH_DEFAULT_LOADERS = listOf(
 suspend fun addModrinthProject(
     ctx: Context,
     query: String,
-    ignoreIfExists: Boolean = false
+    ignoreIfExists: Boolean = false,
+    skipDependencies: Boolean = false
 ) {
     val directMatch = ctx.modrinth.getProject(query)
 
@@ -37,7 +38,7 @@ suspend fun addModrinthProject(
     }
 
     addModrinthProject(
-        ctx, directMatch ?: ctx.modrinth.getProject(projectSlug)!!, ignoreIfExists
+        ctx, directMatch ?: ctx.modrinth.getProject(projectSlug)!!, ignoreIfExists, skipDependencies
     )
 }
 
@@ -45,6 +46,7 @@ private suspend fun addModrinthProject(
     ctx: Context,
     project: ModrinthProject,
     ignoreIfExists: Boolean = true,
+    skipDependencies: Boolean = false
 ): Boolean {
     val versions = runBlocking {
         ctx.modrinth.getProjectVersions(
@@ -64,7 +66,7 @@ private suspend fun addModrinthProject(
         versions.elementAtOrNull(0)
     } ?: error("No valid versions found for ${project.title} (Minecraft: ${ctx.pack.getManifest().minecraft}, loader: ${ctx.pack.getManifest().loader.type})")
 
-    return addModrinthVersion(ctx, project, version, ignoreIfExists = ignoreIfExists)
+    return addModrinthVersion(ctx, project, version, ignoreIfExists = ignoreIfExists, downloadDependencies = !skipDependencies)
 }
 
 suspend fun addModrinthVersion(

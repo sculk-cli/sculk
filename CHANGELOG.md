@@ -1,0 +1,1 @@
+- feat(modrinth, curseforge): '--skip-dependencies' for add commands
