@@ -103,7 +103,7 @@ private fun buildInstanceCfg(name: String, packUrl: String?): ByteArray {
 
 	if (packUrl != null) {
 		cfg += "\nOverrideCommands=true"
-		cfg += "\nPreLaunchCommand=\"\$INST_JAVA\" -jar \"\$INST_DIR/.minecraft/_sculk.jar\" install \"$packUrl\" \"\$INST_MC_DIR\" --side client"
+		cfg += "\nPreLaunchCommand=\\\"\$INST_JAVA\\\" -jar \\\"\$INST_DIR/.minecraft/_sculk.jar\\\" install \\\"$packUrl\\\" \\\"\$INST_MC_DIR\\\" --side client"
 	}
 
 	return cfg.toByteArray()
