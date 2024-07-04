@@ -17,7 +17,8 @@ import java.nio.file.Paths
 class ExportMultiMc :
     CliktCommand(name = "multimc", help = "Export a MultiMC compatible instance (.zip)") {
     private val packUrl by option().help("The download URL/path for the modpack, to use for automatic updating. If not specified, the pack will not automatically update")
-
+    private val sculkJarLocation by option().help("The location of the Sculk jar, to use for automatic updating. If not specified, Sculk will attempt to locate it automatically.")
+    
     override fun run() = runBlocking {
         val ctx = Context.getOrCreate(terminal)
         val components = mutableListOf<MultiMcPackComponent>()
@@ -69,6 +70,7 @@ class ExportMultiMc :
             components = components,
             files = files,
             packUrl = packUrl,
+            sculkJarLocation = sculkJarLocation
         )
 
         terminal.info("Exported ${ctx.pack.getManifest().name} to ${ctx.pack.getManifest().name}-${ctx.pack.getManifest().version}-multimc.zip")

@@ -1,2 +1,3 @@
 - feat(modrinth, curseforge): '--skip-dependencies' for add commands
 - fix(multimc): quote directories in pre-launch command
+- fix(multimc): add `--sculk-jar-location`
