@@ -1,1 +1,2 @@
 - fix(multimc): properly escape quotes in pre launch command
+- fix(install): installing non-text (binary) files now works as expected

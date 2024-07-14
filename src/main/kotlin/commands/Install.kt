@@ -12,6 +12,7 @@ import com.github.ajalt.clikt.parameters.types.enum
 import com.github.ajalt.mordant.animation.coroutines.animateInCoroutine
 import com.github.ajalt.mordant.animation.progress.advance
 import com.github.ajalt.mordant.widgets.progress.*
+import io.ktor.client.call.*
 import io.ktor.client.plugins.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
@@ -40,7 +41,7 @@ class Install :
             val ctx = Context.getOrCreate(terminal)
             terminal.info("Getting pack manifest from $packLocation/manifest.sculk.json")
             val manifest = ctx.json.decodeFromString(
-                SerialPackManifest.serializer(), readFile("manifest.sculk.json")
+                SerialPackManifest.serializer(), readFileAsText("manifest.sculk.json")
             )
             val installManifestFile = File(installLocation).resolve("install.sculk.json")
             val installManifest = if (installManifestFile.exists()) {
@@ -71,7 +72,7 @@ class Install :
             for (file in manifest.manifests) {
                 progress.advance(1)
                 progress.update { context = file.path }
-                val manifestText = readFile(file.path)
+                val manifestText = readFileAsText(file.path)
 
                 if (manifestText.toByteArray().digestSha256() != file.sha256) {
                     error("File ${file.path} was corrupted or hash was incorrect")
@@ -130,9 +131,9 @@ class Install :
             for (file in manifest.files) {
                 progress.advance(1)
                 progress.update { context = file.path }
-                val fileText = readFile(file.path)
+                val fileBytes = readFile(file.path)
 
-                if (fileText.toByteArray().digestSha256() != file.sha256) {
+                if (fileBytes.digestSha256() != file.sha256) {
                     error("File ${file.path} was corrupted or hash was incorrect")
                 }
 
@@ -146,7 +147,7 @@ class Install :
                 val fileFile = File(installLocation).resolve(file.path)
                 installedItems += fileFile.path.toString()
                 fileFile.parentFile.mkdirs()
-                fileFile.writeText(fileText)
+                fileFile.writeBytes(fileBytes)
                 terminal.info("Downloaded ${file.path}")
             }
 
@@ -162,11 +163,19 @@ class Install :
         }
     }
 
-    private suspend fun readFile(path: String): String {
+    private suspend fun readFileAsText(path: String): String {
         return if (packLocation.startsWith("http")) {
             Context.getOrCreate(terminal).client.get("$packLocation/$path").bodyAsText()
         } else {
             File(packLocation).resolve(path).readText()
+        }
+    }
+    
+    private suspend fun readFile(path: String): ByteArray {
+        return if (packLocation.startsWith("http")) {
+            Context.getOrCreate(terminal).client.get("$packLocation/$path").body()
+        } else {
+            File(packLocation).resolve(path).readBytes()
         }
     }
 
