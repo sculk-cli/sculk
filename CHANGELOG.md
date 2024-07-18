@@ -1,2 +1,2 @@
-- fix(multimc): properly escape quotes in pre launch command
-- fix(install): installing non-text (binary) files now works as expected
+- feat(install): multithread the install
+  - Install is now significantly faster, especially for first time installs.

@@ -16,6 +16,7 @@ import io.ktor.client.call.*
 import io.ktor.client.plugins.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -39,6 +40,7 @@ class Install :
     override fun run() = runBlocking {
         coroutineScope {
             val ctx = Context.getOrCreate(terminal)
+            val startTime = System.currentTimeMillis()
             terminal.info("Getting pack manifest from $packLocation/manifest.sculk.json")
             val manifest = ctx.json.decodeFromString(
                 SerialPackManifest.serializer(), readFileAsText("manifest.sculk.json")
@@ -68,88 +70,96 @@ class Install :
             )
 
             launch { progress.execute() }
+            
+            val jobs = mutableListOf<Job>()
 
             for (file in manifest.manifests) {
-                progress.advance(1)
-                progress.update { context = file.path }
-                val manifestText = readFileAsText(file.path)
+                jobs += launch {
+                    progress.advance(1)
+                    progress.update { context = file.path }
+                    val manifestText = readFileAsText(file.path)
 
-                if (manifestText.toByteArray().digestSha256() != file.sha256) {
-                    error("File ${file.path} was corrupted or hash was incorrect")
-                }
-
-                val fileManifest = ctx.json.decodeFromString(
-                    SerialFileManifest.serializer(), manifestText
-                )
-
-                if (fileManifest.side != Side.Both) {
-                    // 'Server only' should still be installed on the client generally
-                    if (fileManifest.side == Side.ClientOnly && side == InstallSide.SERVER) {
-                        terminal.info("Ignoring ${file.path} because it's not for the selected side ($side)")
-                        continue
+                    if (manifestText.toByteArray().digestSha256() != file.sha256) {
+                        error("File ${file.path} was corrupted or hash was incorrect")
                     }
-                }
 
-                val fileFile =
-                    File(installLocation).resolve(file.path).resolveSibling(fileManifest.filename)
+                    val fileManifest = ctx.json.decodeFromString(
+                        SerialFileManifest.serializer(), manifestText
+                    )
 
-                installedItems += fileFile.path.toString()
-
-                if (fileFile.exists()) {
-                    if (fileFile.readBytes().digestSha512() == fileManifest.hashes.sha512) {
-                        terminal.info("Skipping ${file.path} because it's already downloaded")
-                        continue
+                    if (fileManifest.side != Side.Both) {
+                        // 'Server only' should still be installed on the client generally
+                        if (fileManifest.side == Side.ClientOnly && side == InstallSide.SERVER) {
+                            terminal.info("Ignoring ${file.path} because it's not for the selected side ($side)")
+                            return@launch
+                        }
                     }
-                }
 
-                val downloadLink = if (fileManifest.sources.url != null) {
-                    fileManifest.sources.url.url
-                } else if (fileManifest.sources.modrinth != null) {
-                    fileManifest.sources.modrinth.fileUrl
-                } else if (fileManifest.sources.curseforge != null) {
-                    fileManifest.sources.curseforge.fileUrl
-                } else {
-                    error("No valid source found for ${file.path}")
-                }
+                    val fileFile =
+                        File(installLocation).resolve(file.path).resolveSibling(fileManifest.filename)
 
-                fileFile.parentFile.mkdirs()
-                val request = ctx.client.get(downloadLink) {
-                    timeout {
-                        // Some mods are large.
-                        requestTimeoutMillis = HttpTimeout.INFINITE_TIMEOUT_MS
+                    installedItems += fileFile.path.toString()
+
+                    if (fileFile.exists()) {
+                        if (fileFile.readBytes().digestSha512() == fileManifest.hashes.sha512) {
+                            terminal.info("Skipping ${file.path} because it's already downloaded")
+                            return@launch
+                        }
                     }
-                }
-                fileFile.writeBytes(request.readBytes())
 
-                if (fileFile.readBytes().digestSha512() != fileManifest.hashes.sha512) {
-                    error("Downloaded file for ${file.path} was corrupted or hash was incorrect")
-                }
+                    val downloadLink = if (fileManifest.sources.url != null) {
+                        fileManifest.sources.url.url
+                    } else if (fileManifest.sources.modrinth != null) {
+                        fileManifest.sources.modrinth.fileUrl
+                    } else if (fileManifest.sources.curseforge != null) {
+                        fileManifest.sources.curseforge.fileUrl
+                    } else {
+                        error("No valid source found for ${file.path}")
+                    }
 
-                terminal.info("Downloaded ${file.path}")
+                    fileFile.parentFile.mkdirs()
+                    val request = ctx.client.get(downloadLink) {
+                        timeout {
+                            // Some mods are large.
+                            requestTimeoutMillis = HttpTimeout.INFINITE_TIMEOUT_MS
+                        }
+                    }
+                    fileFile.writeBytes(request.readBytes())
+
+                    if (fileFile.readBytes().digestSha512() != fileManifest.hashes.sha512) {
+                        error("Downloaded file for ${file.path} was corrupted or hash was incorrect")
+                    }
+
+                    terminal.info("Downloaded ${file.path}")
+                }
             }
 
             for (file in manifest.files) {
-                progress.advance(1)
-                progress.update { context = file.path }
-                val fileBytes = readFile(file.path)
+                jobs += launch {
+                    progress.advance(1)
+                    progress.update { context = file.path }
+                    val fileBytes = readFile(file.path)
 
-                if (fileBytes.digestSha256() != file.sha256) {
-                    error("File ${file.path} was corrupted or hash was incorrect")
-                }
-
-                if (file.side != Side.Both) {
-                    if ((file.side == Side.ServerOnly && side == InstallSide.CLIENT) || (file.side == Side.ClientOnly && side == InstallSide.SERVER)) {
-                        terminal.info("Ignoring ${file.path} because it's not for the selected side ($side)")
-                        continue
+                    if (fileBytes.digestSha256() != file.sha256) {
+                        error("File ${file.path} was corrupted or hash was incorrect")
                     }
-                }
 
-                val fileFile = File(installLocation).resolve(file.path)
-                installedItems += fileFile.path.toString()
-                fileFile.parentFile.mkdirs()
-                fileFile.writeBytes(fileBytes)
-                terminal.info("Downloaded ${file.path}")
+                    if (file.side != Side.Both) {
+                        if ((file.side == Side.ServerOnly && side == InstallSide.CLIENT) || (file.side == Side.ClientOnly && side == InstallSide.SERVER)) {
+                            terminal.info("Ignoring ${file.path} because it's not for the selected side ($side)")
+                            return@launch
+                        }
+                    }
+
+                    val fileFile = File(installLocation).resolve(file.path)
+                    installedItems += fileFile.path.toString()
+                    fileFile.parentFile.mkdirs()
+                    fileFile.writeBytes(fileBytes)
+                    terminal.info("Downloaded ${file.path}")
+                }
             }
+            
+            jobs.forEach { it.join() }
 
             for (previouslyInstalledItem in installManifest.sculkInstalledItems) {
                 if (previouslyInstalledItem !in installedItems) {
@@ -160,6 +170,7 @@ class Install :
 
             installManifest.sculkInstalledItems = installedItems
             installManifestFile.writeText(ctx.json.encodeToString(InstallManifest.serializer(), installManifest))
+            terminal.info("Installed in ${System.currentTimeMillis() - startTime}ms")
         }
     }
 
