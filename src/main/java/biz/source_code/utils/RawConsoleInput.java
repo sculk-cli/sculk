@@ -18,6 +18,7 @@ import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.Structure;
+import com.sun.jna.platform.win32.Kernel32;
 import com.sun.jna.ptr.IntByReference;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -330,6 +331,7 @@ public class RawConsoleInput {
         static final int STD_INPUT_HANDLE = -10;
         static final long INVALID_HANDLE_VALUE = (Native.POINTER_SIZE == 8) ? -1 : 0xFFFFFFFFL;
         static final int ENABLE_PROCESSED_INPUT = 0x0001;
+        static final int ENABLE_VIRTUAL_TERMINAL_PROCESSING = com.sun.jna.platform.win32.Kernel32.ENABLE_VIRTUAL_TERMINAL_PROCESSING;
     }
 
     protected static class Termios extends Structure {         // termios.h

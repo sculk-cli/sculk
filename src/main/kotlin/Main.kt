@@ -6,6 +6,10 @@ import com.github.ajalt.clikt.core.NoOpCliktCommand
 import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.parameters.options.versionOption
 import com.github.ajalt.mordant.terminal.Terminal
+import com.sun.jna.Native
+import com.sun.jna.platform.win32.Kernel32
+import com.sun.jna.platform.win32.Wincon
+import com.sun.jna.ptr.IntByReference
 import tech.jamalam.commands.*
 import kotlin.system.exitProcess
 
@@ -39,6 +43,19 @@ class ImportCmd :
 }
 
 fun main(args: Array<String>) {
+    if (System.getProperty("os.name").startsWith("Windows")) {
+        val kernel32 = Native.load("kernel32", Kernel32::class.java)
+        val consoleHandle = kernel32.GetStdHandle(Wincon.STD_OUTPUT_HANDLE)
+
+        val consoleMode = IntByReference()
+        if (kernel32.GetConsoleMode(consoleHandle, consoleMode)) {
+            val mode = consoleMode.value or Wincon.ENABLE_VIRTUAL_TERMINAL_PROCESSING
+            kernel32.SetConsoleMode(consoleHandle, mode)
+        } else {
+            println("Error: Unable to get or set console mode.")
+        }
+    }
+    
     val startTime = System.currentTimeMillis()
     val version = Cli::class.java.getResourceAsStream("/version").use {
         String(it?.readAllBytes() ?: "???".toByteArray())

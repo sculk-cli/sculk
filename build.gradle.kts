@@ -18,6 +18,7 @@ allprojects {
 dependencies {
     implementation(libs.clikt)
     implementation(libs.jna)
+    implementation(libs.jna.platform)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.ktor.client.cio)

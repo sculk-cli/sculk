@@ -3,7 +3,7 @@ kotlin-jvm = "2.0.0"
 kotlin-plugin-serialization = "2.0.0"
 
 clikt = "4.3.0"
-jna = "5.14.0"
+jna = "5.15.0"
 kotlinx-coroutines = "1.8.1"
 kotlinx-datetime = "0.6.0"
 kotlinx-serialization-json = "1.6.3"
@@ -15,6 +15,7 @@ slf4j = "2.0.13"
 [libraries]
 clikt = { module = "com.github.ajalt.clikt:clikt", version.ref = "clikt" }
 jna = { module = "net.java.dev.jna:jna", version.ref = "jna" }
+jna-platform = { module = "net.java.dev.jna:jna-platform", version.ref = "jna" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization-json" }
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }

@@ -4,6 +4,9 @@ import com.github.ajalt.clikt.parameters.options.OptionWithValues
 import com.github.ajalt.clikt.parameters.options.RawOption
 import com.github.ajalt.clikt.parameters.options.transformAll
 import com.github.ajalt.mordant.terminal.Terminal
+import com.sun.jna.Native
+import com.sun.jna.platform.win32.Kernel32
+import com.sun.jna.platform.win32.WinNT
 import io.ktor.http.*
 import tech.jamalam.FilePrettyPrompt
 import tech.jamalam.PrettyListPrompt
