@@ -1,10 +1,17 @@
 package io.github.sculk_cli
 
 import com.github.ajalt.clikt.completion.CompletionCommand
+import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.CliktError
 import com.github.ajalt.clikt.core.NoOpCliktCommand
 import com.github.ajalt.clikt.core.subcommands
+import com.github.ajalt.clikt.core.terminal
+import com.github.ajalt.clikt.parameters.options.default
+import com.github.ajalt.clikt.parameters.options.help
+import com.github.ajalt.clikt.parameters.options.option
+import com.github.ajalt.clikt.parameters.options.optionalValue
 import com.github.ajalt.clikt.parameters.options.versionOption
+import com.github.ajalt.clikt.parameters.types.int
 import com.github.ajalt.mordant.terminal.Terminal
 import io.github.sculk_cli.commands.AddByUrl
 import io.github.sculk_cli.commands.AddFromCurseforge
@@ -25,10 +32,16 @@ import io.github.sculk_cli.commands.Remove
 import io.github.sculk_cli.commands.Update
 import kotlin.system.exitProcess
 
-class Cli : NoOpCliktCommand(name = "sculk") {
+class Cli : CliktCommand(name = "sculk") {
+	val requestRetries by option().int().default(3).help("The number of times to retry a request")
+	
 	override fun aliases(): Map<String, List<String>> = mapOf(
 		"rm" to listOf("remove"),
 	)
+
+	override fun run() {
+		Context.getOrCreate(terminal).requestRetries = requestRetries
+	}
 }
 
 class AddCmd : NoOpCliktCommand(name = "add", help = "Add projects to the pack") {
@@ -58,7 +71,7 @@ fun main(args: Array<String>) {
 	val version = Cli::class.java.getResourceAsStream("/version").use {
 		String(it?.readAllBytes() ?: "???".toByteArray())
 	}
-
+	
 	val cli = Cli()
 		.versionOption(version)
 		.subcommands(Init())

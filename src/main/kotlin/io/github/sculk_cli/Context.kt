@@ -21,6 +21,8 @@ import java.util.*
 const val USER_AGENT = "sculk-cli/sculk (email: james<at>jamalam<dot>tech / discord: jamalam)"
 
 class Context(val terminal: Terminal) {
+    var requestRetries = 3
+    
     @OptIn(ExperimentalSerializationApi::class)
     val json by lazy {
         Json {

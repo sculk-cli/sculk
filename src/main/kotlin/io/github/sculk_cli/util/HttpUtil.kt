@@ -14,15 +14,14 @@ suspend fun downloadFileTemp(url: Url): File {
     val tempFile = File.createTempFile("sculk", null)
     tempFile.deleteOnExit()
     tempFile.writeBytes(tryReq(url))
-
     return tempFile
 }
 
-suspend fun tryReq(url: Url, maxAttempts: Int = 3): ByteArray {
+suspend fun tryReq(url: Url): ByteArray {
     var attempts = 0
     var lastException: Exception? = null
 
-    while (attempts < maxAttempts) {
+    while (attempts < Context.getOrCreate().requestRetries) {
         try {
             val response = Context.Companion.getOrCreate().client.get(url)
             return response.body()
@@ -32,5 +31,5 @@ suspend fun tryReq(url: Url, maxAttempts: Int = 3): ByteArray {
         }
     }
 
-    error("Failed to complete request to $url after $maxAttempts attempts (last caught exception: $lastException")
+    error("Failed to complete request to $url after ${Context.getOrCreate().requestRetries} attempts (last caught exception: $lastException")
 }
