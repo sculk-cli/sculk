@@ -1,2 +1,2 @@
-- feat(install): multithread the install
-  - Install is now significantly faster, especially for first time installs.
+- feat: rewrite raw console input
+  - Windows is now supported 
