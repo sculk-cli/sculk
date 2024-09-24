@@ -25,7 +25,7 @@ suspend fun addModrinthProject(
     val projectSlug = directMatch?.slug ?: run {
         val projects = ctx.modrinth.search(
             query,
-            loaders = getAllLoaders(ctx.pack.getManifest().loader.type),
+            loaders = getAllLoaders(ctx.pack.getManifest().loader.type, ctx.pack.getManifest().minecraft),
             gameVersions = listOf(ctx.pack.getManifest().minecraft)
         ).hits
 
@@ -51,7 +51,7 @@ private suspend fun addModrinthProject(
     val versions = runBlocking {
         ctx.modrinth.getProjectVersions(
             project.slug,
-            loaders = getAllLoaders(ctx.pack.getManifest().loader.type),
+            loaders = getAllLoaders(ctx.pack.getManifest().loader.type, ctx.pack.getManifest().minecraft),
             gameVersions = listOf(ctx.pack.getManifest().minecraft)
         )
     }.sortedBy {
@@ -181,7 +181,7 @@ suspend fun updateModrinthProject(
 
     val versions = ctx.modrinth.getProjectVersions(
         idOrSlug = mod.id,
-        loaders = getAllLoaders(ctx.pack.getManifest().loader.type),
+        loaders = getAllLoaders(ctx.pack.getManifest().loader.type, ctx.pack.getManifest().minecraft),
         gameVersions = listOf(ctx.pack.getManifest().minecraft)
     ).sortedBy {
         it.publishedTime
@@ -269,10 +269,15 @@ fun ModrinthLoader.getSaveDir(): String = when (this) {
     else -> error("Unsupported Modrinth loader: $this")
 }
 
-fun getAllLoaders(loader: ModLoader): List<ModrinthLoader> = listOf(
+fun getAllLoaders(loader: ModLoader, gameVersion: String): List<ModrinthLoader> = listOf(
     loader.toModrinth(),
     *if (loader == ModLoader.Quilt) {
         arrayOf(ModrinthLoader.Fabric)
+    } else {
+        emptyArray()
+    },
+    *if (loader == ModLoader.Neoforge && gameVersion == "1.20.1") {
+        arrayOf(ModrinthLoader.Forge)
     } else {
         emptyArray()
     },
