@@ -8,7 +8,7 @@ plugins {
 }
 
 allprojects {
-    group = "tech.jamalam"
+    group = "io.github.sculk_cli"
 
     repositories {
         mavenCentral()
@@ -93,7 +93,7 @@ tasks {
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
         manifest {
-            attributes["Main-Class"] = "tech.jamalam.MainKt"
+            attributes["Main-Class"] = "io.github.sculk_cli.MainKt"
         }
 
         fromConfiguration(configurations.runtimeClasspath)
