@@ -6,92 +6,72 @@ import com.github.ajalt.clikt.core.NoOpCliktCommand
 import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.parameters.options.versionOption
 import com.github.ajalt.mordant.terminal.Terminal
-import com.sun.jna.Native
-import com.sun.jna.platform.win32.Kernel32
-import com.sun.jna.platform.win32.Wincon
-import com.sun.jna.ptr.IntByReference
 import tech.jamalam.commands.*
 import kotlin.system.exitProcess
 
 class Cli : NoOpCliktCommand(name = "sculk") {
-    override fun aliases(): Map<String, List<String>> = mapOf(
-        "rm" to listOf("remove"),
-    )
+	override fun aliases(): Map<String, List<String>> = mapOf(
+		"rm" to listOf("remove"),
+	)
 }
 
 class AddCmd : NoOpCliktCommand(name = "add", help = "Add projects to the pack") {
-    override fun aliases(): Map<String, List<String>> = mapOf(
-        "mr" to listOf("modrinth"),
-        "cf" to listOf("curseforge"),
-    )
+	override fun aliases(): Map<String, List<String>> = mapOf(
+		"mr" to listOf("modrinth"),
+		"cf" to listOf("curseforge"),
+	)
 }
 
 class ExportCmd :
-    NoOpCliktCommand(name = "export", help = "Export the pack to a different format") {
-    override fun aliases(): Map<String, List<String>> = mapOf(
-        "mr" to listOf("modrinth"),
-        "cf" to listOf("curseforge"),
-        "mmc" to listOf("multimc")
-    )
+	NoOpCliktCommand(name = "export", help = "Export the pack to a different format") {
+	override fun aliases(): Map<String, List<String>> = mapOf(
+		"mr" to listOf("modrinth"),
+		"cf" to listOf("curseforge"),
+		"mmc" to listOf("multimc")
+	)
 }
 
 class ImportCmd :
-    NoOpCliktCommand(name = "import", help = "Import a pack from a different format") {
-    override fun aliases(): Map<String, List<String>> = mapOf(
-        "mr" to listOf("modrinth"), "cf" to listOf("curseforge")
-    )
+	NoOpCliktCommand(name = "import", help = "Import a pack from a different format") {
+	override fun aliases(): Map<String, List<String>> = mapOf(
+		"mr" to listOf("modrinth"), "cf" to listOf("curseforge")
+	)
 }
 
 fun main(args: Array<String>) {
-    if (System.getProperty("os.name").startsWith("Windows")) {
-        val kernel32 = Native.load("kernel32", Kernel32::class.java)
-        val consoleHandle = kernel32.GetStdHandle(Wincon.STD_OUTPUT_HANDLE)
+	val version = Cli::class.java.getResourceAsStream("/version").use {
+		String(it?.readAllBytes() ?: "???".toByteArray())
+	}
 
-        val consoleMode = IntByReference()
-        if (kernel32.GetConsoleMode(consoleHandle, consoleMode)) {
-            val mode = consoleMode.value or Wincon.ENABLE_VIRTUAL_TERMINAL_PROCESSING
-            kernel32.SetConsoleMode(consoleHandle, mode)
-        } else {
-            println("Error: Unable to get or set console mode.")
-        }
-    }
-    
-    val startTime = System.currentTimeMillis()
-    val version = Cli::class.java.getResourceAsStream("/version").use {
-        String(it?.readAllBytes() ?: "???".toByteArray())
-    }
+	val cli = Cli()
+		.versionOption(version)
+		.subcommands(Init())
+		.subcommands(
+			AddCmd().subcommands(
+				AddByUrl(), AddFromModrinth(), AddFromCurseforge(), AddFromList()
+			)
+		)
+		.subcommands(Update())
+		.subcommands(Link(), Migrate(), Refresh())
+		.subcommands(Remove())
+		.subcommands(Install())
+		.subcommands(ImportCmd().subcommands(ImportModrinth(), ImportCurseforge()))
+		.subcommands(ExportCmd().subcommands(ExportModrinth(), ExportCurseforge(), ExportMultiMc()))
+		.subcommands(ModList()).subcommands(
+			CompletionCommand(
+				name = "completion", help = "Generate a completion script for your shell"
+			)
+		)
 
-    val cli = Cli()
-        .versionOption(version)
-        .subcommands(Init())
-        .subcommands(
-            AddCmd().subcommands(
-                AddByUrl(), AddFromModrinth(), AddFromCurseforge(), AddFromList()
-            )
-        )
-        .subcommands(Update())
-        .subcommands(Link(), Migrate(), Refresh())
-        .subcommands(Remove())
-        .subcommands(Install())
-        .subcommands(ImportCmd().subcommands(ImportModrinth(), ImportCurseforge()))
-        .subcommands(ExportCmd().subcommands(ExportModrinth(), ExportCurseforge(), ExportMultiMc()))
-        .subcommands(ModList()).subcommands(
-            CompletionCommand(
-                name = "completion", help = "Generate a completion script for your shell"
-            )
-        )
-
-    try {
-        cli.parse(args)
-    } catch (e: CliktError) {
-        cli.echoFormattedHelp(e)
-        exitProcess(e.statusCode)
-    } catch (e: Exception) {
-        val terminal = Terminal()
-        terminal.danger(e.message ?: "An unknown error occurred")
-        e.printStackTrace()
-        exitProcess(1)
-    }
-
-//    println("Finished in ${System.currentTimeMillis() - time}ms")
+	try {
+		cli.parse(args)
+	} catch (e: CliktError) {
+		cli.echoFormattedHelp(e)
+		exitProcess(e.statusCode)
+	} catch (e: Exception) {
+		val terminal = Terminal()
+		terminal.danger(e.message ?: "An unknown error occurred")
+		e.printStackTrace()
+		exitProcess(1)
+	}
 }
