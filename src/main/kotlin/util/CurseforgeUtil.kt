@@ -54,7 +54,7 @@ suspend fun addCurseforgeProject(
         return false
     }
 
-    val files =
+    var files =
         ctx.curseforge.getModFiles(
             modId = mod.id,
             modLoader = ctx.pack.getManifest().loader.type.toCurseforge(),
@@ -62,7 +62,17 @@ suspend fun addCurseforgeProject(
         ).sortedBy {
             it.fileDate
         }.reversed()
-
+    
+    if (ctx.pack.getManifest().loader.type == ModLoader.Neoforge && ctx.pack.getManifest().minecraft == "1.20.1") {
+        files += ctx.curseforge.getModFiles(
+            modId = mod.id,
+            modLoader = CurseforgeModLoader.Forge,
+            gameVersion = ctx.pack.getManifest().minecraft
+        ).sortedBy {
+            it.fileDate
+        }.reversed()
+    }
+    
     if (files.isEmpty()) {
         error("No files found for ${mod.name}")
     }
@@ -190,7 +200,7 @@ suspend fun updateCurseforgeProject(
     val mod = ctx.curseforge.getMod(manifest.sources.curseforge!!.projectId)
         ?: error("Project not found")
 
-    val files =
+    var files =
         ctx.curseforge.getModFiles(
             modId = mod.id,
             modLoader = ctx.pack.getManifest().loader.type.toCurseforge(),
@@ -198,6 +208,16 @@ suspend fun updateCurseforgeProject(
         ).sortedBy {
             it.fileDate
         }.reversed()
+
+    if (ctx.pack.getManifest().loader.type == ModLoader.Neoforge && ctx.pack.getManifest().minecraft == "1.20.1") {
+        files += ctx.curseforge.getModFiles(
+            modId = mod.id,
+            modLoader = CurseforgeModLoader.Forge,
+            gameVersion = ctx.pack.getManifest().minecraft
+        ).sortedBy {
+            it.fileDate
+        }.reversed()
+    }
 
     if (files.isEmpty()) {
         error("No files found for ${mod.name}")
