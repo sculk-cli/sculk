@@ -15,4 +15,5 @@ dependencyResolutionManagement {
 include(":modules:curseforge")
 include(":modules:modrinth")
 include(":modules:multimc")
+include(":modules:console")
 include(":modules:util")

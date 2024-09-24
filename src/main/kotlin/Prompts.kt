@@ -1,14 +1,17 @@
 package tech.jamalam
 
-import biz.source_code.utils.RawConsoleInput
 import com.github.ajalt.mordant.terminal.ConversionResult
 import com.github.ajalt.mordant.terminal.Prompt
 import com.github.ajalt.mordant.terminal.Terminal
 import io.ktor.http.*
+import tech.jamalam.console.Console
+import tech.jamalam.console.getOrCreateConsole
 import tech.jamalam.util.clearLine
 import tech.jamalam.util.clearLines
 import java.io.File
 import kotlin.system.exitProcess
+
+val console = getOrCreateConsole()
 
 class PrettyListPrompt(prompt: String, choices: Collection<String>, terminal: Terminal) :
     Prompt<String>(prompt, terminal, choices = choices) {
@@ -44,33 +47,25 @@ class PrettyListPrompt(prompt: String, choices: Collection<String>, terminal: Te
             if (filter != null) {
                 printedLines += 1
             }
-
-            when (val char = RawConsoleInput.read(true)) {
-                3 -> exitProcess(0) // CTRL-C
-                10 -> break // Enter
-                127 -> { // Backspace
+            
+            when (val key = console.read()) {
+                is Console.CtrlC -> exitProcess(0)
+                is Console.Enter -> break
+                is Console.Backspace -> { // Backspace
                     if (filter != null) {
                         filter = filter.dropLast(1)
                     }
                 }
-
-                27 -> {
-                    if (RawConsoleInput.read(true) == 91) {
-                        when (RawConsoleInput.read(true)) {
-                            // Up arrow
-                            65 -> choiceIdx = if (choiceIdx == 0) {
-                                choices.size - 1
-                            } else {
-                                choiceIdx - 1
-                            }
-                            // Down arrow
-                            66 -> choiceIdx = (choiceIdx + 1) % choices.size
+                is Console.ArrowUp -> choiceIdx = if (choiceIdx == 0) {
+                            choices.size - 1
+                        } else {
+                            choiceIdx - 1
                         }
-                    }
-                }
 
-                else -> {
-                    filter = (filter ?: "") + char.toChar()
+                is Console.ArrowDown -> choiceIdx = (choiceIdx + 1) % choices.size
+                is Console.Invalid -> {}
+                is Console.Other -> {
+                    filter = (filter ?: "") + key.value
                     choiceIdx = 0
                 }
             }
@@ -96,7 +91,7 @@ class PrettyListPrompt(prompt: String, choices: Collection<String>, terminal: Te
         })
 
         terminal.cursor.show()
-        RawConsoleInput.resetConsoleMode()
+        console.reset()
         return choice
     }
 
@@ -158,15 +153,15 @@ abstract class PrettyPrompt<T>(
         while (true) {
             printPrompt(input, error)
 
-            when (val char = RawConsoleInput.read(true)) {
-                3 -> exitProcess(0) // CTRL-C
-                10 -> { // Enter
+            when (val key = console.read()) {
+                is Console.CtrlC -> exitProcess(0)
+                is Console.Enter -> {
                     return if (input.isNotEmpty()) {
                         when (val conversion = convert(input)) {
                             is ConversionResult.Valid -> {
                                 terminal.clearLine()
                                 printPrompt(input, error = false, finished = true)
-                                RawConsoleInput.resetConsoleMode()
+                                console.reset()
                                 conversion.value
                             }
 
@@ -180,7 +175,7 @@ abstract class PrettyPrompt<T>(
                     } else if (default != null) {
                         terminal.clearLine()
                         printPrompt(input, error = false, finished = true)
-                        RawConsoleInput.resetConsoleMode()
+                        console.reset()
                         default!!
                     } else {
                         error = true
@@ -189,16 +184,15 @@ abstract class PrettyPrompt<T>(
                     }
                 }
 
-                127 -> { // Backspace
+                is Console.Backspace -> {
                     input = input.dropLast(1)
                     terminal.clearLine()
                 }
-
-                27 -> {} // Control code
-                else -> {
+                is Console.Other -> {
                     terminal.clearLine()
-                    input += char.toChar()
+                    input += key.value
                 }
+                else -> {}
             }
         }
     }
@@ -252,7 +246,7 @@ class UrlPrettyPrompt(
     override fun convert(input: String): ConversionResult<Url> {
         return try {
             ConversionResult.Valid(URLBuilder().takeFrom(input).build())
-        } catch (e: URLParserException) {
+        } catch (_: URLParserException) {
             ConversionResult.Invalid("Invalid URL")
         }
     }

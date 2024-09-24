@@ -5,11 +5,17 @@ import com.github.ajalt.clikt.parameters.options.RawOption
 import com.github.ajalt.clikt.parameters.options.transformAll
 import com.github.ajalt.mordant.terminal.Terminal
 import io.ktor.http.*
+import org.fusesource.jansi.Ansi
 import tech.jamalam.FilePrettyPrompt
 import tech.jamalam.PrettyListPrompt
 import tech.jamalam.StringPrettyPrompt
 import tech.jamalam.UrlPrettyPrompt
 import java.io.File
+
+fun Terminal.clearLine() {
+    rawPrint(Ansi.ansi().eraseLine(Ansi.Erase.ALL).toString())
+    rawPrint("\r")
+}
 
 fun Terminal.clearLines(count: Int) {
     for (i in 0..<count) {
@@ -19,11 +25,7 @@ fun Terminal.clearLines(count: Int) {
 }
 
 fun Terminal.moveUp() {
-    rawPrint("\u001B[A")
-}
-
-fun Terminal.clearLine() {
-    rawPrint("\u001B[2K\r")
+    rawPrint(Ansi.ansi().cursorUpLine().toString())
 }
 
 @Suppress("UNCHECKED_CAST")
