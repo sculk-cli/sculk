@@ -21,7 +21,7 @@
       sculk = pkgs.callPackage ./sculk.nix {};
     });
 
-    nixFunctions.fetchSculkModpack = {
+    lib.fetchSculkModpack = {
       stdenvNoCC,
       sculk,
       jre_headless,
