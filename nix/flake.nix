@@ -11,21 +11,23 @@
     nixpkgs,
     flake-utils,
     ...
-  }: {
-    formatter.x86_64-linux = nixpkgs.legacyPackages.x86_64-linux.alejandra;
-    packages = flake-utils.lib.eachDefaultSystem (system: let
+  }:
+    {
+      formatter.x86_64-linux = nixpkgs.legacyPackages.x86_64-linux.alejandra;
+
+      lib.fetchSculkModpack = {
+        stdenvNoCC,
+        sculk,
+        jre_headless,
+      }:
+        import ./fetch-sculk-modpack.nix {inherit stdenvNoCC sculk jre_headless;};
+    }
+    // flake-utils.lib.eachDefaultSystem (system: let
       pkgs = import nixpkgs {
         inherit system;
       };
     in {
-      sculk = pkgs.callPackage ./sculk.nix {};
+      legacyPackages.sculk = pkgs.callPackage ./package.nix {};
+      packages.sculk = pkgs.callPackage ./package.nix {};
     });
-
-    lib.fetchSculkModpack = {
-      stdenvNoCC,
-      sculk,
-      jre_headless,
-    }:
-      import ./fetch-sculk-modpack.nix {inherit stdenvNoCC sculk jre_headless;};
-  };
 }
