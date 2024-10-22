@@ -13,19 +13,12 @@
     ...
   }: {
     formatter.x86_64-linux = nixpkgs.legacyPackages.x86_64-linux.alejandra;
-    # Define the overlay
-    overlay = final: prev: {
-      sculk = prev.callPackage ./package.nix {};
-    };
-
-    # Apply the overlay to nixpkgs
     packages = flake-utils.lib.eachDefaultSystem (system: let
       pkgs = import nixpkgs {
         inherit system;
-        overlays = [self.overlay];
       };
     in {
-      sculk = pkgs.sculk;
+      sculk = pkgs.callPackage ./sculk.nix {};
     });
 
     nixFunctions.fetchSculkModpack = {
