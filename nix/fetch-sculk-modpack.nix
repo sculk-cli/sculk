@@ -28,6 +28,7 @@
 
         installPhase = ''
           runHook preInstall
+          rm -r env-vars
           rm install.sculk.json
           mkdir -p $out
           cp -r * $out/
