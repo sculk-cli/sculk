@@ -4,6 +4,7 @@ import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.options.help
 import com.github.ajalt.clikt.parameters.options.option
+import com.github.ajalt.mordant.terminal.info
 import kotlinx.coroutines.runBlocking
 import io.github.sculk_cli.multimc.MultiMcPackComponent
 import io.github.sculk_cli.multimc.createMultiMcCompatiblePack
@@ -15,12 +16,12 @@ import io.github.sculk_cli.util.parseUrl
 import java.nio.file.Paths
 
 class ExportMultiMc :
-    CliktCommand(name = "multimc", help = "Export a MultiMC compatible instance (.zip)") {
+    CliktCommand(name = "multimc") {
     private val packUrl by option().help("The download URL/path for the modpack, to use for automatic updating. If not specified, the pack will not automatically update")
     private val sculkJarLocation by option().help("The location of the Sculk jar, to use for automatic updating. If not specified, Sculk will attempt to locate it automatically.")
     
     override fun run() = runBlocking {
-        val ctx = Context.Companion.getOrCreate(terminal)
+        val ctx = Context.getOrCreate(terminal)
         val components = mutableListOf<MultiMcPackComponent>()
 
         components.add(MultiMcPackComponent.Minecraft(ctx.pack.getManifest().minecraft))
@@ -75,4 +76,6 @@ class ExportMultiMc :
 
         terminal.info("Exported ${ctx.pack.getManifest().name} to ${ctx.pack.getManifest().name}-${ctx.pack.getManifest().version}-multimc.zip")
     }
+
+    override fun help(context: com.github.ajalt.clikt.core.Context): String = "Export a MultiMC compatible instance (.zip)"
 }

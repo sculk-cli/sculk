@@ -5,6 +5,8 @@ import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.arguments.argument
 import com.github.ajalt.clikt.parameters.arguments.help
 import com.github.ajalt.clikt.parameters.types.file
+import com.github.ajalt.mordant.terminal.info
+import com.github.ajalt.mordant.terminal.warning
 import kotlinx.coroutines.runBlocking
 import io.github.sculk_cli.Context
 import io.github.sculk_cli.pack.getDependants
@@ -16,12 +18,12 @@ import io.github.sculk_cli.pack.save
 import java.io.File
 import java.nio.file.Paths
 
-class Remove : CliktCommand(name = "remove", help = "Remove a file or manifest") {
+class Remove : CliktCommand(name = "remove") {
     private val filename by argument().file(mustExist = true, canBeDir = false)
         .help("The file to remove")
 
     override fun run() = runBlocking {
-        val ctx = Context.Companion.getOrCreate(terminal)
+        val ctx = Context.getOrCreate(terminal)
         val relativePath =
             filename.canonicalFile.toRelativeString(Paths.get("").toFile().canonicalFile)
 
@@ -65,4 +67,6 @@ class Remove : CliktCommand(name = "remove", help = "Remove a file or manifest")
         ctx.pack.save(ctx.json)
         terminal.info("Removed $relativePath")
     }
+
+    override fun help(context: com.github.ajalt.clikt.core.Context): String = "Remove a file or manifest"
 }

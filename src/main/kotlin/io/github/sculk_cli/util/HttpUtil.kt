@@ -23,7 +23,7 @@ suspend fun tryReq(url: Url): ByteArray {
 
     while (attempts < Context.getOrCreate().requestRetries) {
         try {
-            val response = Context.Companion.getOrCreate().client.get(url)
+            val response = Context.getOrCreate().client.get(url)
             return response.body()
         } catch (e: Exception) {
             attempts += 1

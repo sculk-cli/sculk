@@ -4,15 +4,16 @@ import com.github.ajalt.clikt.completion.CompletionCommand
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.CliktError
 import com.github.ajalt.clikt.core.NoOpCliktCommand
+import com.github.ajalt.clikt.core.parse
 import com.github.ajalt.clikt.core.subcommands
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.options.default
 import com.github.ajalt.clikt.parameters.options.help
 import com.github.ajalt.clikt.parameters.options.option
-import com.github.ajalt.clikt.parameters.options.optionalValue
 import com.github.ajalt.clikt.parameters.options.versionOption
 import com.github.ajalt.clikt.parameters.types.int
 import com.github.ajalt.mordant.terminal.Terminal
+import com.github.ajalt.mordant.terminal.danger
 import io.github.sculk_cli.commands.AddByUrl
 import io.github.sculk_cli.commands.AddFromCurseforge
 import io.github.sculk_cli.commands.AddFromList
@@ -44,27 +45,33 @@ class Cli : CliktCommand(name = "sculk") {
 	}
 }
 
-class AddCmd : NoOpCliktCommand(name = "add", help = "Add projects to the pack") {
+class AddCmd : NoOpCliktCommand(name = "add") {
 	override fun aliases(): Map<String, List<String>> = mapOf(
 		"mr" to listOf("modrinth"),
 		"cf" to listOf("curseforge"),
 	)
+
+	override fun help(context: com.github.ajalt.clikt.core.Context) = "Add projects to the pack"
 }
 
 class ExportCmd :
-	NoOpCliktCommand(name = "export", help = "Export the pack to a different format") {
+	NoOpCliktCommand(name = "export") {
 	override fun aliases(): Map<String, List<String>> = mapOf(
 		"mr" to listOf("modrinth"),
 		"cf" to listOf("curseforge"),
 		"mmc" to listOf("multimc")
 	)
+
+	override fun help(context: com.github.ajalt.clikt.core.Context) = "Export the pack to a different format"
 }
 
 class ImportCmd :
-	NoOpCliktCommand(name = "import", help = "Import a pack from a different format") {
+	NoOpCliktCommand(name = "import") {
 	override fun aliases(): Map<String, List<String>> = mapOf(
 		"mr" to listOf("modrinth"), "cf" to listOf("curseforge")
 	)
+
+	override fun help(context: com.github.ajalt.clikt.core.Context) = "Import a pack from a different format"
 }
 
 fun main(args: Array<String>) {

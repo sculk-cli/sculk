@@ -11,6 +11,7 @@ import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.enum
 import com.github.ajalt.mordant.animation.coroutines.animateInCoroutine
 import com.github.ajalt.mordant.animation.progress.advance
+import com.github.ajalt.mordant.terminal.info
 import com.github.ajalt.mordant.widgets.progress.*
 import io.ktor.client.call.*
 import io.ktor.client.plugins.*
@@ -27,10 +28,11 @@ import io.github.sculk_cli.pack.SerialPackManifest
 import io.github.sculk_cli.pack.Side
 import io.github.sculk_cli.util.digestSha256
 import io.github.sculk_cli.util.digestSha512
+import kotlinx.coroutines.joinAll
 import java.io.File
 
 class Install :
-    CliktCommand(name = "install", help = "Install a Sculk modpack from a URL or local directory") {
+    CliktCommand(name = "install") {
     private val packLocation by argument().help("The URL or path to the modpack")
     private val installLocation by argument().help("The path to install the modpack to")
         .default(".")
@@ -39,7 +41,7 @@ class Install :
 
     override fun run() = runBlocking {
         coroutineScope {
-            val ctx = Context.Companion.getOrCreate(terminal)
+            val ctx = Context.getOrCreate(terminal)
             val startTime = System.currentTimeMillis()
             terminal.info("Getting pack manifest from $packLocation/manifest.sculk.json")
             val manifest = ctx.json.decodeFromString(
@@ -121,10 +123,10 @@ class Install :
                     val request = ctx.client.get(downloadLink) {
                         timeout {
                             // Some mods are large.
-                            requestTimeoutMillis = HttpTimeout.INFINITE_TIMEOUT_MS
+                            requestTimeoutMillis = null
                         }
                     }
-                    fileFile.writeBytes(request.readBytes())
+                    fileFile.writeBytes(request.readRawBytes())
 
                     if (fileFile.readBytes().digestSha512() != fileManifest.hashes.sha512) {
                         error("Downloaded file for ${file.path} was corrupted or hash was incorrect")
@@ -159,7 +161,7 @@ class Install :
                 }
             }
             
-            jobs.forEach { it.join() }
+            jobs.joinAll()
 
             for (previouslyInstalledItem in installManifest.sculkInstalledItems) {
                 if (previouslyInstalledItem !in installedItems) {
@@ -176,7 +178,7 @@ class Install :
 
     private suspend fun readFileAsText(path: String): String {
         return if (packLocation.startsWith("http")) {
-            Context.Companion.getOrCreate(terminal).client.get("$packLocation/$path").bodyAsText()
+            Context.getOrCreate(terminal).client.get("$packLocation/$path").bodyAsText()
         } else {
             File(packLocation).resolve(path).readText()
         }
@@ -184,7 +186,7 @@ class Install :
     
     private suspend fun readFile(path: String): ByteArray {
         return if (packLocation.startsWith("http")) {
-            Context.Companion.getOrCreate(terminal).client.get("$packLocation/$path").body()
+            Context.getOrCreate(terminal).client.get("$packLocation/$path").body()
         } else {
             File(packLocation).resolve(path).readBytes()
         }
@@ -198,4 +200,6 @@ class Install :
     data class InstallManifest(
         var sculkInstalledItems: MutableList<String>,
     )
+
+    override fun help(context: com.github.ajalt.clikt.core.Context): String = "Install a Sculk modpack from a URL or local directory"
 }

@@ -13,14 +13,16 @@ import io.github.sculk_cli.pack.save
 import io.github.sculk_cli.util.findAndAddCurseforgeProject
 
 class AddFromCurseforge :
-    CliktCommand(name = "curseforge", help = "Add a project to the manifest from Curseforge") {
+    CliktCommand(name = "curseforge") {
     private val query by argument().help("The slug of the project, or a query to search for")
     private val skipDependencies by option().flag().help("Whether to skip checking for and adding dependencies.")
 
     override fun run() = runBlocking {
-        val ctx = Context.Companion.getOrCreate(terminal)
+        val ctx = Context.getOrCreate(terminal)
 	    findAndAddCurseforgeProject(ctx, query, skipDependencies = skipDependencies)
         ctx.dependencyGraph.save()
         ctx.pack.save(ctx.json)
     }
+
+    override fun help(context: com.github.ajalt.clikt.core.Context) = "Add a project to the manifest from Curseforge"
 }

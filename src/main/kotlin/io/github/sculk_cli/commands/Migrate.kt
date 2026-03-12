@@ -2,6 +2,7 @@ package io.github.sculk_cli.commands
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
+import com.github.ajalt.mordant.terminal.info
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
@@ -14,11 +15,11 @@ import io.github.sculk_cli.util.mkdirsAndWriteJson
 import java.nio.file.Paths
 
 class Migrate :
-    CliktCommand(name = "migrate", help = "Migrate a pack to the latest format version") {
+    CliktCommand(name = "migrate") {
     private val basePath = Paths.get("")
 
     override fun run() {
-        val ctx = Context.Companion.getOrCreate(terminal)
+        val ctx = Context.getOrCreate(terminal)
         val manifestPath = basePath.resolve("manifest.sculk.json")
         if (!manifestPath.toFile().exists()) {
             error("Attempted to open a pack at $basePath, but no manifest was found")
@@ -27,10 +28,10 @@ class Migrate :
         var rootManifestJson =
             ctx.json.parseToJsonElement(manifestPath.toFile().readText()).jsonObject
         val formatVersion = rootManifestJson["formatVersion"]?.jsonPrimitive?.content?.let {
-            FormatVersion.Companion.fromString(it)
+            FormatVersion.fromString(it)
         } ?: FormatVersion(0, 0)
 
-        if (formatVersion == FormatVersion.Companion.CURRENT) {
+        if (formatVersion == FormatVersion.CURRENT) {
             terminal.info("Format version $formatVersion is up to date")
             return
         }
@@ -70,7 +71,7 @@ class Migrate :
 	    fileManifests: Map<String, JsonObject>
     ): Pair<JsonObject, Map<String, JsonObject>> {
         val currentVersion =
-            FormatVersion.Companion.fromString(rootManifest["formatVersion"]?.jsonPrimitive?.content ?: "0.0")
+            FormatVersion.fromString(rootManifest["formatVersion"]?.jsonPrimitive?.content ?: "0.0")
 
         if (currentVersion >= migrator.getOutputVersion()) {
             return Pair(rootManifest, fileManifests)
@@ -83,4 +84,6 @@ class Migrate :
         newRootManifest = migrator.manipulateRootPostMigration(newRootManifest)
         return Pair(newRootManifest, newFileManifests)
     }
+
+    override fun help(context: com.github.ajalt.clikt.core.Context): String = "Migrate a pack to the latest format version"
 }

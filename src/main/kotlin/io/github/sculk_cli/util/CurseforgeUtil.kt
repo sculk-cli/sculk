@@ -1,5 +1,7 @@
 package io.github.sculk_cli.util
 
+import com.github.ajalt.mordant.terminal.info
+import com.github.ajalt.mordant.terminal.warning
 import io.github.sculk_cli.curseforge.CURSEFORGE_MODS_CLASS
 import io.github.sculk_cli.curseforge.models.*
 import io.github.sculk_cli.Context
@@ -60,14 +62,14 @@ suspend fun addCurseforgeProject(
         return false
     }
 
-    var files =
-        ctx.curseforge.getModFiles(
-            modId = mod.id,
-            modLoader = ctx.pack.getManifest().loader.type.toCurseforge(),
-            gameVersion = ctx.pack.getManifest().minecraft
-        ).sortedBy {
-            it.fileDate
-        }.reversed()
+    val files =
+	    ctx.curseforge.getModFiles(
+		    modId = mod.id,
+		    modLoader = ctx.pack.getManifest().loader.type.toCurseforge(),
+		    gameVersion = ctx.pack.getManifest().minecraft
+	    ).sortedBy {
+		    it.fileDate
+	    }.reversed().toMutableList()
     
     if (ctx.pack.getManifest().loader.type == ModLoader.Neoforge && ctx.pack.getManifest().minecraft == "1.20.1") {
         files += ctx.curseforge.getModFiles(
@@ -206,14 +208,14 @@ suspend fun updateCurseforgeProject(
     val mod = ctx.curseforge.getMod(manifest.sources.curseforge!!.projectId)
         ?: error("Project not found")
 
-    var files =
-        ctx.curseforge.getModFiles(
-            modId = mod.id,
-            modLoader = ctx.pack.getManifest().loader.type.toCurseforge(),
-            gameVersion = ctx.pack.getManifest().minecraft
-        ).sortedBy {
-            it.fileDate
-        }.reversed()
+    val files =
+	    ctx.curseforge.getModFiles(
+		    modId = mod.id,
+		    modLoader = ctx.pack.getManifest().loader.type.toCurseforge(),
+		    gameVersion = ctx.pack.getManifest().minecraft
+	    ).sortedBy {
+		    it.fileDate
+	    }.reversed().toMutableList()
 
     if (ctx.pack.getManifest().loader.type == ModLoader.Neoforge && ctx.pack.getManifest().minecraft == "1.20.1") {
         files += ctx.curseforge.getModFiles(

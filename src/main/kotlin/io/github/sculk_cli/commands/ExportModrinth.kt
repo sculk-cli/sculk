@@ -2,6 +2,8 @@ package io.github.sculk_cli.commands
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
+import com.github.ajalt.mordant.terminal.info
+import com.github.ajalt.mordant.terminal.warning
 import kotlinx.coroutines.runBlocking
 import io.github.sculk_cli.Context
 import io.github.sculk_cli.pack.ModLoader
@@ -15,9 +17,9 @@ import java.io.File
 import java.nio.file.Paths
 
 class ExportModrinth :
-    CliktCommand(name = "modrinth", help = "Export a Modrinth modpack (.mrpack)") {
+    CliktCommand(name = "modrinth") {
     override fun run() = runBlocking {
-        val ctx = Context.Companion.getOrCreate(terminal)
+        val ctx = Context.getOrCreate(terminal)
         val mrpackIndex = createMrpackIndex(ctx)
         val overrides = ctx.pack
             .getFiles()
@@ -92,6 +94,8 @@ class ExportModrinth :
             dependencies = dependencies
         )
     }
+
+    override fun help(context: com.github.ajalt.clikt.core.Context): String = "Export a Modrinth modpack (.mrpack)"
 }
 
 private fun PackManifest.getLoaderVersionOrNull(loader: ModLoader): String? {

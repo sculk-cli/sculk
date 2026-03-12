@@ -30,10 +30,10 @@ class InMemoryPack(ctx: Context, private val basePath: Path = Paths.get("")) {
             ctx.json.parseToJsonElement(manifest).jsonObject
         }
         val formatVersion = rootManifestJson["formatVersion"]?.jsonPrimitive?.content?.let {
-            FormatVersion.Companion.fromString(it)
+            FormatVersion.fromString(it)
         } ?: FormatVersion(0, 0)
 
-        if (formatVersion != FormatVersion.Companion.CURRENT) {
+        if (formatVersion != FormatVersion.CURRENT) {
             error("Format version $formatVersion is out of date, please run the migrate command")
         }
 

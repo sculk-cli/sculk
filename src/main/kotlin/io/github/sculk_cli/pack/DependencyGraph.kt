@@ -10,7 +10,7 @@ import java.nio.file.Paths
 typealias DependencyGraph = HashMap<String, MutableList<String>>
 
 fun loadDependencyGraph(basePath: Path = Paths.get("")): DependencyGraph {
-    val ctx = Context.Companion.getOrCreate()
+    val ctx = Context.getOrCreate()
     val file = basePath.resolve("dependency-graph.sculk.json").toFile()
 
     return if (file.exists()) {
@@ -45,5 +45,5 @@ fun DependencyGraph.getUnusedDependencies(): List<String> =
 
 fun DependencyGraph.save(basePath: Path = Paths.get("")) =
     basePath.resolve("dependency-graph.sculk.json").toFile()
-        .mkdirsAndWriteJson(Context.Companion.getOrCreate().json, this)
+        .mkdirsAndWriteJson(Context.getOrCreate().json, this)
 

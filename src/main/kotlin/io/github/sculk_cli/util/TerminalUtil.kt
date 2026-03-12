@@ -3,6 +3,7 @@ package io.github.sculk_cli.util
 import com.github.ajalt.clikt.parameters.options.OptionWithValues
 import com.github.ajalt.clikt.parameters.options.RawOption
 import com.github.ajalt.clikt.parameters.options.transformAll
+import com.github.ajalt.clikt.parameters.transform.terminal
 import com.github.ajalt.mordant.terminal.Terminal
 import io.ktor.http.*
 import org.fusesource.jansi.Ansi
@@ -18,7 +19,7 @@ fun Terminal.clearLine() {
 }
 
 fun Terminal.clearLines(count: Int) {
-	(0..<count).forEach {
+	repeat(count) {
 		moveUp()
 		clearLine()
 	}

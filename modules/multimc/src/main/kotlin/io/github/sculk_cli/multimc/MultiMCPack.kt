@@ -2,7 +2,6 @@ package io.github.sculk_cli.multimc
 
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.File
 import java.io.FileOutputStream
@@ -103,7 +102,7 @@ private fun buildInstanceCfg(name: String, packUrl: String?): ByteArray {
 
 	if (packUrl != null) {
 		cfg += "\nOverrideCommands=true"
-		cfg += "\nPreLaunchCommand=\\\"\$INST_JAVA\\\" -jar \\\"\$INST_DIR/.minecraft/_sculk.jar\\\" install \\\"$packUrl\\\" \\\"\$INST_MC_DIR\\\" --side client"
+		cfg += $$"\nPreLaunchCommand=\\\"$INST_JAVA\\\" -jar \\\"$INST_DIR/.minecraft/_sculk.jar\\\" install \\\"$$packUrl\\\" \\\"$INST_MC_DIR\\\" --side client"
 	}
 
 	return cfg.toByteArray()
@@ -117,7 +116,7 @@ private fun findSculkJar(): File? {
 		}
 	}
 
-	val path = Paths.get(MultiMcPackComponent::class.java.getProtectionDomain().getCodeSource().getLocation().toURI())
+	val path = Paths.get(MultiMcPackComponent::class.java.getProtectionDomain().codeSource.location.toURI())
 	
 	if (path.toFile().isFile && path.toFile().extension == "jar") {
 		return path.toFile()

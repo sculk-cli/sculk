@@ -2,6 +2,8 @@ package io.github.sculk_cli.commands
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
+import com.github.ajalt.mordant.terminal.info
+import com.github.ajalt.mordant.terminal.warning
 import kotlinx.coroutines.runBlocking
 import io.github.sculk_cli.curseforge.*
 import io.github.sculk_cli.Context
@@ -9,9 +11,9 @@ import io.github.sculk_cli.pack.ModLoader
 import java.nio.file.Paths
 
 class ExportCurseforge :
-    CliktCommand(name = "curseforge", help = "Export a Curseforge modpack (.zip)") {
+    CliktCommand(name = "curseforge") {
     override fun run() = runBlocking {
-        val ctx = Context.Companion.getOrCreate(terminal)
+        val ctx = Context.getOrCreate(terminal)
         val curseforgeManifest = createCurseforgeManifest(ctx)
         val overrides = ctx.pack
             .getFiles()
@@ -68,4 +70,6 @@ class ExportCurseforge :
             overrides = "overrides",
         )
     }
+
+    override fun help(context: com.github.ajalt.clikt.core.Context): String = "Export a Curseforge modpack (.zip)"
 }

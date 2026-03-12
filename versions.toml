@@ -1,17 +1,17 @@
 [versions]
-kotlin-jvm = "2.0.0"
-kotlin-plugin-serialization = "2.0.0"
+kotlin-jvm = "2.3.10"
+kotlin-plugin-serialization = "2.3.10"
 
-clikt = "4.3.0"
-jna = "5.15.0"
-kotlinx-coroutines = "1.8.1"
-kotlinx-datetime = "0.6.0"
-kotlinx-serialization-json = "1.6.3"
-ktor = "2.3.11"
-mordant = "2.4.0"
-jansi = "2.4.1"
+clikt = "5.1.0"
+jna = "5.18.1"
+kotlinx-coroutines = "1.10.2"
+kotlinx-datetime = "0.7.1"
+kotlinx-serialization-json = "1.10.0"
+ktor = "3.4.1"
+mordant = "3.0.2"
+jansi = "2.4.2"
 
-slf4j = "2.0.13"
+slf4j = "2.0.17"
 
 [libraries]
 clikt = { module = "com.github.ajalt.clikt:clikt", version.ref = "clikt" }

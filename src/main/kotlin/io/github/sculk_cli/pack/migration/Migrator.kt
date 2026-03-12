@@ -2,6 +2,7 @@
 
 package io.github.sculk_cli.pack.migration
 
+import com.github.ajalt.mordant.terminal.info
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.*
 import io.github.sculk_cli.curseforge.calculateCurseforgeMurmur2Hash
@@ -70,7 +71,7 @@ abstract class Migrator {
     fun migrateFileManifest(path: String, json: JsonObject): JsonObject {
         val migrated = migrateFileManifest2(path, json)
         val tempFile = File.createTempFile("migrated", ".json")
-        tempFile.mkdirsAndWriteJson(Context.Companion.getOrCreate().json, migrated)
+        tempFile.mkdirsAndWriteJson(Context.getOrCreate().json, migrated)
         hashes[path] = tempFile.readBytes().digestSha256()
         return migrated
     }
@@ -78,7 +79,7 @@ abstract class Migrator {
     abstract fun migrateFileManifest2(path: String, json: JsonObject): JsonObject
 
     open fun manipulateRootPostMigration(json: JsonObject): JsonObject {
-        Context.Companion.getOrCreate().terminal.info(hashes)
+        Context.getOrCreate().terminal.info(hashes)
         return JsonObject(json.toMutableMap().apply {
             val fileManifests =
                 json["manifests"]?.jsonArray!!.map { it.jsonObject }.map { it.toMutableMap() }

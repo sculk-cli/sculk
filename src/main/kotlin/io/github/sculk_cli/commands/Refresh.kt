@@ -5,6 +5,8 @@ import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.help
 import com.github.ajalt.clikt.parameters.options.option
+import com.github.ajalt.mordant.terminal.info
+import com.github.ajalt.mordant.terminal.warning
 import io.github.sculk_cli.Context
 import io.github.sculk_cli.pack.PackManifestFile
 import io.github.sculk_cli.pack.PackManifestManifest
@@ -24,13 +26,12 @@ import kotlin.collections.plusAssign
 
 class Refresh : CliktCommand(
     name = "refresh",
-    help = "Check all hashes in the manifest and update them if needed"
 ) {
     private val check by option().flag().help("Check hashes without updating them")
     private val watch by option().flag().help("Watch for changes in the filesystem and update the manifest automatically")
 
     override fun run() {
-        val ctx = Context.Companion.getOrCreate(terminal)
+        val ctx = Context.getOrCreate(terminal)
         val basePath = Paths.get("")
         refresh(ctx, basePath)
 
@@ -185,4 +186,6 @@ class Refresh : CliktCommand(
             }
         }
     }
+
+    override fun help(context: com.github.ajalt.clikt.core.Context): String = "Check all hashes in the manifest and update them if needed"
 }

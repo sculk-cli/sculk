@@ -1,6 +1,5 @@
 package io.github.sculk_cli.util
 
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import io.github.sculk_cli.curseforge.calculateCurseforgeMurmur2Hash
 import java.io.File

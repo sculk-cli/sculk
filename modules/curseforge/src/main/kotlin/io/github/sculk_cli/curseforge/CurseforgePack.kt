@@ -3,7 +3,6 @@ package io.github.sculk_cli.curseforge
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.FileOutputStream
 import java.nio.file.Path
@@ -47,11 +46,10 @@ public fun importCurseforgePack(path: Path): ImportedCurseforgePack {
     )
 
     val overrides = zipFile.entries().asSequence()
-        .filter { it.name.startsWith("overrides/") }
-        .map { it.name.removePrefix("overrides/") to zipFile.getInputStream(it).readBytes() }
-        .toMap()
+	    .filter { it.name.startsWith("overrides/") }
+	    .associate { it.name.removePrefix("overrides/") to zipFile.getInputStream(it).readBytes() }
 
-    return ImportedCurseforgePack(manifest, overrides)
+	return ImportedCurseforgePack(manifest, overrides)
 }
 
 public data class ImportedCurseforgePack(

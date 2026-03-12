@@ -12,14 +12,13 @@ import io.github.sculk_cli.util.addModrinthProject
 import io.github.sculk_cli.util.findAndAddCurseforgeProject
 
 class AddFromList : CliktCommand(
-    name = "list",
-    help = "Add projects to the manifest from a userscript export list"
+    name = "list"
 ) {
     private val listFile by argument().file(mustExist = true, mustBeReadable = true)
         .help("The path to the list file")
 
     override fun run() = runBlocking {
-        val ctx = Context.Companion.getOrCreate(terminal)
+        val ctx = Context.getOrCreate(terminal)
 
         listFile.forEachLine { line ->
             runBlocking {
@@ -44,4 +43,6 @@ class AddFromList : CliktCommand(
         ctx.dependencyGraph.save()
         ctx.pack.save(ctx.json)
     }
+
+    override fun help(context: com.github.ajalt.clikt.core.Context): String = "Add projects to the manifest from a userscript export list"
 }

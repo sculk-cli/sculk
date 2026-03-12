@@ -7,6 +7,7 @@ import com.github.ajalt.clikt.parameters.arguments.help
 import com.github.ajalt.clikt.parameters.arguments.optional
 import com.github.ajalt.mordant.animation.coroutines.animateInCoroutine
 import com.github.ajalt.mordant.animation.progress.advance
+import com.github.ajalt.mordant.terminal.info
 import com.github.ajalt.mordant.widgets.progress.*
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -16,12 +17,12 @@ import io.github.sculk_cli.pack.FileManifest
 import io.github.sculk_cli.util.updateCurseforgeProject
 import io.github.sculk_cli.util.updateModrinthProject
 
-class Update : CliktCommand(name = "update", help = "Update projects from Curseforge and Modrinth") {
+class Update : CliktCommand(name = "update") {
     private val project by argument().optional().help("The project to update, or all projects if not specified")
 
     override fun run() = runBlocking {
         coroutineScope {
-            val ctx = Context.Companion.getOrCreate(terminal)
+            val ctx = Context.getOrCreate(terminal)
 
             if (project != null) {
                 if (ctx.pack.getManifest(project!!) == null) error("Project not found")
@@ -75,4 +76,6 @@ class Update : CliktCommand(name = "update", help = "Update projects from Cursef
             terminal.info("No updates for $manifestPath")
         }
     }
+
+    override fun help(context: com.github.ajalt.clikt.core.Context): String = "Update projects from Curseforge and Modrinth"
 }

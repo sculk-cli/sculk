@@ -4,6 +4,7 @@ import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.options.help
 import com.github.ajalt.clikt.parameters.options.option
+import com.github.ajalt.mordant.terminal.info
 import io.ktor.http.*
 import kotlinx.coroutines.runBlocking
 import io.github.sculk_cli.Context
@@ -19,7 +20,7 @@ import io.github.sculk_cli.util.downloadFileTemp
 import io.github.sculk_cli.util.prettyPrompt
 
 class AddByUrl :
-    CliktCommand(name = "url", help = "Add a project to the manifest from a direct download URL") {
+    CliktCommand(name = "url") {
     private val slug by option().prettyPrompt<String>("Enter project name")
         .help("The slug of the project, used for naming the file manifest")
     private val url by option().prettyPrompt<Url>("Enter download URL")
@@ -32,7 +33,7 @@ class AddByUrl :
 
     override fun run() = runBlocking {
         val transformedSlug = slug.lowercase().replace(" ", "-")
-        val ctx = Context.Companion.getOrCreate(terminal)
+        val ctx = Context.getOrCreate(terminal)
         val tempFile = downloadFileTemp(url)
         val contents = tempFile.readBytes()
 
@@ -67,6 +68,8 @@ class AddByUrl :
         ctx.pack.save(ctx.json)
         terminal.info("Added $transformedSlug to manifest")
     }
+
+    override fun help(context: com.github.ajalt.clikt.core.Context): String = "Add a project to the manifest from a direct download URL"
 
     enum class Type {
         Mod, Shaderpack, Resourcepack, Datapack,

@@ -15,14 +15,14 @@ import io.github.sculk_cli.util.addModrinthProject
 import io.github.sculk_cli.util.addModrinthVersion
 
 class AddFromModrinth :
-    CliktCommand(name = "modrinth", help = "Add a project to the manifest from Modrinth") {
+    CliktCommand(name = "modrinth") {
     private val query by argument().optional()
         .help("The slug of the project, or a query to search for")
     private val versionId by option().help("The version ID to add. If this is provided, the query will be ignored.")
     private val skipDependencies by option().flag().help("Whether to skip checking for and adding dependencies.")
 
     override fun run() = runBlocking {
-        val ctx = Context.Companion.getOrCreate(terminal)
+        val ctx = Context.getOrCreate(terminal)
 
         if (versionId != null) {
             val version = ctx.modrinth.getVersion(versionId!!) ?: error("Version not found")
@@ -39,4 +39,6 @@ class AddFromModrinth :
         ctx.dependencyGraph.save()
         ctx.pack.save(ctx.json)
     }
+
+	override fun help(context: com.github.ajalt.clikt.core.Context): String = "Add a project to the manifest from Modrinth"
 }

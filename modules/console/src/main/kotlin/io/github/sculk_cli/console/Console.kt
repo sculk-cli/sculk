@@ -75,7 +75,7 @@ public class WindowsConsoleImpl : Console() {
 			224 -> { // Arrow or function keys
 				c = Msvcrt.INSTANCE._getwch()
 
-				return when (c) {
+				when (c) {
 					72 -> ArrowUp()
 					80 -> ArrowDown()
 					else -> Invalid()
@@ -114,12 +114,8 @@ public class UnixConsoleImpl : Console() {
 	}
 
 	override fun read(): Key {
-		val c = readInternal()
-		
-		if (c == null) {
-			return Invalid()
-		}
-		
+		val c = readInternal() ?: return Invalid()
+
 		return when (c) {
 			3 -> CtrlC()
 			10 -> Enter()

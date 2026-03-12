@@ -66,21 +66,18 @@ public fun importModrinthPack(path: Path): ImportedModrinthPack {
     )
 
     val overrides = zipFile.entries().asSequence()
-        .filter { it.name.startsWith("overrides/") }
-        .map { it.name.removePrefix("overrides/") to zipFile.getInputStream(it).readBytes() }
-        .toMap()
+	    .filter { it.name.startsWith("overrides/") }
+	    .associate { it.name.removePrefix("overrides/") to zipFile.getInputStream(it).readBytes() }
 
-    val clientOverrides = zipFile.entries().asSequence()
-        .filter { it.name.startsWith("client-overrides/") }
-        .map { it.name.removePrefix("client-overrides/") to zipFile.getInputStream(it).readBytes() }
-        .toMap()
+	val clientOverrides = zipFile.entries().asSequence()
+		.filter { it.name.startsWith("client-overrides/") }
+		.associate { it.name.removePrefix("client-overrides/") to zipFile.getInputStream(it).readBytes() }
 
-    val serverOverrides = zipFile.entries().asSequence()
-        .filter { it.name.startsWith("server-overrides/") }
-        .map { it.name.removePrefix("server-overrides/") to zipFile.getInputStream(it).readBytes() }
-        .toMap()
+	val serverOverrides = zipFile.entries().asSequence()
+		.filter { it.name.startsWith("server-overrides/") }
+		.associate { it.name.removePrefix("server-overrides/") to zipFile.getInputStream(it).readBytes() }
 
-    return ImportedModrinthPack(index, overrides, clientOverrides, serverOverrides)
+	return ImportedModrinthPack(index, overrides, clientOverrides, serverOverrides)
 }
 
 public data class ImportedModrinthPack(

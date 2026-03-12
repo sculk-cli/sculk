@@ -20,7 +20,7 @@ import io.github.sculk_cli.util.prettyPrompt
 import java.io.File
 import java.nio.file.Paths
 
-class Init : CliktCommand(name = "init", help = "Initialize a new Sculk modpack") {
+class Init : CliktCommand(name = "init") {
     private val path by argument().file().help("The path to the modpack folder")
         .default(Paths.get("").toFile().canonicalFile)
 
@@ -30,7 +30,7 @@ class Init : CliktCommand(name = "init", help = "Initialize a new Sculk modpack"
         .help("The mod loader to use")
 
     override fun run() = runBlocking {
-        val ctx = Context.Companion.getOrCreate(terminal)
+        val ctx = Context.getOrCreate(terminal)
         if (!path.exists()) {
             path.mkdirs()
         }
@@ -102,7 +102,7 @@ class Init : CliktCommand(name = "init", help = "Initialize a new Sculk modpack"
         }
 
         val manifest = SerialPackManifest(
-	        formatVersion = FormatVersion.Companion.CURRENT.toString(),
+	        formatVersion = FormatVersion.CURRENT.toString(),
 	        name = name,
 	        version = "1.0.0",
 	        summary = null,
@@ -116,4 +116,6 @@ class Init : CliktCommand(name = "init", help = "Initialize a new Sculk modpack"
         val manifestFile = File("$path/manifest.sculk.json")
         manifestFile.mkdirsAndWriteJson(ctx.json, manifest)
     }
+
+    override fun help(context: com.github.ajalt.clikt.core.Context): String = "Initialize a new Sculk modpack"
 }

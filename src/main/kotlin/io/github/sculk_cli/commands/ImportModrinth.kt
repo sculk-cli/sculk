@@ -7,6 +7,8 @@ import com.github.ajalt.clikt.parameters.arguments.help
 import com.github.ajalt.clikt.parameters.types.file
 import com.github.ajalt.mordant.animation.coroutines.animateInCoroutine
 import com.github.ajalt.mordant.animation.progress.advance
+import com.github.ajalt.mordant.terminal.info
+import com.github.ajalt.mordant.terminal.warning
 import com.github.ajalt.mordant.widgets.progress.*
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -38,13 +40,13 @@ import java.nio.file.Paths
 import kotlin.collections.plusAssign
 
 class ImportModrinth :
-    CliktCommand(name = "modrinth", help = "Import a Modrinth modpack (.mrpack)") {
+    CliktCommand(name = "modrinth") {
     private val mrpack by argument().file(mustExist = true, mustBeReadable = true)
         .help("The path to the Modrinth modpack")
 
     override fun run() = runBlocking {
         coroutineScope {
-            val ctx = Context.Companion.getOrCreate(terminal)
+            val ctx = Context.getOrCreate(terminal)
             val importedPack = importModrinthPack(mrpack.toPath())
             terminal.info("Loaded Modrinth pack with name ${importedPack.index.name}; creating Sculk modpack")
             val manifests = mutableListOf<SerialPackManifestManifest>()
@@ -179,7 +181,7 @@ class ImportModrinth :
             )
 
             val pack = SerialPackManifest(
-	            formatVersion = FormatVersion.Companion.CURRENT.toString(),
+	            formatVersion = FormatVersion.CURRENT.toString(),
 	            name = importedPack.index.name,
 	            author = null,
 	            summary = importedPack.index.summary,
@@ -194,4 +196,6 @@ class ImportModrinth :
             terminal.info("Created Sculk modpack manifest")
         }
     }
+
+    override fun help(context: com.github.ajalt.clikt.core.Context): String = "Import a Modrinth modpack (.mrpack)"
 }

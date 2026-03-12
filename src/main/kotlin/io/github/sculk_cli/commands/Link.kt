@@ -8,6 +8,7 @@ import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.help
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.types.enum
+import com.github.ajalt.mordant.terminal.info
 import kotlinx.coroutines.runBlocking
 import io.github.sculk_cli.BooleanPrettyPrompt
 import io.github.sculk_cli.Context
@@ -18,15 +19,14 @@ import io.github.sculk_cli.util.addModrinthVersion
 import io.github.sculk_cli.modrinth.models.ModrinthHashAlgorithm
 
 class Link : CliktCommand(
-    name = "link",
-    help = "Finds Curseforge/Modrinth projects for files in the manifest"
+    name = "link"
 ) {
     private val target by argument().enum<Target>().help("The site to search for projects on")
     private val yes by option().flag("yes", "y", default = false)
         .help("Automatically accept matches")
 
     override fun run() = runBlocking {
-        val ctx = Context.Companion.getOrCreate(terminal)
+        val ctx = Context.getOrCreate(terminal)
 
         val manifests = ctx.pack.getManifests().filter {
             when (target) {
@@ -119,6 +119,8 @@ class Link : CliktCommand(
             return BooleanPrettyPrompt("Accept [y/n]", terminal = terminal).ask()
         }
     }
+
+    override fun help(context: com.github.ajalt.clikt.core.Context): String = "Finds Curseforge/Modrinth projects for files in the manifest"
 
     enum class Target {
         Curseforge,

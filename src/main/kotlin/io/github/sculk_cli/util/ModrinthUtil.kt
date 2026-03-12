@@ -1,6 +1,6 @@
 package io.github.sculk_cli.util
 
-import kotlinx.coroutines.runBlocking
+import com.github.ajalt.mordant.terminal.info
 import io.github.sculk_cli.Context
 import io.github.sculk_cli.PrettyListPrompt
 import io.github.sculk_cli.pack.FileManifest
@@ -54,13 +54,11 @@ private suspend fun addModrinthProject(
 	ignoreIfExists: Boolean = true,
 	skipDependencies: Boolean = false
 ): Boolean {
-    val versions = runBlocking {
-        ctx.modrinth.getProjectVersions(
-            project.slug,
-            loaders = getAllLoaders(ctx.pack.getManifest().loader.type, ctx.pack.getManifest().minecraft),
-            gameVersions = listOf(ctx.pack.getManifest().minecraft)
-        )
-    }.sortedBy {
+    val versions = ctx.modrinth.getProjectVersions(
+        project.slug,
+        loaders = getAllLoaders(ctx.pack.getManifest().loader.type, ctx.pack.getManifest().minecraft),
+        gameVersions = listOf(ctx.pack.getManifest().minecraft)
+    ).sortedBy {
         it.publishedTime
     }.reversed()
 
