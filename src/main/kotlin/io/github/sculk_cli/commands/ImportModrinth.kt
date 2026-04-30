@@ -35,6 +35,8 @@ import io.github.sculk_cli.util.toModLoader
 import io.github.sculk_cli.util.toSide
 import io.github.sculk_cli.modrinth.getLoaderVersionPair
 import io.github.sculk_cli.modrinth.importModrinthPack
+import io.github.sculk_cli.util.digestSha1
+import io.github.sculk_cli.util.digestSha512
 import java.io.File
 import java.nio.file.Paths
 import kotlin.collections.plusAssign
@@ -75,11 +77,6 @@ class ImportModrinth :
                 val fileManifest = FileManifest(
 	                filename = File(file.path).name,
 	                side = file.env?.toSide() ?: Side.Both,
-	                hashes = FileManifestHashes(
-		                sha1 = file.hashes.sha1,
-		                sha512 = file.hashes.sha512,
-		                murmur2 = -1, // Updated later in the loop
-	                ),
 	                fileSize = file.fileSizeInBytes,
 	                sources = FileManifestSources(
 		                curseforge = null,
@@ -93,14 +90,14 @@ class ImportModrinth :
                 for (downloadUrl in file.downloadUrls) {
                     progress.advance(1)
                     progress.update { context = downloadUrl }
-
-                    if (fileManifest.hashes.murmur2 == -1L) {
-                        val file = downloadFileTemp(parseUrl(downloadUrl))
-                        fileManifest.hashes.murmur2 = file.readBytes().digestMurmur2()
-                    }
+                    val file = downloadFileTemp(parseUrl(downloadUrl))
+                    val bytes = file.readBytes()
+                    val sha1 = bytes.digestSha1()
+                    val sha512 = bytes.digestSha512()
+                    val murmur2 = bytes.digestMurmur2()
 
                     if (parseUrl(downloadUrl).host == "cdn.modrinth.com") {
-                        val version = ctx.modrinth.getVersionFromHash(file.hashes.sha1)
+                        val version = ctx.modrinth.getVersionFromHash(sha1)
                             ?: run {
                                 terminal.warning("File ${file.path} includes a Modrinth file that does not seem to exist")
                                 null
@@ -108,12 +105,21 @@ class ImportModrinth :
 
                         fileManifest.sources.modrinth = FileManifestModrinthSource(
 	                        projectId = version.projectId,
-	                        fileUrl = downloadUrl
+	                        fileUrl = downloadUrl,
+                            hashes = FileManifestHashes(
+                                sha1 = sha1,
+                                sha512 = sha512,
+                                murmur2 = murmur2,
+                            ),
                         )
 
                         slug = ctx.modrinth.getProject(version.projectId)!!.slug
                     } else if (fileManifest.sources.url == null) {
-                        fileManifest.sources.url = FileManifestUrlSource(downloadUrl)
+                        fileManifest.sources.url = FileManifestUrlSource(downloadUrl, FileManifestHashes(
+                            sha1 = sha1,
+                            sha512 = sha512,
+                            murmur2 = murmur2,
+                        ))
                     } else {
                         terminal.warning("File ${file.path} has multiple valid URL sources; only the first will be included")
                     }

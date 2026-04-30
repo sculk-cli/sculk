@@ -102,13 +102,6 @@ class Install :
 
                     installedItems += fileFile.path.toString()
 
-                    if (fileFile.exists()) {
-                        if (fileFile.readBytes().digestSha512() == fileManifest.hashes.sha512) {
-                            terminal.info("Skipping ${file.path} because it's already downloaded")
-                            return@launch
-                        }
-                    }
-
                     val downloadLink = if (fileManifest.sources.url != null) {
                         fileManifest.sources.url.url
                     } else if (fileManifest.sources.modrinth != null) {
@@ -117,6 +110,23 @@ class Install :
                         fileManifest.sources.curseforge.fileUrl
                     } else {
                         error("No valid source found for ${file.path}")
+                    }
+
+                    val hashes = if (fileManifest.sources.url != null) {
+                        fileManifest.sources.url.hashes
+                    } else if (fileManifest.sources.modrinth != null) {
+                        fileManifest.sources.modrinth.hashes
+                    } else if (fileManifest.sources.curseforge != null) {
+                        fileManifest.sources.curseforge.hashes
+                    } else {
+                        error("No valid hashes found for ${file.path}")
+                    }
+
+                    if (fileFile.exists()) {
+                        if (fileFile.readBytes().digestSha512() == hashes.sha512) {
+                            terminal.info("Skipping ${file.path} because it's already downloaded")
+                            return@launch
+                        }
                     }
 
                     fileFile.parentFile.mkdirs()
@@ -128,7 +138,7 @@ class Install :
                     }
                     fileFile.writeBytes(request.readRawBytes())
 
-                    if (fileFile.readBytes().digestSha512() != fileManifest.hashes.sha512) {
+                    if (fileFile.readBytes().digestSha512() != hashes.sha512) {
                         error("Downloaded file for ${file.path} was corrupted or hash was incorrect")
                     }
 

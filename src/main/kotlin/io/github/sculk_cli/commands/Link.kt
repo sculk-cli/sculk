@@ -55,9 +55,19 @@ class Link : CliktCommand(
 	    ctx: Context,
 	    manifest: Map.Entry<String, FileManifest>
     ) {
+        val hashes = if (manifest.value.sources.url != null) {
+            manifest.value.sources.url!!.hashes
+        } else if (manifest.value.sources.modrinth != null) {
+            manifest.value.sources.modrinth!!.hashes
+        } else if (manifest.value.sources.curseforge != null) {
+            manifest.value.sources.curseforge!!.hashes
+        } else {
+            error("No valid hashes found for ${manifest.key}")
+        }
+
         when (target) {
             Target.Curseforge -> {
-                val matches = ctx.curseforge.getFingerprintMatches(manifest.value.hashes.murmur2)
+                val matches = ctx.curseforge.getFingerprintMatches(hashes.murmur2)
 
                 if (matches.isEmpty()) {
                     terminal.info("No match found for ${manifest.key}")
@@ -85,7 +95,7 @@ class Link : CliktCommand(
 
             Target.Modrinth -> {
                 val version = ctx.modrinth.getVersionFromHash(
-                    manifest.value.hashes.sha512,
+                    hashes.sha512,
                     ModrinthHashAlgorithm.SHA512
                 )
 

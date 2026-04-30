@@ -13,6 +13,7 @@ import io.github.sculk_cli.util.toModrinthEnvClientSupport
 import io.github.sculk_cli.util.toModrinthEnvServerSupport
 import io.github.sculk_cli.modrinth.*
 import io.github.sculk_cli.modrinth.models.ModrinthVersionFileHashes
+import io.github.sculk_cli.pack.FileManifestHashes
 import java.io.File
 import java.nio.file.Paths
 
@@ -42,13 +43,16 @@ class ExportModrinth :
 
         for ((path, fileManifest) in ctx.pack.getManifests().entries) {
             val downloadUrls = mutableListOf<String>()
+            var hashes: FileManifestHashes? = null
 
             if (fileManifest.sources.modrinth != null) {
                 downloadUrls += fileManifest.sources.modrinth!!.fileUrl
+                hashes = fileManifest.sources.modrinth!!.hashes
             }
 
             if (fileManifest.sources.url != null) {
                 downloadUrls += fileManifest.sources.url!!.url
+                hashes = hashes ?: fileManifest.sources.url!!.hashes
             }
 
             val filteredDownloadUrls = downloadUrls
@@ -61,11 +65,16 @@ class ExportModrinth :
                 continue
             }
 
+            if (hashes == null) {
+                terminal.warning("File $path will not be included as it does not have hashes")
+                continue
+            }
+
             files += ModrinthPackFile(
                 path = File(path).resolveSibling(fileManifest.filename).toString(),
                 hashes = ModrinthVersionFileHashes(
-                    sha1 = fileManifest.hashes.sha1,
-                    sha512 = fileManifest.hashes.sha512
+                    sha1 = hashes.sha1,
+                    sha512 = hashes.sha512
                 ),
                 env = ModrinthPackFileEnv(
                     clientSupport = fileManifest.side.toModrinthEnvClientSupport(),
