@@ -173,7 +173,6 @@ data class PackManifestFile(
 data class FileManifest(
     var filename: String,
     var side: Side,
-    var hashes: FileManifestHashes,
     var fileSize: Int,
     var sources: FileManifestSources
 )
@@ -189,15 +188,15 @@ data class FileManifestSources(
 )
 
 data class FileManifestCurseforgeSource(
-    var projectId: Int, var fileUrl: String, var fileId: Int,
+    var projectId: Int, var fileUrl: String, var fileId: Int, var hashes: FileManifestHashes,
 )
 
 data class FileManifestModrinthSource(
-    var projectId: String, var fileUrl: String,
+    var projectId: String, var fileUrl: String, var hashes: FileManifestHashes,
 )
 
 data class FileManifestUrlSource(
-    var url: String
+    var url: String, var hashes: FileManifestHashes,
 )
 
 fun PackManifest.toSerial(): SerialPackManifest {
@@ -232,11 +231,6 @@ fun FileManifest.toSerial(): SerialFileManifest {
     return SerialFileManifest(
         filename = filename,
         side = side,
-        hashes = SerialFileManifestHashes(
-            sha1 = hashes.sha1,
-            sha512 = hashes.sha512,
-            murmur2 = hashes.murmur2,
-        ),
         fileSize = fileSize,
         sources = SerialFileManifestSources(
             curseforge = sources.curseforge?.let {
@@ -244,19 +238,30 @@ fun FileManifest.toSerial(): SerialFileManifest {
                     projectId = it.projectId,
                     fileUrl = it.fileUrl,
                     fileId = it.fileId,
+                    hashes = it.hashes.toSerial(),
                 )
             },
             modrinth = sources.modrinth?.let {
                 SerialFileManifestModrinthSource(
                     projectId = it.projectId,
                     fileUrl = it.fileUrl,
+                    hashes = it.hashes.toSerial(),
                 )
             },
             url = sources.url?.let {
                 SerialFileManifestUrlSource(
                     url = it.url,
+                    hashes = it.hashes.toSerial(),
                 )
             },
         )
+    )
+}
+
+fun FileManifestHashes.toSerial(): SerialFileManifestHashes {
+    return SerialFileManifestHashes(
+        sha1 = sha1,
+        sha512 = sha512,
+        murmur2 = murmur2,
     )
 }

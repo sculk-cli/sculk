@@ -120,25 +120,19 @@ suspend fun addCurseforgeFile(
             error("Existing manifest already has a Curseforge source (did you mean to use the update command?)")
         }
 
-        if (existingManifest.hashes.sha1 != sha1 || existingManifest.hashes.sha512 != sha512) {
-            error("File hashes do not match for ${file.fileName}")
-        }
-
         existingManifest.sources.curseforge = FileManifestCurseforgeSource(
-	        projectId = mod.id, fileUrl = file.downloadUrl!!, fileId = file.id
+	        projectId = mod.id, fileUrl = file.downloadUrl!!, fileId = file.id, hashes = FileManifestHashes(sha1, sha512, murmur2)
         )
 
         existingManifest
     } else {
 	    FileManifest(
-		    filename = file.fileName, hashes = FileManifestHashes(
-			    sha1 = sha1, sha512 = sha512, murmur2 = murmur2
-		    ),
+		    filename = file.fileName,
 		    fileSize = tempFile.size,
 		    side = file.getSide().toSide(),
 		    sources = FileManifestSources(
 			    curseforge = FileManifestCurseforgeSource(
-				    projectId = mod.id, fileUrl = file.downloadUrl!!, fileId = file.id
+				    projectId = mod.id, fileUrl = file.downloadUrl!!, fileId = file.id, hashes = FileManifestHashes(sha1, sha512, murmur2)
 			    ), modrinth = null, url = null
 		    )
 	    )
@@ -242,13 +236,11 @@ suspend fun updateCurseforgeProject(
     }
 
     val tempFile = downloadFileTemp(parseUrl(file.downloadUrl!!)).readBytes()
-    manifest.hashes.sha1 = tempFile.digestSha1()
-    manifest.hashes.sha512 = tempFile.digestSha512()
     manifest.fileSize = tempFile.size
     manifest.filename = file.fileName
 
     manifest.sources.curseforge = FileManifestCurseforgeSource(
-	    projectId = mod.id, fileUrl = file.downloadUrl!!, fileId = file.id
+	    projectId = mod.id, fileUrl = file.downloadUrl!!, fileId = file.id, hashes = FileManifestHashes(tempFile.digestSha1(), tempFile.digestSha512(), tempFile.digestMurmur2())
     )
 
     return true

@@ -83,6 +83,7 @@ suspend fun addModrinthVersion(
 ): Boolean {
     val modrinthFile = version.files.first { it.primary }
     val tempFile = downloadFileTemp(parseUrl(modrinthFile.downloadUrl))
+    val bytes = tempFile.readBytes()
     val dir = version.loaders.first().getSaveDir()
 
     val path = manifestPath ?: "$dir/${project.slug}.sculk.json"
@@ -96,26 +97,22 @@ suspend fun addModrinthVersion(
             error("Existing manifest already has a Modrinth source (did you mean to use the update command?)")
         }
 
-        if (existingManifest.hashes.sha1 != modrinthFile.hashes.sha1 || existingManifest.hashes.sha512 != modrinthFile.hashes.sha512) {
-            error("File hashes do not match for ${modrinthFile.filename}")
-        }
-
         existingManifest.sources.modrinth = FileManifestModrinthSource(
-	        projectId = project.id, fileUrl = modrinthFile.downloadUrl
+	        projectId = project.id, fileUrl = modrinthFile.downloadUrl, hashes = FileManifestHashes(modrinthFile.hashes.sha1, modrinthFile.hashes.sha512, bytes.digestMurmur2())
         )
 
         existingManifest
     } else {
 	    FileManifest(
-		    filename = modrinthFile.filename, hashes = FileManifestHashes(
-			    sha1 = modrinthFile.hashes.sha1,
-			    sha512 = modrinthFile.hashes.sha512,
-			    murmur2 = tempFile.readBytes().digestMurmur2()
-		    ), fileSize = tempFile.readBytes().size, side = modrinthEnvTypePairToSide(
+		    filename = modrinthFile.filename, fileSize = tempFile.readBytes().size, side = modrinthEnvTypePairToSide(
 			    project.clientSideSupport, project.serverSideSupport
 		    ), sources = FileManifestSources(
 			    curseforge = null, modrinth = FileManifestModrinthSource(
-				    projectId = project.id, fileUrl = modrinthFile.downloadUrl
+				    projectId = project.id, fileUrl = modrinthFile.downloadUrl, hashes = FileManifestHashes(
+                        sha1 = modrinthFile.hashes.sha1,
+                        sha512 = modrinthFile.hashes.sha512,
+                        murmur2 = bytes.digestMurmur2()
+                    ),
 			    ), url = null
 		    )
 	    )
@@ -203,13 +200,11 @@ suspend fun updateModrinthProject(
     }
 
     val tempFile = downloadFileTemp(parseUrl(file.downloadUrl)).readBytes()
-    manifest.hashes.sha1 = tempFile.digestSha1()
-    manifest.hashes.sha512 = tempFile.digestSha512()
     manifest.fileSize = tempFile.size
     manifest.filename = file.filename
 
     manifest.sources.modrinth = FileManifestModrinthSource(
-	    projectId = mod.id, fileUrl = file.downloadUrl
+	    projectId = mod.id, fileUrl = file.downloadUrl, hashes = FileManifestHashes(tempFile.digestSha1(), tempFile.digestSha512(), tempFile.digestMurmur2())
     )
 
     return true

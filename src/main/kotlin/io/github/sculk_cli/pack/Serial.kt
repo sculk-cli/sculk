@@ -36,7 +36,6 @@ data class SerialPackManifestFile(
 data class SerialFileManifest(
     val filename: String,
     val side: Side,
-    val hashes: SerialFileManifestHashes,
     val fileSize: Int,
     val sources: SerialFileManifestSources
 )
@@ -55,17 +54,17 @@ data class SerialFileManifestSources(
 
 @Serializable
 data class SerialFileManifestCurseforgeSource(
-    val projectId: Int, val fileUrl: String, val fileId: Int,
+    val projectId: Int, val fileUrl: String, val fileId: Int, val hashes: SerialFileManifestHashes,
 )
 
 @Serializable
 data class SerialFileManifestModrinthSource(
-    val projectId: String, val fileUrl: String,
+    val projectId: String, val fileUrl: String, val hashes: SerialFileManifestHashes,
 )
 
 @Serializable
 data class SerialFileManifestUrlSource(
-    var url: String
+    var url: String, val hashes: SerialFileManifestHashes,
 )
 
 fun SerialPackManifest.load(): PackManifest {
@@ -98,29 +97,36 @@ fun SerialPackManifest.load(): PackManifest {
 
 fun SerialFileManifest.load(): FileManifest {
     return FileManifest(
-        filename = filename, side = side, hashes = FileManifestHashes(
-            sha1 = hashes.sha1,
-            sha512 = hashes.sha512,
-            murmur2 = hashes.murmur2,
-        ), fileSize = fileSize, sources = FileManifestSources(
+        filename = filename, side = side, fileSize = fileSize, sources = FileManifestSources(
             curseforge = sources.curseforge?.let {
                 FileManifestCurseforgeSource(
                     projectId = it.projectId,
                     fileUrl = it.fileUrl,
                     fileId = it.fileId,
+                    hashes = it.hashes.load(),
                 )
             },
             modrinth = sources.modrinth?.let {
                 FileManifestModrinthSource(
                     projectId = it.projectId,
                     fileUrl = it.fileUrl,
+                    hashes = it.hashes.load(),
                 )
             },
             url = sources.url?.let {
                 FileManifestUrlSource(
                     url = it.url,
+                    hashes = it.hashes.load(),
                 )
             },
         )
+    )
+}
+
+fun SerialFileManifestHashes.load(): FileManifestHashes {
+    return FileManifestHashes(
+        sha1 = sha1,
+        sha512 = sha512,
+        murmur2 = murmur2,
     )
 }

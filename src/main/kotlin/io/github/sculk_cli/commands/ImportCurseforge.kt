@@ -96,17 +96,17 @@ class ImportCurseforge :
                 val fileManifest = FileManifest(
 	                filename = cfFile.fileName,
 	                side = cfFile.getSide().toSide(),
-	                hashes = FileManifestHashes(
-		                sha1 = tempFile.digestSha1(),
-		                sha512 = tempFile.digestSha512(),
-		                murmur2 = tempFile.digestMurmur2()
-	                ),
 	                fileSize = tempFile.size,
 	                sources = FileManifestSources(
 		                curseforge = FileManifestCurseforgeSource(
 			                projectId = mod.id,
 			                fileId = file.fileId,
-			                fileUrl = cfFile.downloadUrl!!
+			                fileUrl = cfFile.downloadUrl!!,
+                            hashes = FileManifestHashes(
+                                sha1 = tempFile.digestSha1(),
+                                sha512 = tempFile.digestSha512(),
+                                murmur2 = tempFile.digestMurmur2()
+                            ),
 		                ),
 		                modrinth = null,
 		                url = null

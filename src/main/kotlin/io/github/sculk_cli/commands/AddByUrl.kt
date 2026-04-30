@@ -45,21 +45,18 @@ class AddByUrl :
         }
 
         val existingManifest = ctx.pack.getManifest("$dir/$transformedSlug.sculk.json")
+        val hashes = FileManifestHashes(
+            sha1 = contents.digestSha1(),
+            sha512 = contents.digestSha512(),
+            murmur2 = contents.digestMurmur2()
+        )
         val fileManifest = if (existingManifest != null) {
-            if (existingManifest.hashes.sha1 != contents.digestSha1() || existingManifest.hashes.sha512 != contents.digestSha512()) {
-                error("File hashes do not match for $filename")
-            }
-
-            existingManifest.sources.url = FileManifestUrlSource(url.toString())
+            existingManifest.sources.url = FileManifestUrlSource(url.toString(), hashes)
             existingManifest
         } else {
 	        FileManifest(
-		        filename = filename, side = side, hashes = FileManifestHashes(
-			        sha1 = contents.digestSha1(),
-			        sha512 = contents.digestSha512(),
-			        murmur2 = contents.digestMurmur2()
-		        ), fileSize = contents.size, sources = FileManifestSources(
-			        curseforge = null, modrinth = null, url = FileManifestUrlSource(url.toString())
+		        filename = filename, side = side, fileSize = contents.size, sources = FileManifestSources(
+			        curseforge = null, modrinth = null, url = FileManifestUrlSource(url.toString(), hashes)
 		        )
 	        )
         }
