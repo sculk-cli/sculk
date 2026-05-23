@@ -1,1 +1,1 @@
-- feat: add --request-retries global option to customise the number of times requests should be retried before giving up. 
+- Ship JAR with Curseforge API token.
