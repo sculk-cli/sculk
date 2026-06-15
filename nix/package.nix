@@ -7,11 +7,11 @@
 }:
 stdenv.mkDerivation rec {
   pname = "sculk";
-  version = "0.1.0+beta.21";
+  version = "0.1.0+beta.22";
 
   src = fetchurl {
     url = "https://github.com/sculk-cli/${pname}/releases/download/${version}/${pname}-${version}.jar";
-    hash = "sha256-EkYN9iK8GIHtwtDtKdV4U3ABADqCWiv6yJfId5MESUo=";
+    hash = "sha256-jvAGx+9Z7B5ka6OcTWZB8pTI6oGgc/EsaaP/LPMSmkg=";
   };
 
   dontUnpack = true;
