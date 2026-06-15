@@ -1,1 +1,1 @@
-- Ship JAR with Curseforge API token.
+- Fix Neoforge version resolution.

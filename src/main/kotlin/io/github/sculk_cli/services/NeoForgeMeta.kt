@@ -11,9 +11,16 @@ class NeoForgeMeta(private val client: HttpClient) {
 			"1.20.1" -> "net/neoforged/forge"
 			else -> "net/neoforged/neoforge"
 		}
+		val filter = if (gameVersion == "1.20.1") {
+			"1.20.1"
+		} else if (gameVersion.startsWith("1.")) {
+			"${gameVersion.trimStart('1', '.')}."
+		} else {
+			"$gameVersion."
+		}
 
 		return client.get(
-			"https://maven.neoforged.net/api/maven/versions/releases/$artifact"
+			"https://maven.neoforged.net/api/maven/versions/releases/$artifact?filter=$filter"
 		).body<NeoForgeVersionResponse>().versions.filter {
 			if (gameVersion == "1.20.1") {
 				it.startsWith("1.20.1")
