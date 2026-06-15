@@ -2,3 +2,4 @@
 - Fix Modrinth side resolution (#24).
 - Convert dependency graph object to sets (#23). 
 - Update Modrinth env metadata during update command.
+- Add export ZIP command (#25).

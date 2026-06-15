@@ -21,6 +21,7 @@ import io.github.sculk_cli.commands.AddFromModrinth
 import io.github.sculk_cli.commands.ExportCurseforge
 import io.github.sculk_cli.commands.ExportModrinth
 import io.github.sculk_cli.commands.ExportMultiMc
+import io.github.sculk_cli.commands.ExportZip
 import io.github.sculk_cli.commands.ImportCurseforge
 import io.github.sculk_cli.commands.ImportModrinth
 import io.github.sculk_cli.commands.Init
@@ -92,7 +93,7 @@ fun main(args: Array<String>) {
 		.subcommands(Remove())
 		.subcommands(Install())
 		.subcommands(ImportCmd().subcommands(ImportModrinth(), ImportCurseforge()))
-		.subcommands(ExportCmd().subcommands(ExportModrinth(), ExportCurseforge(), ExportMultiMc()))
+		.subcommands(ExportCmd().subcommands(ExportModrinth(), ExportCurseforge(), ExportMultiMc(), ExportZip()))
 		.subcommands(ModList()).subcommands(
 			CompletionCommand(
 				name = "completion", help = "Generate a completion script for your shell"
