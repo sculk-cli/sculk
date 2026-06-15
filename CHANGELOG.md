@@ -1,1 +1,2 @@
 - Fix Neoforge version resolution.
+- Fix Modrinth side resolution.
