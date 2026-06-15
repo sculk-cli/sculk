@@ -177,9 +177,18 @@ suspend fun updateModrinthProject(
         return false
     }
 
+    var modified = false
     val mod =
         ctx.modrinth.getProject(manifest.sources.modrinth!!.projectId) ?: error("Project not found")
 
+    // Check if environment metadata is corrected. Needed due to #24.
+    val side = modrinthEnvTypePairToSide(mod.clientSideSupport, mod.serverSideSupport)
+    if (side != manifest.side) {
+        manifest.side = side
+        modified = true
+    }
+
+    // Check for new versions
     val versions = ctx.modrinth.getProjectVersions(
         idOrSlug = mod.id,
         loaders = getAllLoaders(ctx.pack.getManifest().loader.type, ctx.pack.getManifest().minecraft),
@@ -195,19 +204,20 @@ suspend fun updateModrinthProject(
     val version = versions[0] // Most recent version
     val file = version.files.first { it.primary }
 
-    if (file.downloadUrl == manifest.sources.modrinth!!.fileUrl) {
-        return false
+    if (file.downloadUrl != manifest.sources.modrinth!!.fileUrl) {
+        val tempFile = downloadFileTemp(parseUrl(file.downloadUrl)).readBytes()
+        manifest.fileSize = tempFile.size
+        manifest.filename = file.filename
+
+        manifest.sources.modrinth = FileManifestModrinthSource(
+            projectId = mod.id,
+            fileUrl = file.downloadUrl,
+            hashes = FileManifestHashes(tempFile.digestSha1(), tempFile.digestSha512(), tempFile.digestMurmur2())
+        )
+        modified = true
     }
 
-    val tempFile = downloadFileTemp(parseUrl(file.downloadUrl)).readBytes()
-    manifest.fileSize = tempFile.size
-    manifest.filename = file.filename
-
-    manifest.sources.modrinth = FileManifestModrinthSource(
-	    projectId = mod.id, fileUrl = file.downloadUrl, hashes = FileManifestHashes(tempFile.digestSha1(), tempFile.digestSha512(), tempFile.digestMurmur2())
-    )
-
-    return true
+    return modified
 }
 
 fun modrinthEnvTypePairToSide(clientSide: ModrinthEnvSupport, serverSide: ModrinthEnvSupport) =

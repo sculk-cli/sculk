@@ -1,3 +1,4 @@
 - Fix Neoforge version resolution.
 - Fix Modrinth side resolution (#24).
 - Convert dependency graph object to sets (#23). 
+- Update Modrinth env metadata during update command.
