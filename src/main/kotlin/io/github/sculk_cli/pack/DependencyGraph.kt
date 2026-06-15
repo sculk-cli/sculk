@@ -5,9 +5,9 @@ import io.github.sculk_cli.util.mkdirsAndWriteJson
 import java.nio.file.Path
 import java.nio.file.Paths
 
-// Map is dependency to dependants
+// Maps from dependency to dependants
 // e.g. fabric-api --> [trinkets, utility-belt]
-typealias DependencyGraph = HashMap<String, MutableList<String>>
+typealias DependencyGraph = HashMap<String, MutableSet<String>>
 
 fun loadDependencyGraph(basePath: Path = Paths.get("")): DependencyGraph {
     val ctx = Context.getOrCreate()
@@ -36,7 +36,7 @@ fun DependencyGraph.addDependency(dependency: String, dependant: String) {
     if (this.containsKey(dependency)) {
         this[dependency]!!.add(dependant)
     } else {
-        this[dependency] = mutableListOf(dependant)
+        this[dependency] = mutableSetOf(dependant)
     }
 }
 

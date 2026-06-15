@@ -1,2 +1,3 @@
 - Fix Neoforge version resolution.
-- Fix Modrinth side resolution.
+- Fix Modrinth side resolution (#24).
+- Convert dependency graph object to sets (#23). 
