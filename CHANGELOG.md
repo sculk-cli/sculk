@@ -1,1 +1,2 @@
 - Normalize paths on windows.
+- Check files are properly deleted while reinstalling packs.

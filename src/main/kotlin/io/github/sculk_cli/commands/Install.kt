@@ -13,6 +13,7 @@ import com.github.ajalt.clikt.parameters.types.enum
 import com.github.ajalt.mordant.animation.coroutines.animateInCoroutine
 import com.github.ajalt.mordant.animation.progress.advance
 import com.github.ajalt.mordant.terminal.info
+import com.github.ajalt.mordant.terminal.warning
 import com.github.ajalt.mordant.widgets.progress.*
 import io.ktor.client.call.*
 import io.ktor.client.plugins.*
@@ -178,7 +179,12 @@ class Install :
             for (previouslyInstalledItem in installManifest.getItemsRelativeTo(installDir)) {
                 if (previouslyInstalledItem !in installedItems) {
                     terminal.info("Removing $previouslyInstalledItem as it is no longer part of the pack")
-                    installDir.resolve(previouslyInstalledItem).delete()
+                    val previousFile = installDir.resolve(previouslyInstalledItem)
+                    if (!previousFile.delete() && previousFile.exists()) {
+                        // Usually means the file is locked (e.g. by a running game on Windows), so retry next install
+                        terminal.warning("Could not remove $previouslyInstalledItem; is it in use?")
+                        installedItems += previouslyInstalledItem
+                    }
                 }
             }
 
