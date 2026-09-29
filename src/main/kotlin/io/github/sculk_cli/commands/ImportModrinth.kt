@@ -1,5 +1,6 @@
 package io.github.sculk_cli.commands
 
+import io.github.sculk_cli.util.normalizePath
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.arguments.argument
@@ -134,7 +135,7 @@ class ImportModrinth :
                 manifestFile.mkdirsAndWriteJson(ctx.json, fileManifest.toSerial())
 
                 manifests += SerialPackManifestManifest(
-	                path = manifestFile.toString(),
+	                path = manifestFile.toString().normalizePath(),
 	                sha256 = manifestFile.readBytes().digestSha256()
                 )
             }
@@ -144,37 +145,37 @@ class ImportModrinth :
                 overrideFile.canonicalFile.parentFile.mkdirs()
                 overrideFile.writeBytes(bytes)
                 files += SerialPackManifestFile(
-	                path = path,
+	                path = path.normalizePath(),
 	                side = Side.Both,
 	                sha256 = bytes.digestSha256()
                 )
             }
 
             for ((path, bytes) in importedPack.clientOverrides) {
-                if (files.any { it.path == path }) {
-                    files.removeIf { it.path == path }
+                if (files.any { it.path == path.normalizePath() }) {
+                    files.removeIf { it.path == path.normalizePath() }
                 }
 
                 val overrideFile = Paths.get("").resolve(path).toFile()
                 overrideFile.canonicalFile.parentFile.mkdirs()
                 overrideFile.writeBytes(bytes)
                 files += SerialPackManifestFile(
-	                path = path,
+	                path = path.normalizePath(),
 	                side = Side.ClientOnly,
 	                sha256 = bytes.digestSha256()
                 )
             }
 
             for ((path, bytes) in importedPack.serverOverrides) {
-                if (files.any { it.path == path }) {
-                    files.removeIf { it.path == path }
+                if (files.any { it.path == path.normalizePath() }) {
+                    files.removeIf { it.path == path.normalizePath() }
                 }
 
                 val overrideFile = Paths.get("").resolve(path).toFile()
                 overrideFile.canonicalFile.parentFile.mkdirs()
                 overrideFile.writeBytes(bytes)
                 files += SerialPackManifestFile(
-	                path = path,
+	                path = path.normalizePath(),
 	                side = Side.ServerOnly,
 	                sha256 = bytes.digestSha256()
                 )

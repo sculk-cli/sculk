@@ -7,6 +7,7 @@ import io.github.sculk_cli.Context
 import io.github.sculk_cli.pack.migration.FormatVersion
 import io.github.sculk_cli.util.digestSha256
 import io.github.sculk_cli.util.mkdirsAndWriteJson
+import io.github.sculk_cli.util.normalizePath
 import io.github.sculk_cli.util.tryWithContext
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -87,6 +88,7 @@ class InMemoryPack(ctx: Context, private val basePath: Path = Paths.get("")) {
     }
 
     fun removeFile(path: String) {
+        val path = path.normalizePath()
         files.remove(files.first { it.path == path })
         packManifest.files.remove(packManifest.files.first { it.path == path })
     }
@@ -96,14 +98,15 @@ class InMemoryPack(ctx: Context, private val basePath: Path = Paths.get("")) {
     }
 
     fun getManifest(path: String): FileManifest? {
-        return manifests[path]
+        return manifests[path.normalizePath()]
     }
 
     fun setManifest(path: String, fileManifest: FileManifest) {
-        manifests[path] = fileManifest
+        manifests[path.normalizePath()] = fileManifest
     }
 
     fun removeManifest(path: String) {
+        val path = path.normalizePath()
         manifests.remove(path)
         packManifest.manifests.remove(packManifest.manifests.first { it.path == path })
     }
@@ -213,13 +216,13 @@ fun PackManifest.toSerial(): SerialPackManifest {
         ),
         manifests = manifests.map {
             SerialPackManifestManifest(
-                path = it.path,
+                path = it.path.normalizePath(),
                 sha256 = it.sha256,
             )
         },
         files = files.map {
             SerialPackManifestFile(
-                path = it.path,
+                path = it.path.normalizePath(),
                 side = it.side,
                 sha256 = it.sha256,
             )

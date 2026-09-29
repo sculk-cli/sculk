@@ -40,3 +40,6 @@ fun pathMatchesGlob(path: String, glob: String): Boolean {
     val matcher = FileSystems.getDefault().getPathMatcher("glob:$glob")
     return matcher.matches(FileSystems.getDefault().getPath(path))
 }
+
+// Manifests may be shared between operating systems, so paths are always stored with forward slashes
+fun String.normalizePath(): String = replace('\\', '/')

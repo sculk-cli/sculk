@@ -1,5 +1,6 @@
 package io.github.sculk_cli.commands
 
+import io.github.sculk_cli.util.normalizePath
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.options.help
@@ -41,7 +42,7 @@ class ExportMultiMc :
 
                 val actualFilePath =
                     ctx.pack.getBasePath().resolve(path).resolveSibling(manifest.filename)
-                val relativeFilePath = ctx.pack.getBasePath().relativize(actualFilePath).toString()
+                val relativeFilePath = ctx.pack.getBasePath().relativize(actualFilePath).toString().normalizePath()
 
                 val url = if (manifest.sources.url != null) {
                     manifest.sources.url!!.url

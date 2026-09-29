@@ -1,5 +1,6 @@
 package io.github.sculk_cli.commands
 
+import io.github.sculk_cli.util.normalizePath
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.mordant.terminal.info
@@ -71,7 +72,7 @@ class ExportModrinth :
             }
 
             files += ModrinthPackFile(
-                path = File(path).resolveSibling(fileManifest.filename).toString(),
+                path = File(path).resolveSibling(fileManifest.filename).toString().normalizePath(),
                 hashes = ModrinthVersionFileHashes(
                     sha1 = hashes.sha1,
                     sha512 = hashes.sha512

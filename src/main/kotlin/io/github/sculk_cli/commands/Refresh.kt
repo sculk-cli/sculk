@@ -1,5 +1,6 @@
 package io.github.sculk_cli.commands
 
+import io.github.sculk_cli.util.normalizePath
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.options.flag
@@ -103,7 +104,7 @@ class Refresh : CliktCommand(
         for (file in manifest.files) {
             val fileFile = basePath.resolve(file.path).toFile()
             val relativePath =
-                fileFile.canonicalFile.toRelativeString(Paths.get("").toFile().canonicalFile)
+                fileFile.canonicalFile.toRelativeString(Paths.get("").toFile().canonicalFile).normalizePath()
 
             if (!fileFile.exists()) {
                 if (check) {
@@ -138,7 +139,7 @@ class Refresh : CliktCommand(
                 continue
             }
 
-            val relativePath = file.toRelativeString(Paths.get("").toFile().canonicalFile)
+            val relativePath = file.toRelativeString(Paths.get("").toFile().canonicalFile).normalizePath()
             if (ignore.isFileIgnored(relativePath)) {
                 continue
             }

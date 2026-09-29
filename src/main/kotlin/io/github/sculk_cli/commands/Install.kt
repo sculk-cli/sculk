@@ -1,5 +1,6 @@
 package io.github.sculk_cli.commands
 
+import io.github.sculk_cli.util.normalizePath
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.arguments.argument
@@ -47,7 +48,8 @@ class Install :
             val manifest = ctx.json.decodeFromString(
                 SerialPackManifest.serializer(), readFileAsText("manifest.sculk.json")
             )
-            val installManifestFile = File(installLocation).resolve("install.sculk.json")
+            val installDir = File(installLocation)
+            val installManifestFile = installDir.resolve("install.sculk.json")
             val installManifest = if (installManifestFile.exists()) {
                 ctx.json.decodeFromString(
                     InstallManifest.serializer(), installManifestFile.readText()
@@ -98,9 +100,9 @@ class Install :
                     }
 
                     val fileFile =
-                        File(installLocation).resolve(file.path).resolveSibling(fileManifest.filename)
+                        installDir.resolve(file.path).resolveSibling(fileManifest.filename)
 
-                    installedItems += fileFile.path.toString()
+                    installedItems += fileFile.relativeTo(installDir).path.normalizePath()
 
                     val downloadLink = if (fileManifest.sources.url != null) {
                         fileManifest.sources.url.url
@@ -163,8 +165,8 @@ class Install :
                         }
                     }
 
-                    val fileFile = File(installLocation).resolve(file.path)
-                    installedItems += fileFile.path.toString()
+                    val fileFile = installDir.resolve(file.path)
+                    installedItems += fileFile.relativeTo(installDir).path.normalizePath()
                     fileFile.parentFile.mkdirs()
                     fileFile.writeBytes(fileBytes)
                     terminal.info("Downloaded ${file.path}")
@@ -173,14 +175,15 @@ class Install :
             
             jobs.joinAll()
 
-            for (previouslyInstalledItem in installManifest.sculkInstalledItems) {
+            for (previouslyInstalledItem in installManifest.getItemsRelativeTo(installDir)) {
                 if (previouslyInstalledItem !in installedItems) {
                     terminal.info("Removing $previouslyInstalledItem as it is no longer part of the pack")
-                    File(installLocation).resolve(previouslyInstalledItem).delete()
+                    installDir.resolve(previouslyInstalledItem).delete()
                 }
             }
 
             installManifest.sculkInstalledItems = installedItems
+            installManifest.formatVersion = InstallManifest.CURRENT_FORMAT_VERSION
             installManifestFile.writeText(ctx.json.encodeToString(InstallManifest.serializer(), installManifest))
             terminal.info("Installed in ${System.currentTimeMillis() - startTime}ms")
         }
@@ -209,7 +212,30 @@ class Install :
     @Serializable
     data class InstallManifest(
         var sculkInstalledItems: MutableList<String>,
-    )
+        // Absent in manifests written before paths were stored relative to the install directory
+        var formatVersion: Int = 0,
+    ) {
+        fun getItemsRelativeTo(installDir: File): List<String> {
+            if (formatVersion >= CURRENT_FORMAT_VERSION) {
+                return sculkInstalledItems.map { it.normalizePath() }
+            }
+
+            // Format 0 stored paths relative to the working directory with the install location prepended
+            val canonicalInstallDir = installDir.canonicalFile
+            return sculkInstalledItems.mapNotNull {
+                val file = File(it).canonicalFile
+                if (file.startsWith(canonicalInstallDir)) {
+                    file.relativeTo(canonicalInstallDir).path.normalizePath()
+                } else {
+                    null
+                }
+            }
+        }
+
+        companion object {
+            const val CURRENT_FORMAT_VERSION = 1
+        }
+    }
 
     override fun help(context: com.github.ajalt.clikt.core.Context): String = "Install a Sculk modpack from a URL or local directory"
 }

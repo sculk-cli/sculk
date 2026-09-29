@@ -1,5 +1,6 @@
 package io.github.sculk_cli.commands
 
+import io.github.sculk_cli.util.normalizePath
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.options.default
@@ -98,7 +99,7 @@ class ExportZip :
                         error("Downloaded file for $path was corrupted or hash was incorrect")
                     }
 
-                    out.putNextEntry(ZipEntry(Path(path).resolveSibling(fileManifest.filename).toString()))
+                    out.putNextEntry(ZipEntry(Path(path).resolveSibling(fileManifest.filename).toString().normalizePath()))
                     out.write(bytes, 0, bytes.size)
                     out.closeEntry()
                     terminal.info("Zipped $path")

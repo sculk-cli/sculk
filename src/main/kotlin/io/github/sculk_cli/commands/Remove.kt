@@ -1,5 +1,6 @@
 package io.github.sculk_cli.commands
 
+import io.github.sculk_cli.util.normalizePath
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.arguments.argument
@@ -25,7 +26,7 @@ class Remove : CliktCommand(name = "remove") {
     override fun run() = runBlocking {
         val ctx = Context.getOrCreate(terminal)
         val relativePath =
-            filename.canonicalFile.toRelativeString(Paths.get("").toFile().canonicalFile)
+            filename.canonicalFile.toRelativeString(Paths.get("").toFile().canonicalFile).normalizePath()
 
         if (ctx.pack.getManifests().any { it.key == relativePath }) {
             ctx.pack.removeManifest(relativePath)

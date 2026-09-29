@@ -1,5 +1,6 @@
 package io.github.sculk_cli.pack
 
+import io.github.sculk_cli.util.normalizePath
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -81,13 +82,13 @@ fun SerialPackManifest.load(): PackManifest {
         ),
         manifests = manifests.map {
             PackManifestManifest(
-                path = it.path,
+                path = it.path.normalizePath(),
                 sha256 = it.sha256,
             )
         }.toMutableList(),
         files = files.map {
             PackManifestFile(
-                path = it.path,
+                path = it.path.normalizePath(),
                 side = it.side,
                 sha256 = it.sha256,
             )

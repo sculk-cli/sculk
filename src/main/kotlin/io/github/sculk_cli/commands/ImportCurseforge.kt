@@ -1,5 +1,6 @@
 package io.github.sculk_cli.commands
 
+import io.github.sculk_cli.util.normalizePath
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.terminal
 import com.github.ajalt.clikt.parameters.arguments.argument
@@ -119,7 +120,7 @@ class ImportCurseforge :
                 manifestFile.mkdirsAndWriteJson(ctx.json, fileManifest.toSerial())
 
                 manifests += SerialPackManifestManifest(
-	                path = manifestFile.toString(),
+	                path = manifestFile.toString().normalizePath(),
 	                sha256 = manifestFile.readBytes().digestSha256()
                 )
             }
@@ -129,7 +130,7 @@ class ImportCurseforge :
                 overrideFile.canonicalFile.parentFile.mkdirs()
                 overrideFile.writeBytes(bytes)
                 files += SerialPackManifestFile(
-	                path = path,
+	                path = path.normalizePath(),
 	                side = Side.Both,
 	                sha256 = bytes.digestSha256()
                 )
