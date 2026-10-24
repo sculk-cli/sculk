@@ -1,7 +1,14 @@
 package io.github.sculk_cli.modrinth.models
 
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlin.enums.EnumEntries
 
 @Serializable
 public enum class ModrinthEnvSupport {
@@ -18,73 +25,65 @@ public enum class ModrinthEnvSupport {
     Unknown,
 }
 
-@Serializable
-public enum class ModrinthLoader {
-    @SerialName("bukkit")
-    Bukkit,
+@Serializable(with = ModrinthLoaderSerializer::class)
+public enum class ModrinthLoader(public val serialName: String) {
+    Babric("babric"),
 
-    @SerialName("bungeecord")
-    Bungeecord,
+    BtaBabric("bta-babric"),
 
-    @SerialName("canvas")
-    Canvas,
+    Bukkit("bukkit"),
 
-    @SerialName("datapack")
-    Datapack,
+    Bungeecord("bungeecord"),
 
-    @SerialName("fabric")
-    Fabric,
+    Canvas("canvas"),
 
-    @SerialName("folia")
-    Folia,
+    Datapack("datapack"),
 
-    @SerialName("forge")
-    Forge,
+    Fabric("fabric"),
 
-    @SerialName("iris")
-    Iris,
+    Folia("folia"),
 
-    @SerialName("liteloader")
-    LiteLoader,
+    Forge("forge"),
 
-    @SerialName("minecraft")
-    Minecraft,
+    Geyser("geyser"),
 
-    @SerialName("modloader")
-    RisugamiModLoader,
+    Iris("iris"),
 
-    @SerialName("neoforge")
-    NeoForge,
+    JavaAgent("java-agent"),
 
-    @SerialName("optifine")
-    Optifine,
+    LegacyFabric("legacy-fabric"),
 
-    @SerialName("paper")
-    Paper,
+    LiteLoader("liteloader"),
 
-    @SerialName("purpur")
-    Purpur,
+    Minecraft("minecraft"),
 
-    @SerialName("quilt")
-    Quilt,
+    RisugamiModLoader("modloader"),
 
-    @SerialName("rift")
-    Rift,
+    NeoForge("neoforge"),
 
-    @SerialName("spigot")
-    Spigot,
+    NilLoader("nilloader"),
 
-    @SerialName("sponge")
-    Sponge,
+    Optifine("optifine"),
 
-    @SerialName("vanilla")
-    Vanilla,
+    Paper("paper"),
 
-    @SerialName("velocity")
-    Velocity,
+    Purpur("purpur"),
 
-    @SerialName("waterfall")
-    Waterfall,
+    Quilt("quilt"),
+
+    Rift("rift"),
+
+    Spigot("spigot"),
+
+    Sponge("sponge"),
+
+    Vanilla("vanilla"),
+
+    Velocity("velocity"),
+
+    Waterfall("waterfall"),
+
+    Unknown("unknown");
 }
 
 @Serializable
@@ -95,3 +94,29 @@ public enum class ModrinthHashAlgorithm {
     @SerialName("sha512")
     SHA512
 }
+
+internal abstract class SafeEnumSerializer<T : Enum<T>>(
+    serialName: String,
+    val toString: (T) -> String,
+    values: EnumEntries<T>,
+    val default: T
+) : KSerializer<T> {
+    val fromString = values.associateBy(toString)
+
+    override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor(serialName, PrimitiveKind.STRING)
+
+    override fun deserialize(decoder: Decoder): T {
+        return fromString[decoder.decodeString()] ?: default
+    }
+
+    override fun serialize(encoder: Encoder, value: T) {
+        encoder.encodeString(toString(value))
+    }
+}
+
+private object ModrinthLoaderSerializer : SafeEnumSerializer<ModrinthLoader>(
+    "ModrinthLoader",
+    ModrinthLoader::serialName,
+    ModrinthLoader.entries,
+    ModrinthLoader.Unknown
+)
